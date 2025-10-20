@@ -1,31 +1,26 @@
 import streamlit as st
-import time
 
-# Demo credentials (keep in sync with pages/protected.py or move to a shared module)
+# Demo credentials (keep in sync with pages/Admin.py or move to a shared module)
 CREDENTIALS = {"alice": "password123", "bob": "hunter2"}
 
 def authenticate(user: str, pwd: str) -> bool:
     return CREDENTIALS.get(user) == pwd
 
 def _navigate_to_page(page_name: str):
-    """Try several ways to navigate to another Streamlit page (multipage)."""
-    # Preferred: set query params then rerun
+    """Navigate to another Streamlit multipage page if possible, else show link."""
+    # Try setting query params (works in many Streamlit versions)
     try:
-        setter = getattr(st, "experimental_set_query_params", None)
+        setter = getattr(st, "query_params", None)
         if callable(setter):
             setter(page=page_name)
+        else:
+            setter2 = getattr(st, "set_query_params", None)
+            if callable(setter2):
+                setter2(page=page_name)
     except Exception:
         pass
 
-    # older API
-    try:
-        setter = getattr(st, "set_query_params", None)
-        if callable(setter):
-            setter(page=page_name)
-    except Exception:
-        pass
-
-    # Try to force a rerun
+    # Try forcing a rerun
     try:
         rerun = getattr(st, "experimental_rerun", None)
         if callable(rerun):
@@ -34,9 +29,8 @@ def _navigate_to_page(page_name: str):
     except Exception:
         pass
 
-    # Fallback: provide direct link the user can click
-    st.success("Login successful — click the link below if the app did not navigate automatically.")
-    st.markdown(f"[Go to {page_name}](?page={page_name})")
+    # Fallback: clickable link
+    st.success("Login successful — Navigate to the Admin Page")
     st.stop()
 
 def render():
@@ -49,7 +43,7 @@ def render():
         st.session_state.username = ""
 
     if st.session_state.logged_in:
-        st.info(f"Already logged in as **{st.session_state.username}**. Go to the Protected page from the Pages menu.")
+        st.info(f"Already logged in as **{st.session_state.username}**. Use the Pages menu to go to Admin.")
         return
 
     st.write("Enter your username and password to sign in.")
@@ -63,11 +57,9 @@ def render():
         if authenticate(user, pwd):
             st.session_state.logged_in = True
             st.session_state.username = user
-            # clear sensitive fields
             st.session_state.pop("login_pwd", None)
             st.success("Logged in")
-            # try to navigate to the Protected page
-            _navigate_to_page("Protected")
+            _navigate_to_page("Admin")
         else:
             st.error("Invalid credentials")
 
