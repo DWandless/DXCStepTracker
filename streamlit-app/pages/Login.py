@@ -29,9 +29,6 @@ def _navigate_to_page(page_name: str):
     except Exception:
         pass
 
-    # Fallback: clickable link
-    st.success("Login successful — Navigate to the Admin Page")
-    st.stop()
 
 def render():
     st.title("Log in")
@@ -58,7 +55,7 @@ def render():
             st.session_state.logged_in = True
             st.session_state.username = user
             st.session_state.pop("login_pwd", None)
-            st.success("Logged in")
+            st.success("Login successful — Please navigate to the Admin Page.")
             _navigate_to_page("Admin")
         else:
             st.error("Invalid credentials")

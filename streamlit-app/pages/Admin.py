@@ -25,8 +25,7 @@ def _navigate_to_page(page_name: str):
     except Exception:
         pass
 
-    st.info("You have been logged out — click the link below if the app did not navigate automatically.")
-    st.markdown(f"[Go to {page_name}](?page={page_name})")
+    st.info("You have been logged out — Please refresh this window.")
     st.stop()
 
 def render():
