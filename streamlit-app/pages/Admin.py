@@ -11,13 +11,17 @@ def render():
     # Protected: require login
     if not st.session_state.get("logged_in"):
         st.warning("You must be logged in to view this page.")
-        st.markdown("[Go to Login page](?page=Login)")
         return
 
     # Logged-in view
     username = st.session_state.get("username", "user")
     st.header(f"Hello {username}")
     st.write("Protected admin content goes here.")
+
+    # show logged-in user
+    if st.session_state.get("username"):
+        st.sidebar.markdown(f"**User:** {st.session_state.get('username')}")
+
 
     if st.button("Log out"):
         st.session_state.logged_in = False

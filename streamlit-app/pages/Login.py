@@ -35,5 +35,9 @@ def render():
         else:
             st.error("Invalid credentials")
 
+    # show logged-in user
+    if st.session_state.get("username"):
+        st.sidebar.markdown(f"**User:** {st.session_state.get('username')}")
+
 # run UI when page is loaded
 render()
