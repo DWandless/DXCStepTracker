@@ -1,10 +1,15 @@
 import streamlit as st
-
-# Demo credentials (keep in sync with pages/Admin.py or move to a shared module)
-CREDENTIALS = {"alice": "password123", "bob": "hunter2"}
+from db import supabase
 
 def authenticate(user: str, pwd: str) -> bool:
-    return CREDENTIALS.get(user) == pwd
+    response = supabase.table("users").select("*").eq("user_name", user).execute()
+    
+    if response.data and len(response.data) == 1:
+        user_record = response.data[0]
+        stored_password = user_record.get("user_password", "")
+        return pwd == stored_password
+    
+    return False
 
 def render():
     st.title("Log in")

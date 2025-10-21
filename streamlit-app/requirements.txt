@@ -7,3 +7,8 @@ plotly
 scikit-learn
 requests
 streamlit-lottie
+supabase
+dotenv
+certifi
+httpx
+bcrypt
