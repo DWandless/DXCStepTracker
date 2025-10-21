@@ -22,7 +22,7 @@ def render():
         st.session_state.username = ""
 
     if st.session_state.logged_in:
-        st.info(f"Already logged in as **{st.session_state.username}**. Use the Pages menu to go to Admin.")
+        st.info(f"Already logged in as **{st.session_state.username}**.")
         return
 
     st.write("Enter your username and password to sign in.")
@@ -37,7 +37,7 @@ def render():
             st.session_state.logged_in = True
             st.session_state.username = user
             st.session_state.pop("login_pwd", None)
-            st.success("Login successful — Please navigate to the Admin Page.")
+            st.success("Login successful — Please Return to the Home Page.")
         else:
             st.error("Invalid credentials")
 

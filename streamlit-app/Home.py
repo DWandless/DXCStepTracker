@@ -15,7 +15,7 @@ def get_user_id(username):
 
 def render():
     st.set_page_config(page_title="Movember Step Tracker", layout="wide")
-    st.title("Movember Step Tracker - Home")
+    st.title("Movember Step Tracker")
 
     # --- Check session ---
     if "logged_in" not in st.session_state or not st.session_state.logged_in:
