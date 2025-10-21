@@ -1,4 +1,3 @@
-# filepath: streamlit-app/pages/About.py
 import streamlit as st
 
 def render():

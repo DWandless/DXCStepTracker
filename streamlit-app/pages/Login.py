@@ -1,4 +1,5 @@
 import streamlit as st
+import bcrypt
 from db import supabase
 
 def authenticate(user: str, pwd: str) -> bool:
@@ -6,9 +7,9 @@ def authenticate(user: str, pwd: str) -> bool:
     
     if response.data and len(response.data) == 1:
         user_record = response.data[0]
-        stored_password = user_record.get("user_password", "")
-        return pwd == stored_password
-    
+        stored_hash = user_record.get("user_password", "").encode("utf-8")
+        return bcrypt.checkpw(pwd.encode("utf-8"), stored_hash)
+
     return False
 
 def render():

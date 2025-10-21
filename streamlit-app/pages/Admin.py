@@ -22,15 +22,5 @@ def render():
     if st.session_state.get("username"):
         st.sidebar.markdown(f"**User:** {st.session_state.get('username')}")
 
-
-    if st.button("Log out"):
-        st.session_state.logged_in = False
-        st.session_state.username = ""
-        # remove any login inputs left in session state
-        for key in ("login_user", "login_pwd", "prot_user", "prot_pwd"):
-            st.session_state.pop(key, None)
-        st.info("You have been logged out — Please refresh this window.")
-        st.stop()
-
 # Run when the page is loaded
 render()
