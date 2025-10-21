@@ -63,6 +63,10 @@ def render():
                 except Exception as e:
                     st.error(f"Error submitting form: {e}")
     
+    # show logged-in user (if any)
+    if st.session_state.get("username"):
+        st.sidebar.markdown(f"**User:** {st.session_state.get('username')}")
+        
     # --- Logout Button ---
     if st.sidebar.button("Log out"):
         st.session_state.logged_in = False
@@ -72,10 +76,6 @@ def render():
             st.session_state.pop(key, None)
         st.info("You have been logged out — Please refresh this window.")
         st.stop()
-    
-    # show logged-in user (if any)
-    if st.session_state.get("username"):
-        st.sidebar.markdown(f"**User:** {st.session_state.get('username')}")
-        
+      
 # Run it
 render()

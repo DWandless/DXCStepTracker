@@ -33,11 +33,11 @@ def render():
         return
 
     # --- Admin-only content ---
-    st.header(f"Welcome Admin: {username}")
+    st.header(f"Welcome Admin, {username}")
     st.write("Protected admin content goes here.")
 
     # Sidebar info
-    st.sidebar.markdown(f"**User:** {username} (Admin)")
+    st.sidebar.markdown(f"**User:** {username}")
 
     # Optional logout button
     if st.sidebar.button("Log out"):
