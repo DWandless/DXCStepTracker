@@ -1,33 +1,6 @@
 import streamlit as st
 import time
 
-def _navigate_to_page(page_name: str):
-    """Navigate to another Streamlit multipage page if possible, else show link."""
-    try:
-        setter = getattr(st, "query_params", None)
-        if callable(setter):
-            setter(page=page_name, _ts=int(time.time()))
-    except Exception:
-        pass
-
-    try:
-        setter2 = getattr(st, "set_query_params", None)
-        if callable(setter2):
-            setter2(page=page_name, _ts=int(time.time()))
-    except Exception:
-        pass
-
-    try:
-        rerun = getattr(st, "experimental_rerun", None)
-        if callable(rerun):
-            rerun()
-            return
-    except Exception:
-        pass
-
-    st.info("You have been logged out — Please refresh this window.")
-    st.stop()
-
 def render():
     # Ensure session defaults exist
     if "logged_in" not in st.session_state:
@@ -52,7 +25,8 @@ def render():
         # remove any login inputs left in session state
         for key in ("login_user", "login_pwd", "prot_user", "prot_pwd"):
             st.session_state.pop(key, None)
-        _navigate_to_page("Login")
+        st.info("You have been logged out — Please refresh this window.")
+        st.stop()
 
 # Run when the page is loaded
 render()
