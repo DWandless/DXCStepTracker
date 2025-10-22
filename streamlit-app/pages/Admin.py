@@ -26,8 +26,6 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize session state
-if "dismissed_rows" not in st.session_state:
-    st.session_state["dismissed_rows"] = set()
 if "confirm_delete" not in st.session_state:
     st.session_state["confirm_delete"] = None
 if "confirm_clear" not in st.session_state:
@@ -35,7 +33,11 @@ if "confirm_clear" not in st.session_state:
 
 # ------------------ FETCH DATA FROM SUPABASE ------------------
 def fetch_all_submissions():
-    forms = supabase.table("forms").select("*").execute().data
+    forms = supabase.table("forms") \
+        .select("*") \
+        .eq("form_verified", False) \
+        .gt("form_stepcount", 15000) \
+        .execute().data
     users = supabase.table("users").select("user_id, user_name").execute().data
     if not forms:
         return pd.DataFrame()
@@ -59,7 +61,6 @@ if st.session_state["confirm_delete"] is not None and not df.empty:
                     file_path = os.path.join(UPLOAD_FOLDER, confirm_row["form_filepath"])
                     if os.path.exists(file_path):
                         os.remove(file_path)
-                    st.success(f"Deleted submission for {confirm_row['user_name']} on {confirm_row['form_date']}")
                 except Exception as e:
                     st.error(f"Error deleting submission: {e}")
                 st.session_state["confirm_delete"] = None
@@ -70,36 +71,38 @@ if st.session_state["confirm_delete"] is not None and not df.empty:
                 st.rerun()
 
 # ------------------ 1. HIGH-STEP SUBMISSIONS (>15,000) ------------------
-st.subheader("📊 All Submissions (Steps > 15,000)")
+st.subheader("📊 Unverified Submissions (Steps > 15,000)")
 if not df.empty:
-    df_filtered = df[df["form_stepcount"] > 15000].copy()
-    if not df_filtered.empty:
-        for idx, row in df_filtered.iterrows():
-            if idx in st.session_state["dismissed_rows"]:
-                continue
-
-            col1, col2, col3 = st.columns([1, 3, 2])
-            with col1:
-                file_path = os.path.join(UPLOAD_FOLDER, row["form_filepath"])
+    for idx, row in df.iterrows():
+        col1, col2, col3 = st.columns([1, 3, 2])
+        with col1:
+            file_path = os.path.join(UPLOAD_FOLDER, row["form_filepath"])
+            if os.path.exists(file_path):
+                st.image(file_path, width=100)
+        with col2:
+            st.markdown(f"**Name:** {row['user_name']} | **Date:** {row['form_date']} | **Steps:** {row['form_stepcount']}")
+            with st.expander("View Full Screenshot"):
                 if os.path.exists(file_path):
-                    st.image(file_path, width=100)
-            with col2:
-                st.markdown(f"**Name:** {row['user_name']} | **Date:** {row['form_date']} | **Steps:** {row['form_stepcount']}")
-                with st.expander("View Full Screenshot"):
-                    if os.path.exists(file_path):
-                        st.image(file_path, caption=f"Screenshot for {row['user_name']}", use_column_width=True)
-            with col3:
-                if st.button("Dismiss", key=f"dismiss_{idx}"):
-                    st.session_state["dismissed_rows"].add(idx)
-                    st.rerun()
-                if st.button("Delete", key=f"delete_{idx}"):
-                    st.session_state["confirm_delete"] = idx
-                    st.rerun()
-            st.markdown("---")
-    else:
-        st.info("No submissions with more than 15,000 steps yet.")
+                    st.image(file_path, caption=f"Screenshot for {row['user_name']}", use_container_width=True)
+                else:
+                    st.warning("Screenshot not found.")
+        with col3:
+            if st.button("✅ Verify", key=f"dismiss_{idx}"):
+                try:
+                    supabase.table("forms") \
+                        .update({"form_verified": True}) \
+                        .eq("form_id", row["form_id"]) \
+                        .execute()
+                    st.success(f"Verified submission for {row['user_name']}")
+                except Exception as e:
+                    st.error(f"Error verifying form: {e}")
+                st.rerun()
+            if st.button("❌ Delete", key=f"delete_{idx}"):
+                st.session_state["confirm_delete"] = idx
+                st.rerun()
+        st.markdown("---")
 else:
-    st.info("No submissions yet.")
+    st.info("No high-step unverified submissions found.")
 
 # ------------------ 2. DOWNLOAD STEP DATA ------------------
 st.subheader("📥 Download Step Data")
@@ -138,7 +141,7 @@ else:
     with colA:
         if st.button("✅ Yes, Clear Everything"):
             try:
-                supabase.table("forms").delete().neq("form_id", 0).execute()  # Delete all rows
+                supabase.table("forms").delete().neq("form_id", 0).execute()
                 if os.path.exists(UPLOAD_FOLDER):
                     shutil.rmtree(UPLOAD_FOLDER)
                     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
