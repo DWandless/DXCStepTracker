@@ -6,6 +6,24 @@ import plotly.express as px
 import zipfile
 import io
 from db import supabase
+import re
+import unicodedata
+
+def secure_filename(filename: str, max_length: int = 255) -> str:
+    """
+    Very small secure filename helper:
+    - strip any path components
+    - normalize unicode
+    - replace disallowed chars with underscore
+    - truncate to max_length
+    """
+    if not filename:
+        return "file"
+    filename = os.path.basename(filename)
+    filename = unicodedata.normalize("NFKD", filename)
+    filename = filename.encode("utf-8", "ignore").decode("utf-8")
+    filename = re.sub(r"[^A-Za-z0-9.\-_]", "_", filename)
+    return filename[:max_length]
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="Movember Step Tracker", layout="wide")
@@ -70,7 +88,8 @@ with tab1:
         if not screenshot:
             st.error("Please upload a screenshot.")
         else:
-            filename = f"{username}_{step_date}_{datetime.now().strftime('%H%M%S')}_{screenshot.name}"
+            raw_name = f"{username}_{step_date}_{datetime.now().strftime('%H%M%S')}_{screenshot.name}"
+            filename = secure_filename(raw_name)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             with open(file_path, "wb") as f:
                 f.write(screenshot.getbuffer())
@@ -96,7 +115,7 @@ with tab2:
         daily_steps = df.groupby("form_date")["form_stepcount"].sum().reset_index()
         st.metric("Your Total Steps", int(df["form_stepcount"].sum()))
         fig = px.bar(daily_steps, x="form_date", y="form_stepcount", title=f"{username}'s Steps per Day")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("No submissions yet.")
 
@@ -105,7 +124,7 @@ with tab3:
     st.header("Your Submissions")
     df = fetch_user_forms(user_id)
     if not df.empty:
-        st.dataframe(df[["form_date", "form_stepcount", "form_filepath"]], use_container_width=True)
+        st.dataframe(df[["form_date", "form_stepcount", "form_filepath"]], width="stretch")
 
         # Download CSV
         csv_data = df.to_csv(index=False)
@@ -115,9 +134,10 @@ with tab3:
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zip_file:
             for file_name in df["form_filepath"]:
-                file_path = os.path.join(UPLOAD_FOLDER, file_name)
+                safe_name = secure_filename(os.path.basename(str(file_name)))
+                file_path = os.path.join(UPLOAD_FOLDER, safe_name)
                 if os.path.exists(file_path):
-                    zip_file.write(file_path, arcname=os.path.basename(file_path))
+                    zip_file.write(file_path, arcname=os.path.basename(safe_name))
         zip_buffer.seek(0)
         st.download_button("Download My Screenshots (ZIP)", zip_buffer, f"{username}_screenshots.zip")
     else:

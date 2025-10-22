@@ -5,6 +5,17 @@ import zipfile
 import io
 import pandas as pd
 from db import supabase
+import re
+import unicodedata
+
+def secure_filename(filename: str, max_length: int = 255) -> str:
+    if not filename:
+        return "file"
+    filename = os.path.basename(filename)
+    filename = unicodedata.normalize("NFKD", filename)
+    filename = filename.encode("utf-8", "ignore").decode("utf-8")
+    filename = re.sub(r"[^A-Za-z0-9.\-_]", "_", filename)
+    return filename[:max_length]
 
 # ------------------ LOGIN & ROLE CHECK ------------------
 if not st.session_state.get("logged_in"):
@@ -58,7 +69,8 @@ if st.session_state["confirm_delete"] is not None and not df.empty:
             if st.button("✅ Yes, Delete"):
                 try:
                     supabase.table("forms").delete().eq("form_id", confirm_row["form_id"]).execute()
-                    file_path = os.path.join(UPLOAD_FOLDER, confirm_row["form_filepath"])
+                    safe_name = secure_filename(os.path.basename(str(confirm_row.get("form_filepath", ""))))
+                    file_path = os.path.join(UPLOAD_FOLDER, safe_name)
                     if os.path.exists(file_path):
                         os.remove(file_path)
                 except Exception as e:
@@ -76,14 +88,15 @@ if not df.empty:
     for idx, row in df.iterrows():
         col1, col2, col3 = st.columns([1, 3, 2])
         with col1:
-            file_path = os.path.join(UPLOAD_FOLDER, row["form_filepath"])
+            safe_name = secure_filename(os.path.basename(str(row.get("form_filepath", ""))))
+            file_path = os.path.join(UPLOAD_FOLDER, safe_name)
             if os.path.exists(file_path):
                 st.image(file_path, width=100)
         with col2:
             st.markdown(f"**Name:** {row['user_name']} | **Date:** {row['form_date']} | **Steps:** {row['form_stepcount']}")
             with st.expander("View Full Screenshot"):
                 if os.path.exists(file_path):
-                    st.image(file_path, caption=f"Screenshot for {row['user_name']}", use_container_width=True)
+                    st.image(file_path, caption=f"Screenshot for {row['user_name']}", width="stretch")
                 else:
                     st.warning("Screenshot not found.")
         with col3:

@@ -72,7 +72,7 @@ if selected_date:
 else:
     st.caption("Showing **all-time** results")
 
-st.dataframe(leaderboard, use_container_width=True)
+st.dataframe(leaderboard, width="stretch")
 
 # Highlight top user (only if showing all or top 10)
 if not leaderboard.empty and view_option != "Bottom 10":
