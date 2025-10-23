@@ -145,8 +145,7 @@ st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", uns
 if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.session_state.username = ""
-    st.info("You have been logged out. Refresh the page.")
-    st.stop()
+    st.rerun()
 
 # ------------------ TABS ------------------
 tab1, tab2, tab3 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "📂 All Submissions"])

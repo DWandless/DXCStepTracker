@@ -109,9 +109,14 @@ with st.form("signup_form"):
                 register_user(username, password, is_admin)
                 st.success(f"✅ User '{username}' created successfully! You can now log in.")
 
-# ------------------ SIDEBAR USER INFO ------------------
+# ------------------ SIDEBAR ------------------
 if st.session_state.get("username"):
-    st.sidebar.markdown(f"**User:** {st.session_state.get('username')}")
+    st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {st.session_state.get('username')}!</h3>", unsafe_allow_html=True)
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.username = ""
+        st.rerun()
+
 # ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [
     "💡 Movember Tip: Walking meetings are a great way to add steps!",
@@ -132,9 +137,9 @@ carousel_messages = [
 carousel_placeholder = st.empty()
 branding_placeholder = st.empty()
 
-# Render branding once (outside the loop)
+# ------------------ FOOTER ------------------
 branding_placeholder.markdown(
-    "<div class='footer-branding'>DXC Technology | Movember 2025</div>",
+    "<div class='footer-branding' style='color:#603494;'>DXC Technology | Movember 2025</div>",
     unsafe_allow_html=True
 )
 

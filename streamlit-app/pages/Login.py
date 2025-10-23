@@ -102,9 +102,14 @@ else:
         else:
             st.error("Invalid username or password.")
 
-# ------------------ SIDEBAR INFO ------------------
+# ------------------ SIDEBAR ------------------
 if st.session_state.get("username"):
-    st.sidebar.markdown(f"**User:** {st.session_state.username} ({st.session_state.role})")
+    st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {st.session_state.get('username')}!</h3>", unsafe_allow_html=True)
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.username = ""
+        st.rerun()
+
 
 # ------------------ LOGOUT BUTTON ------------------
 if st.session_state.logged_in:

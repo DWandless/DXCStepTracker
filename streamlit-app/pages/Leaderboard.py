@@ -71,7 +71,7 @@ st.markdown(header_html, unsafe_allow_html=True)
 
 # ------------------ SECURITY: LOGIN CHECK ------------------
 if not st.session_state.get("logged_in"):
-    st.warning("Please log in to view the leaderboard.")
+    st.warning("Please log in first.")
     st.stop()
 
 username = st.session_state.get("username", "Guest")
@@ -155,9 +155,12 @@ else:
         top_user = leaderboard.iloc[0]
         st.success(f"🥇 {top_user['user_name']} is leading with {int(top_user['total_steps'])} steps!")
 
-# ------------------ SIDEBAR USER INFO ------------------
-if username:
-    st.sidebar.markdown(f"**Logged in as:** {username}")
+# ------------------ SIDEBAR ------------------
+st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
+if st.sidebar.button("Logout"):
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.rerun()
 
 # ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [

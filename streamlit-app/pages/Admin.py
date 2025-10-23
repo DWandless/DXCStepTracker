@@ -146,6 +146,13 @@ if st.session_state["pending_delete"]:
             st.session_state["pending_delete"] = None
             st.rerun()
 
+# ------------------ SIDEBAR ------------------
+st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
+if st.sidebar.button("Logout"):
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.rerun()
+
 # ------------------ 1. HIGH-STEP SUBMISSIONS (>15,000) ------------------
 st.subheader("📊 Unverified Submissions (Steps > 15,000)")
 
