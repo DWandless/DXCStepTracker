@@ -117,6 +117,8 @@ if st.session_state.get("username"):
         st.session_state.username = ""
         st.rerun()
 
+import random
+
 # ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [
     "💡 Movember Tip: Walking meetings are a great way to add steps!",
@@ -133,21 +135,16 @@ carousel_messages = [
     "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
 ]
 
-# Create two separate placeholders
+# Show one random message per page load
 carousel_placeholder = st.empty()
-branding_placeholder = st.empty()
-
-# ------------------ FOOTER ------------------
-branding_placeholder.markdown(
-    "<div class='footer-branding' style='color:#603494;'>DXC Technology | Movember 2025</div>",
+msg = random.choice(carousel_messages)
+carousel_placeholder.markdown(
+    f"<div class='footer-carousel'>{msg}</div>",
     unsafe_allow_html=True
 )
 
-# Run carousel loop without overwriting branding
-for i in range(2):  # Loop twice for effect
-    for msg in carousel_messages:
-        carousel_placeholder.markdown(
-            f"<div class='footer-carousel'>{msg}</div>",
-            unsafe_allow_html=True
-        )
-        time.sleep(3)
+# Render branding once (static)
+st.markdown(
+    "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
+    unsafe_allow_html=True
+)

@@ -12,4 +12,3 @@ dotenv
 certifi
 httpx
 bcrypt
-imghdr
