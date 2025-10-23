@@ -5,30 +5,107 @@ from datetime import datetime
 import plotly.express as px
 import zipfile
 import io
-from db import supabase
 import re
 import unicodedata
+import time
+from db import supabase
 
+# ------------------ PAGE CONFIG ------------------
+st.set_page_config(page_title="Movember Step Tracker", layout="wide")
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# ------------------ DXC BRANDING & MOVEMBER CSS ------------------
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #FFFFFF;
+    }
+    /* Hero Header */
+    .header-container {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        background: linear-gradient(90deg, #603494, #4a2678);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .header-title {
+        font-size: 42px;
+        font-weight: bold;
+    }
+    .header-subtitle {
+        font-size: 18px;
+        margin-top: 5px;
+    }
+    /* Tabs */
+    .stTabs [role="tablist"] {
+        border-bottom: 3px solid #603494;
+    }
+    .stTabs [role="tab"] {
+        color: #603494;
+        font-weight: bold;
+    }
+    /* Buttons */
+    .stButton>button {
+        background-color: #603494;
+        color: white;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #4a2678;
+        transform: scale(1.05);
+    }
+    /* Metrics */
+    .stMetric {
+        color: #603494 !important;
+    }
+    /* Footer Carousel */
+    .footer-carousel {
+        text-align: center;
+        font-size: 18px;
+        color: #603494;
+        font-weight: bold;
+        margin-top: 30px;
+        padding: 10px;
+        border-top: 2px solid #603494;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ------------------ HERO HEADER ------------------
+header_html = """
+<div class="header-container">
+    <div>
+        <div class="header-title">🏃 Movember Step Tracker</div>
+        <div class="header-subtitle">Track your steps, make every move count for men's health!</div>
+    </div>
+</div>
+"""
+st.markdown(header_html, unsafe_allow_html=True)
+
+# ------------------ SECURE FILENAME HELPER ------------------
 def secure_filename(filename: str, max_length: int = 255) -> str:
     """
-    Very small secure filename helper:
-    - strip any path components
-    - normalize unicode
-    - replace disallowed chars with underscore
-    - truncate to max_length
+    Small secure filename helper:
+    - strips path components
+    - normalizes unicode
+    - replaces disallowed chars
+    - truncates to max_length
     """
     if not filename:
         return "file"
     filename = os.path.basename(filename)
     filename = unicodedata.normalize("NFKD", filename)
     filename = filename.encode("utf-8", "ignore").decode("utf-8")
-    filename = re.sub(r"[^A-Za-z0-9.\-_]", "_", filename)
+    filename = re.sub(r"[^A-Za-z0-9.\\-_]", "_", filename)
     return filename[:max_length]
-
-# ------------------ CONFIG ------------------
-st.set_page_config(page_title="Movember Step Tracker", layout="wide")
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ------------------ HELPER FUNCTIONS ------------------
 def get_user_id(username):
@@ -48,7 +125,7 @@ def fetch_user_forms(user_id):
         st.error(f"Error fetching forms: {e}")
         return pd.DataFrame()
 
-# ------------------ LOGIN CHECK ------------------
+# ------------------ SECURITY: LOGIN CHECK ------------------
 if not st.session_state.get("logged_in"):
     st.warning("Please log in first.")
     st.stop()
@@ -56,12 +133,11 @@ if not st.session_state.get("logged_in"):
 username = st.session_state.get("username", "Guest")
 user_id = get_user_id(username)
 if not user_id:
-    st.error("User ID not found.")
+    st.error("User account not found.")
     st.stop()
 
-# ------------------ HEADER ------------------
-st.title("🏃 Movember Step Tracker")
-st.sidebar.success(f"Welcome, {username}!")
+# ------------------ SIDEBAR ------------------
+st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
 if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.session_state.username = ""
@@ -113,11 +189,16 @@ with tab2:
     df = fetch_user_forms(user_id)
     if not df.empty:
         daily_steps = df.groupby("form_date")["form_stepcount"].sum().reset_index()
-        st.metric("Your Total Steps", int(df["form_stepcount"].sum()))
-        fig = px.bar(daily_steps, x="form_date", y="form_stepcount", title=f"{username}'s Steps per Day")
+        total_steps = int(df["form_stepcount"].sum())
+        st.metric("Your Total Steps", total_steps)
+        fig = px.bar(
+            daily_steps, x="form_date", y="form_stepcount",
+            title=f"{username}'s Steps per Day",
+            color_discrete_sequence=["#603494"]
+        )
         st.plotly_chart(fig, width="stretch")
     else:
-        st.info("No submissions yet.")
+        st.info("No submissions yet. Submit your first steps to start tracking!")
 
 # ------------------ TAB 3: ALL SUBMISSIONS ------------------
 with tab3:
@@ -126,11 +207,11 @@ with tab3:
     if not df.empty:
         st.dataframe(df[["form_date", "form_stepcount", "form_filepath"]], width="stretch")
 
-        # Download CSV
+        # Download CSV securely
         csv_data = df.to_csv(index=False)
-        st.download_button("Download My Data (CSV)", csv_data, f"{username}_steps.csv")
+        st.download_button("Download My Data (CSV)", csv_data, f"{secure_filename(username)}_steps.csv")
 
-        # Download Screenshots as ZIP
+        # Download Screenshots as ZIP safely
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zip_file:
             for file_name in df["form_filepath"]:
@@ -139,6 +220,28 @@ with tab3:
                 if os.path.exists(file_path):
                     zip_file.write(file_path, arcname=os.path.basename(safe_name))
         zip_buffer.seek(0)
-        st.download_button("Download My Screenshots (ZIP)", zip_buffer, f"{username}_screenshots.zip")
+        st.download_button("Download My Screenshots (ZIP)", zip_buffer, f"{secure_filename(username)}_screenshots.zip")
     else:
         st.info("You have no submissions yet.")
+
+# ------------------ FOOTER CAROUSEL ------------------
+carousel_messages = [
+    "💡 Movember Tip: Walking meetings are a great way to add steps!",
+    "🥸 Fun Fact: A mustache can grow up to 0.4mm per day!",
+    "🚶 Challenge: Hit 10,000 steps today and celebrate with a Mo-selfie!",
+    "💜 DXC supports Movember: Keep moving, keep growing!",
+    "🔥 Did you know? Just 30 minutes of walking can boost your mood and health!",
+    "🎯 Goal Reminder: Every step counts toward a healthier you and a great cause!",
+    "📸 Share your Mo! Post your mustache progress and inspire others!",
+    "🏆 Leaderboard Alert: Check who's leading the Mo-vement today!",
+    "🌍 Together we can make a difference—one step at a time!",
+    "💪 Pro Tip: Take the stairs instead of the elevator for an easy step boost!",
+    "🎉 Fun Challenge: Invite a colleague for a lunchtime walk and double your steps!",
+    "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
+]
+
+placeholder = st.empty()
+for _ in range(2):  # gentle loop for rotation
+    for msg in carousel_messages:
+        placeholder.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
+        time.sleep(3)

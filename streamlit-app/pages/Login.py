@@ -3,8 +3,63 @@ import bcrypt
 from db import supabase
 
 # ------------------ CONFIG ------------------
-st.set_page_config(page_title="Login", layout="centered")
-st.title("🔐 Log In")
+st.set_page_config(page_title="🔐 Login", layout="centered")
+
+# ------------------ DXC BRANDING & MOVEMBER CSS ------------------
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #FFFFFF;
+    }
+    /* Hero Header */
+    .header-container {
+        text-align: center;
+        background: linear-gradient(90deg, #603494, #4a2678);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .header-title {
+        font-size: 36px;
+        font-weight: bold;
+    }
+    .header-subtitle {
+        font-size: 18px;
+        margin-top: 5px;
+    }
+    /* Buttons */
+    .stButton>button {
+        background-color: #603494;
+        color: white;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #4a2678;
+        transform: scale(1.05);
+    }
+    /* Footer */
+    .footer {
+        text-align: center;
+        font-size: 14px;
+        color: #603494;
+        margin-top: 30px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ------------------ HERO HEADER ------------------
+header_html = """
+<div class="header-container">
+    <div class="header-title">Movember Step Tracker 🥸</div>
+    <div class="header-subtitle">Log in to start tracking your steps and join the Mo-vement!</div>
+</div>
+"""
+st.markdown(header_html, unsafe_allow_html=True)
 
 # ------------------ SESSION DEFAULTS ------------------
 if "logged_in" not in st.session_state:
@@ -29,7 +84,7 @@ def authenticate(username, password):
 
 # ------------------ LOGIN FORM ------------------
 if st.session_state.logged_in:
-    st.info(f"Already logged in as **{st.session_state.username}** ({st.session_state.role}).")
+    st.info(f"✅ Already logged in as **{st.session_state.username}** ({st.session_state.role}).")
 else:
     with st.form("login_form"):
         username = st.text_input("Username")
@@ -43,7 +98,7 @@ else:
             st.session_state.username = username
             st.session_state.role = role
             st.success(f"✅ Login successful! Role: {role}")
-            st.rerun()  # ✅ Updated
+            st.rerun()
         else:
             st.error("Invalid username or password.")
 
@@ -56,8 +111,11 @@ if st.session_state.logged_in:
     if st.button("Logout"):
         st.session_state.clear()
         st.success("You have been logged out.")
-        st.rerun()  # ✅ Updated
+        st.rerun()
 
 # ------------------ SIGN-UP LINK ------------------
 st.markdown("---")
 st.page_link("pages/Signup.py", label="📝 Don't have an account? Sign up now")
+
+# ------------------ FOOTER ------------------
+st.markdown("<div class='footer'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
