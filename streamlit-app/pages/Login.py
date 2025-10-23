@@ -97,7 +97,6 @@ else:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.role = role
-            st.success(f"✅ Login successful! Role: {role}")
             st.rerun()
         else:
             st.error("Invalid username or password.")
@@ -115,7 +114,6 @@ if st.session_state.get("username"):
 if st.session_state.logged_in:
     if st.button("Logout"):
         st.session_state.clear()
-        st.success("You have been logged out.")
         st.rerun()
 
 # ------------------ SIGN-UP LINK ------------------

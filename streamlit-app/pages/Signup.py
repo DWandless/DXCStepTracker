@@ -2,6 +2,7 @@ import streamlit as st
 from db import supabase
 import bcrypt
 import time
+import random
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="Create an Account", layout="wide")
@@ -116,8 +117,6 @@ if st.session_state.get("username"):
         st.session_state.logged_in = False
         st.session_state.username = ""
         st.rerun()
-
-import random
 
 # ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [

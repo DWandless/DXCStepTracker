@@ -8,6 +8,7 @@ import re
 import unicodedata
 import time
 from db import supabase
+import random
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide")
@@ -109,7 +110,7 @@ def fetch_all_submissions():
     forms = supabase.table("forms") \
         .select("*") \
         .eq("form_verified", False) \
-        .gt("form_stepcount", 15000) \
+        .gt("form_stepcount", 10000) \
         .execute().data
     users = supabase.table("users").select("user_id, user_name").execute().data
     if not forms:
@@ -153,8 +154,8 @@ if st.sidebar.button("Logout"):
     st.session_state.username = ""
     st.rerun()
 
-# ------------------ 1. HIGH-STEP SUBMISSIONS (>15,000) ------------------
-st.subheader("📊 Unverified Submissions (Steps > 15,000)")
+# ------------------ 1. HIGH-STEP SUBMISSIONS (>10,000) ------------------
+st.subheader("📊 Unverified Submissions (Steps > 10,000)")
 
 if not df.empty:
     for idx, row in df.iterrows():
@@ -252,7 +253,7 @@ else:
             st.session_state["confirm_clear"] = False
             st.rerun()
 
-# ------------------ 5. FOOTER CAROUSEL ------------------
+# ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [
     "💡 Movember Tip: Walking meetings are a great way to add steps!",
     "🥸 Fun Fact: A mustache can grow up to 0.4mm per day!",
@@ -268,7 +269,16 @@ carousel_messages = [
     "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
 ]
 
-# non-blocking footer: pick one message based on the current time slice (no sleep loop)
-placeholder = st.empty()
-msg_index = (int(time.time()) // 3) % len(carousel_messages)
-placeholder.markdown(f"<div class='footer-carousel'>{carousel_messages[msg_index]}</div>", unsafe_allow_html=True)
+# Show one random message per page load
+carousel_placeholder = st.empty()
+msg = random.choice(carousel_messages)
+carousel_placeholder.markdown(
+    f"<div class='footer-carousel'>{msg}</div>",
+    unsafe_allow_html=True
+)
+
+# Render branding once (static)
+st.markdown(
+    "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
+    unsafe_allow_html=True
+)

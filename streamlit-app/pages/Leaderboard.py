@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import time
 from db import supabase
+import random
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="🏆 Leaderboard", layout="wide")
@@ -127,13 +128,19 @@ except Exception as e:
 leaderboard = pd.merge(step_summary, users_df, on="user_id", how="inner")
 leaderboard = leaderboard[["user_name", "total_steps"]]
 
+
+leaderboard.rename(columns={
+    "user_name": "Username",
+    "total_steps": "Step Count"
+}, inplace=True)
+
 # ------------------ SORTING OPTIONS ------------------
 if view_option == "Top 10":
-    leaderboard = leaderboard.sort_values("total_steps", ascending=False).head(10)
+    leaderboard = leaderboard.sort_values("Step Count", ascending=False).head(10)
 elif view_option == "Bottom 10":
-    leaderboard = leaderboard.sort_values("total_steps", ascending=True).head(10)
+    leaderboard = leaderboard.sort_values("Step Count", ascending=True).head(10)
 else:  # All
-    leaderboard = leaderboard.sort_values("total_steps", ascending=False)
+    leaderboard = leaderboard.sort_values("Step Count", ascending=False)
 
 leaderboard.reset_index(drop=True, inplace=True)
 leaderboard.index += 1  # Start rank from 1
@@ -153,7 +160,7 @@ else:
     # Highlight top performer (only for All or Top 10 views)
     if view_option != "Bottom 10" and not leaderboard.empty:
         top_user = leaderboard.iloc[0]
-        st.success(f"🥇 {top_user['user_name']} is leading with {int(top_user['total_steps'])} steps!")
+        st.success(f"🥇 {top_user['Username']} is leading with {int(top_user['Step Count'])} steps!")
 
 # ------------------ SIDEBAR ------------------
 st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
@@ -178,8 +185,16 @@ carousel_messages = [
     "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
 ]
 
-placeholder = st.empty()
-for i in range(2):  # Loop twice for gentle motion
-    for msg in carousel_messages:
-        placeholder.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
-        time.sleep(3)
+# Show one random message per page load
+carousel_placeholder = st.empty()
+msg = random.choice(carousel_messages)
+carousel_placeholder.markdown(
+    f"<div class='footer-carousel'>{msg}</div>",
+    unsafe_allow_html=True
+)
+
+# Render branding once (static)
+st.markdown(
+    "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
+    unsafe_allow_html=True
+)

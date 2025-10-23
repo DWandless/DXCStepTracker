@@ -10,6 +10,7 @@ import re
 import unicodedata
 import time
 from db import supabase
+import random
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Movember Step Tracker", layout="wide")
@@ -222,13 +223,35 @@ with tab2:
     if not df.empty:
         daily_steps = df.groupby("form_date")["form_stepcount"].sum().reset_index()
         total_steps = int(df["form_stepcount"].sum())
-        st.metric("Your Total Steps", total_steps)
+        
+        # --- 2x3 Metrics Grid ---
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Your Total Steps", total_steps)
+        with col2:
+            today_steps = int(daily_steps[daily_steps["form_date"] == str(datetime.now().date())]["form_stepcount"].sum() or 0)
+            st.metric("Your Steps Today", today_steps)
+        with col3:
+            st.metric("Days Participated", daily_steps["form_date"].nunique())
+
+        col4, col5, col6 = st.columns(3)
+        with col4:
+            st.metric("Average Daily Steps", int(daily_steps["form_stepcount"].mean()))
+        with col5:
+            st.metric("Estimated Distance (km)", round(total_steps * 0.0008, 2))  # ~0.8m per step
+        with col6:
+            st.metric("Estimated Calories Burned (kcal)", int(total_steps * 0.04))
+        
         fig = px.bar(
             daily_steps, x="form_date", y="form_stepcount",
             title=f"{username}'s Steps per Day",
-            color_discrete_sequence=["#603494"]
+            color_discrete_sequence=["#603494"],
+            labels={
+                "form_date": "Date",
+                "form_stepcount": "Step Count"
+            }
         )
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No submissions yet. Submit your first steps to start tracking!")
 
@@ -272,8 +295,16 @@ carousel_messages = [
     "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
 ]
 
-placeholder = st.empty()
-for _ in range(2):  # gentle loop for rotation
-    for msg in carousel_messages:
-        placeholder.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
-        time.sleep(3)
+# Show one random message per page load
+carousel_placeholder = st.empty()
+msg = random.choice(carousel_messages)
+carousel_placeholder.markdown(
+    f"<div class='footer-carousel'>{msg}</div>",
+    unsafe_allow_html=True
+)
+
+# Render branding once (static)
+st.markdown(
+    "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
+    unsafe_allow_html=True
+)
