@@ -5,6 +5,7 @@ from datetime import datetime
 import plotly.express as px
 import zipfile
 import io
+from PIL import Image, UnidentifiedImageError
 import re
 import unicodedata
 import time
@@ -14,6 +15,9 @@ from db import supabase
 st.set_page_config(page_title="Movember Step Tracker", layout="wide")
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# add max upload size
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
@@ -164,24 +168,53 @@ with tab1:
         if not screenshot:
             st.error("Please upload a screenshot.")
         else:
-            raw_name = f"{username}_{step_date}_{datetime.now().strftime('%H%M%S')}_{screenshot.name}"
-            filename = secure_filename(raw_name)
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            with open(file_path, "wb") as f:
-                f.write(screenshot.getbuffer())
+            # read bytes and enforce size limit
+            buf = bytes(screenshot.getbuffer())
+            if len(buf) > MAX_UPLOAD_SIZE:
+                st.error("Uploaded file is too large (max 5 MB).")
+            else:
+                try:
+                    # integrity check
+                    bio = io.BytesIO(buf)
+                    img = Image.open(bio)
+                    img.verify()  # raises if broken
+                    # reopen to perform conversions (verify() can close file)
+                    bio.seek(0)
+                    img = Image.open(bio).convert("RGB")
 
-            try:
-                supabase.table("forms").insert({
-                    "form_filepath": filename,
-                    "form_stepcount": steps,
-                    "form_date": str(step_date),
-                    "user_id": user_id,
-                    "form_verified": False
-                }).execute()
-                st.success("✅ Step count submitted successfully!")
-                st.balloons()
-            except Exception as e:
-                st.error(f"Error submitting form: {e}")
+                    # build safe filename and force .jpg
+                    raw_name = f"{username}_{step_date}_{datetime.now().strftime('%H%M%S')}_{screenshot.name}"
+                    filename = secure_filename(raw_name)
+                    filename = os.path.splitext(filename)[0] + ".jpg"
+                    file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+                    # re-save as JPEG to normalize and strip metadata
+                    out_buf = io.BytesIO()
+                    img.save(out_buf, format="JPEG", quality=85, optimize=True)
+                    with open(file_path, "wb") as f:
+                        f.write(out_buf.getvalue())
+                    try:
+                        os.chmod(file_path, 0o600)
+                    except Exception:
+                        pass  # non-fatal on some platforms
+
+                    # store only sanitized filename in DB
+                    try:
+                        supabase.table("forms").insert({
+                            "form_filepath": filename,
+                            "form_stepcount": steps,
+                            "form_date": str(step_date),
+                            "user_id": user_id,
+                            "form_verified": False
+                        }).execute()
+                        st.success("✅ Step count submitted successfully!")
+                        st.balloons()
+                    except Exception:
+                        st.error("Error saving submission. Please try again later.")
+                except UnidentifiedImageError:
+                    st.error("Uploaded file is not a valid image.")
+                except Exception:
+                    st.error("Error processing uploaded image. Please try a different file.")
 
 # ------------------ TAB 2: DAILY PROGRESS ------------------
 with tab2:
