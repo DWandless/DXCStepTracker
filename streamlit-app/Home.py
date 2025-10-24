@@ -138,61 +138,98 @@ if st.sidebar.button("Logout"):
 # ------------------ TABS ------------------
 tab1, tab2, tab3, tab4 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "📂 All Submissions", "💜 About Movember"])
 
-# ------------------ TAB 1: SUBMIT STEPS ------------------
+# ------------------ TAB 1: SUBMIT STEPS (with 5-min cooldown) ------------------
 with tab1:
     st.header("Submit Your Steps")
+    
     col1, col2 = st.columns(2)
     with col1:
         step_date = st.date_input("Date")
     with col2:
         steps = st.number_input("Step Count", min_value=0, step=100)
 
-    screenshot = st.file_uploader("Upload Screenshot (PNG/JPEG)", type=["png", "jpg", "jpeg"])
+    screenshot = st.file_uploader("Upload Screenshot (PNG/JPEG) - Please ensure both Date and Stepcount are visisble", type=["png", "jpg", "jpeg"])
     if screenshot:
         st.image(screenshot, caption="Preview", width=300)
 
+    # --- Initialize session state for last submission time ---
+    if "last_submission_time" not in st.session_state:
+        st.session_state.last_submission_time = None
+
+    # --- Helper to fetch last submission timestamp from DB ---
+    def get_last_submission_time(user_id):
+        try:
+            response = (
+                supabase.table("forms")
+                .select("form_created_at")
+                .eq("user_id", user_id)
+                .order("form_created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if response.data and len(response.data) == 1:
+                return datetime.fromisoformat(response.data[0]["form_created_at"])
+        except Exception as e:
+            st.error(f"Error fetching last submission time: {e}")
+        return None
+
     if st.button("Submit"):
-        if not screenshot:
-            st.error("Please upload a screenshot.")
+        now = datetime.now()
+        last_submission = st.session_state.last_submission_time or get_last_submission_time(user_id)
+
+        # --- Check 5-minute cooldown ---
+        if last_submission and now - last_submission < timedelta(minutes=5):
+            remaining = timedelta(minutes=5) - (now - last_submission)
+            minutes, seconds = divmod(remaining.total_seconds(), 60)
+            st.warning(f"⏳ You must wait {int(minutes)}m {int(seconds)}s before submitting again.")
         else:
-            buf = bytes(screenshot.getbuffer())
-            if len(buf) > MAX_UPLOAD_SIZE:
-                st.error("Uploaded file is too large (max 5 MB).")
+            if not screenshot:
+                st.error("Please upload a screenshot.")
             else:
-                try:
-                    bio = io.BytesIO(buf)
-                    img = Image.open(bio)
-                    img.verify()
-                    bio.seek(0)
-                    img = Image.open(bio).convert("RGB")
-
-                    raw_name = f"{username}_{step_date}_{datetime.now().strftime('%H%M%S')}_{screenshot.name}"
-                    filename = secure_filename(raw_name)
-                    filename = os.path.splitext(filename)[0] + ".jpg"
-                    file_path = os.path.join(UPLOAD_FOLDER, filename)
-
-                    out_buf = io.BytesIO()
-                    img.save(out_buf, format="JPEG", quality=85, optimize=True)
-                    with open(file_path, "wb") as f:
-                        f.write(out_buf.getvalue())
+                buf = bytes(screenshot.getbuffer())
+                if len(buf) > MAX_UPLOAD_SIZE:
+                    st.error("Uploaded file is too large (max 5 MB).")
+                else:
                     try:
-                        os.chmod(file_path, 0o600)
-                    except Exception:
-                        pass
+                        bio = io.BytesIO(buf)
+                        img = Image.open(bio)
+                        img.verify()  # Validate image
+                        bio.seek(0)
+                        img = Image.open(bio).convert("RGB")
 
-                    supabase.table("forms").insert({
-                        "form_filepath": filename,
-                        "form_stepcount": steps,
-                        "form_date": str(step_date),
-                        "user_id": user_id,
-                        "form_verified": False
-                    }).execute()
-                    st.success("✅ Step count submitted successfully!")
-                    st.balloons()
-                except UnidentifiedImageError:
-                    st.error("Uploaded file is not a valid image.")
-                except Exception:
-                    st.error("Error processing uploaded image. Please try a different file.")
+                        # --- Save file ---
+                        raw_name = f"{username}_{step_date}_{datetime.now().strftime('%H%M%S')}_{screenshot.name}"
+                        filename = secure_filename(raw_name)
+                        filename = os.path.splitext(filename)[0] + ".jpg"
+                        file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+                        out_buf = io.BytesIO()
+                        img.save(out_buf, format="JPEG", quality=85, optimize=True)
+                        with open(file_path, "wb") as f:
+                            f.write(out_buf.getvalue())
+                        try:
+                            os.chmod(file_path, 0o600)
+                        except Exception:
+                            pass
+
+                        # --- Insert submission into Supabase ---
+                        supabase.table("forms").insert({
+                            "form_filepath": filename,
+                            "form_stepcount": steps,
+                            "form_date": str(step_date),
+                            "user_id": user_id,
+                            "form_verified": False
+                        }).execute()
+
+                        # --- Update session state cooldown ---
+                        st.session_state.last_submission_time = now
+
+                        st.success("✅ Step count submitted successfully!")
+                        st.balloons()
+                    except UnidentifiedImageError:
+                        st.error("Uploaded file is not a valid image.")
+                    except Exception as e:
+                        st.error(f"Error processing uploaded image: {e}")
 
 # ------------------ TAB 2: DAILY PROGRESS ------------------
 with tab2:
