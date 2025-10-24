@@ -124,8 +124,14 @@ with st.form("signup_form"):
             if existing.data:
                 st.error("That username is already taken.")
             else:
-                register_user(username, password, is_admin)
-                st.success(f"✅ User '{username}' created successfully! You can now log in.")
+                try:
+                    response = register_user(username, password, is_admin)
+                    if response.data:
+                        st.success(f"✅ User '{username}' created successfully! You can now log in.")
+                    else:
+                        st.error("There was an issue creating your account. Please try again.")
+                except Exception as e:
+                    st.error("An unexpected error occurred during registration.")
 
 # ------------------ SIDEBAR ------------------
 if st.session_state.get("username"):
