@@ -3,6 +3,7 @@ from db import supabase
 import bcrypt
 import time
 import random
+import re
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="Create an Account", layout="wide")
@@ -76,9 +77,23 @@ header_html = """
 """
 st.markdown(header_html, unsafe_allow_html=True)
 
+# ------------------ INPUT SANITIZATION FUNCTION ------------------
+def sanitize_username(username: str) -> str:
+    username = username.strip()
+    if not re.match(r"^[A-Za-z0-9 _.-]{3,50}$", username):
+        raise ValueError("Username must be 3–50 characters long and contain only letters, numbers, spaces, dots, underscores, or hyphens.")
+    return username
+
+
 # ------------------ REGISTER USER FUNCTION ------------------
 def register_user(username: str, password: str, is_admin: bool = False):
     hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+    try:
+        username = sanitize_username(username)
+    except ValueError as e:
+        st.error(str(e))
+
     response = supabase.table("users").insert({
         "user_name": username,
         "user_password": hashed_password,
@@ -102,6 +117,8 @@ with st.form("signup_form"):
             st.warning("Please fill out all fields.")
         elif password != confirm_password:
             st.error("Passwords do not match.")
+        elif len(password) < 8 or not any(c.isdigit() for c in password) or not any(c.isalpha() for c in password):
+            st.error("Password must be at least 8 characters long and include both letters and numbers.")
         else:
             existing = supabase.table("users").select("user_name").eq("user_name", username).execute()
             if existing.data:
