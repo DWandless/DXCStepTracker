@@ -122,7 +122,7 @@ if not st.session_state.get("logged_in"):
     st.warning("Please log in first.")
     st.stop()
 
-username = st.session_state.get("username", "Guest")
+username = st.session_state.get("username")
 user_id = get_user_id(username)
 if not user_id:
     st.error("User account not found.")
@@ -148,7 +148,7 @@ with tab1:
     with col2:
         steps = st.number_input("Step Count", min_value=0, step=100)
 
-    screenshot = st.file_uploader("Upload Screenshot (PNG/JPEG) - Please ensure both Date and Stepcount are visisble", type=["png", "jpg", "jpeg"])
+    screenshot = st.file_uploader("Upload Screenshot (PNG/JPEG) - Please ensure both Date and Stepcount are visible", type=["png", "jpg", "jpeg"])
     if screenshot:
         st.image(screenshot, caption="Preview", width=300)
 
@@ -185,6 +185,8 @@ with tab1:
         else:
             if not screenshot:
                 st.error("Please upload a screenshot.")
+            if steps <= 0:
+                st.error("Please enter a valid step count greater than zero.")
             else:
                 buf = bytes(screenshot.getbuffer())
                 if len(buf) > MAX_UPLOAD_SIZE:

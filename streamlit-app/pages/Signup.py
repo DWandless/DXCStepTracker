@@ -91,7 +91,7 @@ st.subheader("Sign Up")
 st.write("Fill in the details below to create your account.")
 
 with st.form("signup_form"):
-    username = st.text_input("Choose a username")
+    username = st.text_input("Enter your full name")
     password = st.text_input("Choose a password", type="password")
     confirm_password = st.text_input("Confirm password", type="password")
     is_admin = False  # Default is non-admin
