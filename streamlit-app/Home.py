@@ -1,14 +1,13 @@
 import streamlit as st
 import os
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import plotly.express as px
 import zipfile
 import io
 from PIL import Image, UnidentifiedImageError
 import re
 import unicodedata
-import time
 from db import supabase
 import random
 
@@ -67,10 +66,6 @@ st.markdown("""
         background-color: #4a2678;
         transform: scale(1.05);
     }
-    /* Metrics */
-    .stMetric {
-        color: #603494 !important;
-    }
     /* Footer Carousel */
     .footer-carousel {
         text-align: center;
@@ -85,25 +80,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------ HERO HEADER ------------------
-header_html = """
+st.markdown("""
 <div class="header-container">
     <div>
         <div class="header-title">🏃 Movember Step Tracker</div>
         <div class="header-subtitle">Track your steps, make every move count for men's health!</div>
     </div>
 </div>
-"""
-st.markdown(header_html, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ------------------ SECURE FILENAME HELPER ------------------
 def secure_filename(filename: str, max_length: int = 255) -> str:
-    """
-    Small secure filename helper:
-    - strips path components
-    - normalizes unicode
-    - replaces disallowed chars
-    - truncates to max_length
-    """
     if not filename:
         return "file"
     filename = os.path.basename(filename)
@@ -149,7 +136,7 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "📂 All Submissions"])
+tab1, tab2, tab3, tab4 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "📂 All Submissions", "💜 About Movember"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -168,27 +155,22 @@ with tab1:
         if not screenshot:
             st.error("Please upload a screenshot.")
         else:
-            # read bytes and enforce size limit
             buf = bytes(screenshot.getbuffer())
             if len(buf) > MAX_UPLOAD_SIZE:
                 st.error("Uploaded file is too large (max 5 MB).")
             else:
                 try:
-                    # integrity check
                     bio = io.BytesIO(buf)
                     img = Image.open(bio)
-                    img.verify()  # raises if broken
-                    # reopen to perform conversions (verify() can close file)
+                    img.verify()
                     bio.seek(0)
                     img = Image.open(bio).convert("RGB")
 
-                    # build safe filename and force .jpg
                     raw_name = f"{username}_{step_date}_{datetime.now().strftime('%H%M%S')}_{screenshot.name}"
                     filename = secure_filename(raw_name)
                     filename = os.path.splitext(filename)[0] + ".jpg"
                     file_path = os.path.join(UPLOAD_FOLDER, filename)
 
-                    # re-save as JPEG to normalize and strip metadata
                     out_buf = io.BytesIO()
                     img.save(out_buf, format="JPEG", quality=85, optimize=True)
                     with open(file_path, "wb") as f:
@@ -196,21 +178,17 @@ with tab1:
                     try:
                         os.chmod(file_path, 0o600)
                     except Exception:
-                        pass  # non-fatal on some platforms
+                        pass
 
-                    # store only sanitized filename in DB
-                    try:
-                        supabase.table("forms").insert({
-                            "form_filepath": filename,
-                            "form_stepcount": steps,
-                            "form_date": str(step_date),
-                            "user_id": user_id,
-                            "form_verified": False
-                        }).execute()
-                        st.success("✅ Step count submitted successfully!")
-                        st.balloons()
-                    except Exception:
-                        st.error("Error saving submission. Please try again later.")
+                    supabase.table("forms").insert({
+                        "form_filepath": filename,
+                        "form_stepcount": steps,
+                        "form_date": str(step_date),
+                        "user_id": user_id,
+                        "form_verified": False
+                    }).execute()
+                    st.success("✅ Step count submitted successfully!")
+                    st.balloons()
                 except UnidentifiedImageError:
                     st.error("Uploaded file is not a valid image.")
                 except Exception:
@@ -223,8 +201,8 @@ with tab2:
     if not df.empty:
         daily_steps = df.groupby("form_date")["form_stepcount"].sum().reset_index()
         total_steps = int(df["form_stepcount"].sum())
-        
-        # --- 2x3 Metrics Grid ---
+
+        # --- Summary Metrics ---
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Your Total Steps", total_steps)
@@ -238,20 +216,44 @@ with tab2:
         with col4:
             st.metric("Average Daily Steps", int(daily_steps["form_stepcount"].mean()))
         with col5:
-            st.metric("Estimated Distance (km)", round(total_steps * 0.0008, 2))  # ~0.8m per step
+            st.metric("Estimated Distance (km)", round(total_steps * 0.0008, 2))
         with col6:
             st.metric("Estimated Calories Burned (kcal)", int(total_steps * 0.04))
-        
+
+        # --- DAILY STREAK TRACKER (moved above plotly graph, no progress bar) ---
+        daily_steps["form_date"] = pd.to_datetime(daily_steps["form_date"]).dt.date
+        sorted_dates = sorted(daily_steps["form_date"].unique())
+
+        streak = 0
+        current_streak = 1 if sorted_dates else 0
+
+        for i in range(len(sorted_dates) - 1, 0, -1):
+            if (sorted_dates[i] - sorted_dates[i - 1]) == timedelta(days=1):
+                current_streak += 1
+            else:
+                break
+
+        # Reset streak if last submission wasn’t today
+        if sorted_dates and sorted_dates[-1] != datetime.now().date():
+            current_streak = 0
+
+        streak = current_streak
+
+        # --- Display streak message only ---
+        if streak > 0:
+            st.success(f"🔥 Current Streak: **{streak} day{'s' if streak > 1 else ''} in a row!**")
+        else:
+            st.info("No active streak. Submit today to start one!")
+
+        # --- Plotly Graph (now appears after the streak tracker) ---
         fig = px.bar(
             daily_steps, x="form_date", y="form_stepcount",
             title=f"{username}'s Steps per Day",
             color_discrete_sequence=["#603494"],
-            labels={
-                "form_date": "Date",
-                "form_stepcount": "Step Count"
-            }
+            labels={"form_date": "Date", "form_stepcount": "Step Count"}
         )
         st.plotly_chart(fig, use_container_width=True)
+
     else:
         st.info("No submissions yet. Submit your first steps to start tracking!")
 
@@ -262,11 +264,9 @@ with tab3:
     if not df.empty:
         st.dataframe(df[["form_date", "form_stepcount", "form_filepath"]], width="stretch")
 
-        # Download CSV securely
         csv_data = df.to_csv(index=False)
         st.download_button("Download My Data (CSV)", csv_data, f"{secure_filename(username)}_steps.csv")
 
-        # Download Screenshots as ZIP safely
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zip_file:
             for file_name in df["form_filepath"]:
@@ -278,6 +278,31 @@ with tab3:
         st.download_button("Download My Screenshots (ZIP)", zip_buffer, f"{secure_filename(username)}_screenshots.zip")
     else:
         st.info("You have no submissions yet.")
+
+# ------------------ TAB 4: ABOUT MOVEMBER ------------------
+with tab4:
+    st.header("About Movember")
+    st.markdown(""" 
+    **Movember** is a global movement committed to changing the face of men's health.
+    Every November, participants grow mustaches and take on fitness challenges to raise
+    awareness and funds for:
+
+    - 🧠 **Mental Health & Suicide Prevention**  
+    - 💪 **Prostate Cancer Research**  
+    - 🩺 **Testicular Cancer Support**
+
+    ### 🚶 Why Steps?
+    Physical activity plays a major role in both physical and mental well-being.  
+    By tracking your steps, you’re not only improving your health — you’re also supporting
+    Movember’s mission for men everywhere.
+
+    ---
+    ### 📚 Learn More
+    - [Movember Official Website](https://uk.movember.com)
+    - [Men’s Health Resources](https://movember.com/mens-health)
+    - [Get Involved / Donate](https://uk.movember.com/get-involved)
+    - [DXC Official Website](https://dxc.com)
+    """)
 
 # ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [
@@ -294,17 +319,6 @@ carousel_messages = [
     "🎉 Fun Challenge: Invite a colleague for a lunchtime walk and double your steps!",
     "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
 ]
-
-# Show one random message per page load
-carousel_placeholder = st.empty()
 msg = random.choice(carousel_messages)
-carousel_placeholder.markdown(
-    f"<div class='footer-carousel'>{msg}</div>",
-    unsafe_allow_html=True
-)
-
-# Render branding once (static)
-st.markdown(
-    "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
-    unsafe_allow_html=True
-)
+st.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
