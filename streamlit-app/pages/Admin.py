@@ -111,7 +111,7 @@ def fetch_all_submissions():
     forms = supabase.table("forms") \
         .select("*") \
         .eq("form_verified", False) \
-        .gt("form_stepcount", 10000) \
+        .gt("form_stepcount", 9999) \
         .execute().data
     users = supabase.table("users").select("user_id, user_name").execute().data
     if not forms:
