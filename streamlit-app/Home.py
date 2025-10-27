@@ -12,6 +12,7 @@ from db import supabase
 import random
 import html
 from pathlib import Path
+import urllib.parse
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Movember Step Tracker", layout="wide")
@@ -158,7 +159,7 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3, tab4 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "📂 All Submissions", "💜 About Movember"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "🏅 Badges & Achievements", "🗣️ Movember Shout-Out", "💜 About Movember"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -290,30 +291,254 @@ with tab2:
     else:
         st.info("No submissions yet.")
 
-# ------------------ TAB 3: ALL SUBMISSIONS ------------------
+
+# ------------------ NEW FEATURES SECTION ------------------
+# ------------------ HELPER FUNCTIONS FOR BADGES TAB ------------------
+def calculate_badges(total_steps, streak):
+    badges = []
+    if total_steps >= 10000: badges.append("10K Steps")
+    if total_steps >= 50000: badges.append("50K Steps")
+    if total_steps >= 100000: badges.append("100K Steps")
+    if streak >= 7: badges.append("7-Day Streak")
+    if streak >= 2: badges.append("Weekend Warrior")
+    if total_steps >= 200000: badges.append("Mo’ Legend")
+    return badges
+
+def get_challenges(today_steps, weekly_steps):
+    challenges = []
+    if today_steps < 5000: challenges.append("Walk 5,000 steps today for a bonus badge.")
+    if weekly_steps < 35000: challenges.append("Hit 35,000 steps this week to unlock ‘Mo’ Momentum’.")
+    return challenges
+
+def get_user_level(total_steps):
+    if total_steps < 50000: return "Mo’ Rookie"
+    elif total_steps < 150000: return "Mo’ Pro"
+    else: return "Mo’ Champion"
+
+def generate_shareable_image(username, total_steps, badges):
+    from PIL import Image, ImageDraw, ImageFont
+    img = Image.new('RGB', (600, 400), color=(255, 255, 255))
+    d = ImageDraw.Draw(img)
+    font = ImageFont.load_default()
+    d.text((10, 10), f"Movember Stats for {username}", fill=(0, 0, 0), font=font)
+    d.text((10, 50), f"Total Steps: {total_steps}", fill=(0, 0, 0), font=font)
+    d.text((10, 90), "Badges:", fill=(0, 0, 0), font=font)
+    y = 120
+    for badge in badges:
+        d.text((10, y), f"- {badge}", fill=(0, 0, 0), font=font)
+        y += 20
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+# ------------------ TAB 3: BADGES & ACHIEVEMENTS ------------------
+
 with tab3:
-    st.header("Your Submissions")
+    st.header("🏅 Badges & Achievements")
+    st.write("Welcome to the Mo’verse! Earn badges, conquer challenges, and climb the ranks!")
+
+    # Storyline Overview with background
+    st.markdown("""
+    <div style="
+        background-color:#f4f4f8;
+        padding:20px;
+        border-radius:10px;
+        margin-bottom:20px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    ">
+        <h3 style="color:#603494;">📖 Your Mo’ Journey</h3>
+        <p>Every great adventure starts with a single step. In the Mo’verse, your journey unfolds like this:</p>
+        <ul style="font-size:16px; line-height:1.6;">
+            <li><b>🌱 Mo’ Rookie</b><br>You’re just starting out—full of energy and ready to learn the ropes.</li>
+            <li><b>💪 Mo’ Pro</b><br>A seasoned stepper! You’re smashing goals and inspiring others along the way.</li>
+            <li><b>🏆 Mo’ Champion</b><br>The ultimate Mo’ hero—leading the charge for men’s health and making a lasting impact.</li>
+        </ul>
+        <p>Each step brings you closer to legendary status. Complete challenges, earn badges, and show the world your Mo’ power!</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Fetch user data
     df = fetch_user_forms(user_id)
     if not df.empty:
-        st.dataframe(df[["form_date", "form_stepcount", "form_filepath"]], width="stretch")
+        df['form_date'] = pd.to_datetime(df['form_date'], errors='coerce')
+        total_steps = df['form_stepcount'].sum()
+        today_steps = df[df['form_date'].dt.date == datetime.now().date()]['form_stepcount'].sum()
+        week_start = datetime.now().date() - timedelta(days=datetime.now().weekday())
+        weekly_steps = df[df['form_date'].dt.date >= week_start]['form_stepcount'].sum()
+        streak = len(df['form_date'].dt.date.unique())
 
-        csv_data = df.to_csv(index=False)
-        st.download_button("Download CSV", csv_data, f"{secure_filename(safe_username)}_steps.csv")
+        badges = calculate_badges(total_steps, streak)
+        level = get_user_level(total_steps)
 
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-            for file_name in df["form_filepath"]:
-                safe_name = secure_filename(os.path.basename(str(file_name)))
-                file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-                if os.path.exists(file_path):
-                    zip_file.write(file_path, arcname=os.path.basename(safe_name))
-        zip_buffer.seek(0)
-        st.download_button("Download Screenshots (ZIP)", zip_buffer, f"{secure_filename(safe_username)}_screenshots.zip")
-    else:
-        st.info("No submissions yet.")
+        # Level thresholds
+        level_thresholds = {
+            "Mo’ Rookie": 0,
+            "Mo’ Pro": 50000,
+            "Mo’ Champion": 150000
+        }
 
-# ------------------ TAB 4: ABOUT MOVEMBER ------------------
+        # Next level logic
+        if level == "Mo’ Rookie":
+            next_level = "Mo’ Pro"
+            steps_to_next = level_thresholds[next_level] - total_steps
+        elif level == "Mo’ Pro":
+            next_level = "Mo’ Champion"
+            steps_to_next = level_thresholds[next_level] - total_steps
+        else:
+            next_level = None
+            steps_to_next = 0
+
+        # Display Current Rank
+        st.subheader("🎮 Your Current Rank:")
+        st.markdown(f"<h2 style='color:#603494;'>{level}</h2>", unsafe_allow_html=True)
+        st.progress(min(total_steps / level_thresholds["Mo’ Champion"], 1.0))
+        st.caption("🌱 Mo’ Rookie → 💪 Mo’ Pro → 🏆 Mo’ Champion")
+
+        # Steps remaining
+        if next_level:
+            st.info(f"🚀 {steps_to_next:,} steps to reach **{next_level}**!")
+        else:
+            st.success("🎉 You’ve reached the top! Keep going to stay legendary!")
+
+        # Badges
+        st.subheader("🏅 Your Badges")
+        if badges:
+            for badge in badges:
+                st.markdown(f"- ✅ {badge}")
+        else:
+            st.info("No badges yet. Keep moving!")
+
+        # Challenges
+        st.subheader("🔥 Challenges")
+        challenges = []
+
+        # Daily goal
+        if today_steps < 10000:
+            challenges.append(f"Hit 10,000 steps today! You’re at {today_steps:,} 🚶")
+        else:
+            challenges.append("Amazing! You smashed today’s goal! 🎉")
+
+        # Weekly goal
+        if weekly_steps < 50000:
+            challenges.append(f"Reach 50,000 steps this week! Current: {weekly_steps:,} 🔥")
+        else:
+            challenges.append("Weekly goal crushed! Keep going! 💪")
+
+        # Next level
+        if next_level:
+            challenges.append(f"Push for {next_level}! Only {steps_to_next:,} steps left 🚀")
+
+        # Streak challenge
+        if streak < 7:
+            challenges.append(f"Build a 7-day streak! Current streak: {streak} days 📅")
+        else:
+            challenges.append(f"🔥 Incredible! {streak}-day streak going strong!")
+
+        # Bonus challenges
+        if total_steps < 100000:
+            challenges.append("Break 100,000 total steps milestone! 🌟")
+        else:
+            challenges.append("Legendary! You’ve crossed 100,000 steps! 🏅")
+
+        # Fun extra challenge
+        if today_steps >= 15000:
+            challenges.append("Double down! Can you hit 20,000 steps today? 💥")
+        if weekly_steps >= 70000:
+            challenges.append("Stretch goal: 100,000 steps this week! 🚀")
+
+        # Show challenges
+        for ch in challenges:
+            st.write(f"- {ch}")
+
+
+# ------------------ TAB 4: MOVEMBER SHOUT-OUT ------------------
 with tab4:
+    st.subheader("📢 Share Your Movember Journey on LinkedIn or X")
+
+    if not df.empty:
+        # Messages for each asset
+        messages = {
+            "Move For Movember.png": (
+                f"I’ve walked {total_steps:,} steps for Movember! Every step counts towards men’s health. "
+                "Join the movement and make a difference! #Movember #MoveForMovember #MensHealth"
+            ),
+            "Movember Movement.png": (
+                f"Currently at {level} level with {total_steps:,} steps! Proud to support Movember and raise awareness "
+                "for men’s health. Let’s keep moving! #Movember #MensHealth"
+            ),
+            "Movember.png": (
+                f"Walking for a cause! {total_steps:,} steps completed for Movember. Together, we can change the face of men’s health. "
+                "#Movember #MensHealth #Fundraising"
+            )
+        }
+
+        st.write("Select an image, copy the suggested message, and post it to your socials!")
+
+        asset_dir = os.path.join(os.getcwd(), "assets")
+        asset_files = list(messages.keys())
+
+        selected_asset = st.selectbox("Choose an image:", asset_files)
+
+        if selected_asset:
+            asset_path = os.path.join(asset_dir, selected_asset)
+            if os.path.exists(asset_path):
+                st.image(asset_path, caption=selected_asset, width=300)
+
+                message = messages[selected_asset]
+                st.subheader("Suggested Message")
+                st.text_area("Copy this message:", message, height=100)
+
+                with open(asset_path, "rb") as f:
+                    st.download_button(
+                        label=f"📥 Download {selected_asset}",
+                        data=f,
+                        file_name=selected_asset,
+                        mime="image/png"
+                    )
+
+                # URL encode message for sharing
+                encoded_message = urllib.parse.quote(message)
+
+                # Platform share URLs
+                linkedin_url = f"https://www.linkedin.com/sharing/share-offsite/?url=https://uk.movember.com&summary={encoded_message}"
+                twitter_url = f"https://twitter.com/intent/tweet?text={encoded_message}"
+
+                # --- SHARE ICONS ---
+                st.subheader("Quick Share Buttons")
+                st.markdown(f"""
+                    <style>
+                        .share-icons {{
+                            display: flex;
+                            gap: 16px;
+                            margin-top: 8px;
+                        }}
+                        .share-icons a img {{
+                            width: 40px;
+                            height: 40px;
+                            transition: transform 0.2s ease;
+                        }}
+                        .share-icons a img:hover {{
+                            transform: scale(1.2);
+                        }}
+                    </style>
+                    <div class="share-icons">
+                        <a href="{linkedin_url}" target="_blank" title="Share on LinkedIn">
+                            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn"/>
+                        </a>
+                        <a href="{twitter_url}" target="_blank" title="Share on X">
+                            <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter"/>
+                        </a>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                st.caption("✅ Click an icon to open the post composer. Then upload your downloaded image manually.")
+
+    else:
+        st.info("No steps submitted yet. Start moving to unlock badges and share your progress!")
+
+# ------------------ TAB 5: ABOUT MOVEMBER ------------------
+with tab5:
     st.header("About Movember")
     st.markdown(""" 
     **Movember** is a global movement committed to changing the face of men's health.

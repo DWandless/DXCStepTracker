@@ -14,6 +14,6 @@ if not url or not key:
     raise RuntimeError("SUPABASE_URL or SUPABASE_KEY not set in environment")
 
 # TODO: Remove verify=False in production, therefore make True for deployment
-options = ClientOptions(httpx_client=httpx.Client(verify=False))
+options = ClientOptions(httpx_client=httpx.Client(verify=True))
 
 supabase = create_client(url, key, options=options)
