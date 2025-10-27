@@ -9,6 +9,7 @@ import unicodedata
 import time
 from db import supabase
 import random
+import bcrypt
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide")
@@ -186,7 +187,7 @@ if not df.empty:
                         .execute()
                     st.success(f"Verified submission for {row['user_name']}")
                 except Exception as e:
-                    st.error(f"Error verifying form: {e}")
+                    st.error(f"Error verifying form, please try again later.")
                 st.rerun()
             if st.button("❌ Delete", key=f"delete_{idx}"):
                 # set a small pending_delete dict rather than relying on index
@@ -225,33 +226,49 @@ if os.path.exists(UPLOAD_FOLDER) and os.listdir(UPLOAD_FOLDER):
 else:
     st.info("No evidence files found.")
 
+
 # ------------------ 4. RESET CHALLENGE DATA ------------------
 st.subheader("⚠️ Reset Challenge Data")
-st.warning("This will permanently delete ALL submissions and screenshots. This action cannot be undone.")
 
-if not st.session_state["confirm_clear"]:
+if not st.session_state.get("confirm_clear"):
     if st.button("Clear All Data"):
         st.session_state["confirm_clear"] = True
         st.rerun()
 else:
-    st.error("Are you sure you want to clear ALL data? This will remove all DB records and uploaded screenshots.")
-    colA, colB = st.columns(2)
-    with colA:
-        if st.button("✅ Yes, Clear Everything"):
+    st.warning("This will permentantly delete ALL form submissions and uploaded screenshots. This action cannot be undone.")
+
+    # --- RE-AUTHENTICATION STEP ---
+    with st.form("reauth_form"):
+        admin_password = st.text_input("Re-enter your password to confirm:", type="password")
+        submitted = st.form_submit_button("✅ Confirm and Delete")
+
+        if submitted:
             try:
-                supabase.table("forms").delete().neq("form_id", 0).execute()
-                if os.path.exists(UPLOAD_FOLDER):
-                    shutil.rmtree(UPLOAD_FOLDER)
-                    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                st.success("✅ All data cleared successfully!")
-            except Exception as e:
-                st.error(f"Error clearing data: {e}")
-            st.session_state["confirm_clear"] = False
-            st.rerun()
-    with colB:
-        if st.button("❌ Cancel"):
-            st.session_state["confirm_clear"] = False
-            st.rerun()
+                # Get stored password hash
+                resp = supabase.table("users").select("user_password").eq("user_name", username).limit(1).execute()
+                if resp.data:
+                    stored_hash = resp.data[0]["user_password"].encode("utf-8")
+                    if bcrypt.checkpw(admin_password.encode("utf-8"), stored_hash):
+                        # Auth OK — proceed with deletion
+                        try:
+                            supabase.table("forms").delete().neq("form_id", 0).execute()
+                            if os.path.exists(UPLOAD_FOLDER):
+                                shutil.rmtree(UPLOAD_FOLDER)
+                                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                            st.success("✅ All data cleared successfully!")
+                        except Exception:
+                            st.error("Error clearing data. Please check logs.")
+                    else:
+                        st.error("Invalid password. Re-authentication failed.")
+                else:
+                    st.error("Could not verify admin identity.")
+            except Exception:
+                st.error("Error verifying credentials.")
+
+    # --- Cancel button OUTSIDE the form ---
+    if st.button("❌ Cancel"):
+        st.session_state["confirm_clear"] = False
+        st.rerun()
 
 # ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [

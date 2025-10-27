@@ -121,7 +121,7 @@ try:
     users = supabase.table("users").select("user_id, user_name").execute().data
     users_df = pd.DataFrame(users)
 except Exception as e:
-    st.error(f"Error fetching user data: {e}")
+    st.error(f"Error fetching user data, please try again later.")
     st.stop()
 
 # Merge steps with usernames

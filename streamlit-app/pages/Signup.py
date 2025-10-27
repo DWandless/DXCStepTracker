@@ -1,9 +1,9 @@
 import streamlit as st
 from db import supabase
 import bcrypt
-import time
-import random
 import re
+import random
+import logging
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="Create an Account", layout="wide")
@@ -16,7 +16,6 @@ st.markdown("""
         font-family: 'Roboto', sans-serif;
         background-color: #FFFFFF;
     }
-    /* Hero Header */
     .header-container {
         display: flex;
         justify-content: flex-start;
@@ -27,15 +26,8 @@ st.markdown("""
         border-radius: 10px;
         margin-bottom: 20px;
     }
-    .header-title {
-        font-size: 42px;
-        font-weight: bold;
-    }
-    .header-subtitle {
-        font-size: 18px;
-        margin-top: 5px;
-    }
-    /* Buttons */
+    .header-title { font-size: 42px; font-weight: bold; }
+    .header-subtitle { font-size: 18px; margin-top: 5px; }
     .stButton>button {
         background-color: #603494;
         color: white;
@@ -47,7 +39,6 @@ st.markdown("""
         background-color: #4a2678;
         transform: scale(1.05);
     }
-    /* Footer Carousel */
     .footer-carousel {
         text-align: center;
         font-size: 18px;
@@ -67,39 +58,49 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------ HERO HEADER ------------------
-header_html = """
+st.markdown("""
 <div class="header-container">
     <div>
         <div class="header-title">Create an Account 🥸</div>
         <div class="header-subtitle">Join the Movember Step Challenge and make a difference!</div>
     </div>
 </div>
-"""
-st.markdown(header_html, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# ------------------ INPUT SANITIZATION FUNCTION ------------------
+# ------------------ LOGGING SETUP ------------------
+logging.basicConfig(filename="app.log", level=logging.ERROR,
+                    format="%(asctime)s - %(levelname)s - %(message)s")
+
+# ------------------ INPUT SANITIZATION ------------------
 def sanitize_username(username: str) -> str:
     username = username.strip()
     if not re.match(r"^[A-Za-z0-9 _.-]{3,50}$", username):
-        raise ValueError("Username must be 3–50 characters long and contain only letters, numbers, spaces, dots, underscores, or hyphens.")
+        raise ValueError(
+            "Username must be 3–50 characters long and contain only letters, numbers, spaces, dots, underscores, or hyphens."
+        )
     return username
 
+# ------------------ PASSWORD VALIDATION ------------------
+def validate_password(password: str) -> bool:
+    """Require at least 8 chars, one letter, one digit, one special char."""
+    return bool(re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$', password))
 
 # ------------------ REGISTER USER FUNCTION ------------------
 def register_user(username: str, password: str, is_admin: bool = False):
-    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
     try:
         username = sanitize_username(username)
-    except ValueError as e:
-        st.error(str(e))
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-    response = supabase.table("users").insert({
-        "user_name": username,
-        "user_password": hashed_password,
-        "user_admin": is_admin
-    }).execute()
-    return response
+        response = supabase.table("users").insert({
+            "user_name": username,
+            "user_password": hashed_password,
+            "user_admin": is_admin
+        }).execute()
+        return response
+
+    except Exception as e:
+        logging.error(f"Signup error for {username}: {e}")
+        return None
 
 # ------------------ REGISTRATION FORM ------------------
 st.subheader("Sign Up")
@@ -109,33 +110,51 @@ with st.form("signup_form"):
     username = st.text_input("Enter your full name")
     password = st.text_input("Choose a password", type="password")
     confirm_password = st.text_input("Confirm password", type="password")
-    is_admin = False  # Default is non-admin
+    is_admin = False  # Always false for security
+
     submitted = st.form_submit_button("Register")
 
     if submitted:
+        # --- Input Checks ---
         if not username or not password or not confirm_password:
             st.warning("Please fill out all fields.")
-        elif password != confirm_password:
+            st.stop()
+
+        try:
+            username = sanitize_username(username)
+        except ValueError as e:
+            st.error(str(e))
+            st.stop()
+
+        if password != confirm_password:
             st.error("Passwords do not match.")
-        elif len(password) < 8 or not any(c.isdigit() for c in password) or not any(c.isalpha() for c in password):
-            st.error("Password must be at least 8 characters long and include both letters and numbers.")
+        elif not validate_password(password):
+            st.error("Password must be at least 8 characters, include a letter, number, and special character.")
         else:
-            existing = supabase.table("users").select("user_name").eq("user_name", username).execute()
-            if existing.data:
-                st.error("That username is already taken.")
-            else:
-                try:
-                    response = register_user(username, password, is_admin)
-                    if response.data:
-                        st.success(f"✅ User '{username}' created successfully! You can now log in.")
-                    else:
-                        st.error("There was an issue creating your account. Please try again.")
-                except Exception as e:
-                    st.error("An unexpected error occurred during registration.")
+            try:
+                # --- Check for duplicate username ---
+                existing = supabase.table("users").select("user_name").eq("user_name", username).execute()
+                if existing.data:
+                    st.error("That username is already taken.")
+                    st.stop()
+
+                # --- Attempt Registration ---
+                response = register_user(username, password, is_admin)
+
+                if response and response.data:
+                    st.success(f"✅ User '{username}' created successfully! You can now log in.")
+                else:
+                    st.error("There was an issue creating your account. Please try again.")
+            except Exception as e:
+                logging.error(f"Unexpected signup error: {e}")
+                st.error("An unexpected error occurred. Please contact support.")
 
 # ------------------ SIDEBAR ------------------
 if st.session_state.get("username"):
-    st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {st.session_state.get('username')}!</h3>", unsafe_allow_html=True)
+    st.sidebar.markdown(
+        f"<h3 style='color:#603494;'>Welcome, {st.session_state.get('username')}!</h3>",
+        unsafe_allow_html=True
+    )
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.username = ""
@@ -157,15 +176,8 @@ carousel_messages = [
     "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
 ]
 
-# Show one random message per page load
-carousel_placeholder = st.empty()
 msg = random.choice(carousel_messages)
-carousel_placeholder.markdown(
-    f"<div class='footer-carousel'>{msg}</div>",
-    unsafe_allow_html=True
-)
-
-# Render branding once (static)
+st.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
 st.markdown(
     "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
     unsafe_allow_html=True
