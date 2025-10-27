@@ -476,7 +476,9 @@ with tab4:
 
         st.write("Select an image, copy the suggested message, and post it to your socials!")
 
-        asset_dir = os.path.join(os.getcwd(), "assets")
+        # Resolve asset directory relative to this file
+        asset_dir = Path(__file__).resolve().parent.parent / "assets"  # Adjust .parent depending on file location
+
         asset_files = list(messages.keys())
 
         selected_asset = st.selectbox("Choose an image:", asset_files)
