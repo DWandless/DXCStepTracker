@@ -3,12 +3,14 @@ import bcrypt
 import time
 import logging
 from db import supabase
+from pathlib import Path
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="🔐 Login", layout="centered")
 
 # Add a top logo in sidebar before Streamlit’s nav
-st.logo("assets/logo.png", icon_image="assets/logo.png", size="large")  # Works for sidebar and top-left favicon
+logo_path = Path(__file__).parent / "assets" / "logo.png"
+st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 
 # ------------------ STYLES ------------------
 st.markdown("""

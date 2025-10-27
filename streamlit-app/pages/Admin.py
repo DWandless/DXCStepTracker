@@ -10,12 +10,15 @@ import time
 from db import supabase
 import random
 import bcrypt
+from pathlib import Path
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide")
 
 # Add a top logo in sidebar before Streamlit’s nav
-st.logo("assets/logo.png", icon_image="assets/logo.png", size="large")  # Works for sidebar and top-left favicon
+# Resolve logo path dynamically
+logo_path = Path(__file__).parent / "assets" / "logo.png"
+st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""

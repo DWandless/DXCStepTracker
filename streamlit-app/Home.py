@@ -23,7 +23,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 
 # Add a top logo in sidebar before Streamlit’s nav
-st.logo("assets/logo.png", icon_image="assets/logo.png", size="large")  # Works for sidebar and top-left favicon
+logo_path = Path(__file__).parent / "assets" / "logo.png"
+st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 
 
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
