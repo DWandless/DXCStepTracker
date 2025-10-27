@@ -17,8 +17,15 @@ st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide")
 
 # Add a top logo in sidebar before Streamlit’s nav
 # Resolve logo path dynamically
-logo_path = Path(__file__).parent / "assets" / "logo.png"
-st.logo(str(logo_path), icon_image=str(logo_path), size="large")
+
+# Resolve logo path so it works from any page
+logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
+
+# Check if file actually exists
+if logo_path.exists():
+    st.logo(str(logo_path), icon_image=str(logo_path), size="large")
+else:
+    st.warning(f"⚠️ Logo not found at: {logo_path}")
 
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
