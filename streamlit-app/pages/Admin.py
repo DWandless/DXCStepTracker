@@ -14,6 +14,9 @@ import bcrypt
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide")
 
+# Add a top logo in sidebar before Streamlit’s nav
+st.logo("assets/logo.png", icon_image="assets/logo.png", size="large")  # Works for sidebar and top-left favicon
+
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
 <style>
@@ -138,7 +141,6 @@ if st.session_state["pending_delete"]:
                 file_path = os.path.join(UPLOAD_FOLDER, safe_name)
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                st.success("Submission deleted successfully.")
             except Exception:
                 st.error("Error deleting submission.")  # keep message generic
             st.session_state["pending_delete"] = None
@@ -185,7 +187,13 @@ if not df.empty:
                         .update({"form_verified": True}) \
                         .eq("form_id", row["form_id"]) \
                         .execute()
-                    st.success(f"Verified submission for {row['user_name']}")
+
+                    # Delete the image from uploads after verification, not needed anymore
+                    try:
+                        os.remove(file_path)
+                    except FileNotFoundError:
+                        pass
+
                 except Exception as e:
                     st.error(f"Error verifying form, please try again later.")
                 st.rerun()

@@ -11,6 +11,7 @@ import unicodedata
 from db import supabase
 import random
 import html
+from pathlib import Path
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Movember Step Tracker", layout="wide")
@@ -19,6 +20,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # add max upload size
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
+
+# Add a top logo in sidebar before Streamlit’s nav
+st.logo("assets/logo.png", icon_image="assets/logo.png", size="large")  # Works for sidebar and top-left favicon
+
 
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
@@ -219,6 +224,13 @@ with tab1:
                     "user_id": user_id,
                     "form_verified": False
                 }).execute()
+
+                # Delete the image if steps are under 10,000, not required for verification
+                if steps < 10000:
+                    try:
+                        os.remove(file_path)
+                    except FileNotFoundError:
+                        pass
 
                 st.session_state.last_submission_time = now
                 st.success("✅ Step count submitted successfully!")

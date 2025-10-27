@@ -7,6 +7,9 @@ from db import supabase
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="🔐 Login", layout="centered")
 
+# Add a top logo in sidebar before Streamlit’s nav
+st.logo("assets/logo.png", icon_image="assets/logo.png", size="large")  # Works for sidebar and top-left favicon
+
 # ------------------ STYLES ------------------
 st.markdown("""
 <style>

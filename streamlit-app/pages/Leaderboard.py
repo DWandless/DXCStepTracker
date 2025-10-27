@@ -7,6 +7,9 @@ import random
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="🏆 Leaderboard", layout="wide")
 
+# Add a top logo in sidebar before Streamlit’s nav
+st.logo("assets/logo.png", icon_image="assets/logo.png", size="large")  # Works for sidebar and top-left favicon
+
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
 <style>
