@@ -104,6 +104,7 @@ if st.session_state.lockout_time > time.time():
 
 if st.session_state.logged_in:
     st.info(f"✅ Logged in as **{st.session_state.username}** ({st.session_state.role})")
+    st.page_link("Home.py", label="➡️ Click here to go to the home page.")
 else:
     with st.form("login_form"):
         username = st.text_input("Username")
