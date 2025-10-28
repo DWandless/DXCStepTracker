@@ -6,35 +6,76 @@ import io
 import pandas as pd
 import re
 import unicodedata
+import time
+from db import supabase
 import random
 import bcrypt
 from pathlib import Path
-from datetime import datetime
-from db import supabase
 from streamlit.components.v1 import html as st_html
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo3.png"
+
 st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide", page_icon=logo_path2)
 
-# ------------------ TOP LOGO ------------------
+# Add a top logo in sidebar before Streamlit’s nav
+# Resolve logo path dynamically
+
+# Resolve logo path so it works from any page
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
+
+# Check if file actually exists
 if logo_path.exists():
     st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 else:
     st.warning(f"⚠️ Logo not found at: {logo_path}")
 
-# ------------------ CUSTOM CSS ------------------
+# ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-    body { font-family: 'Roboto', sans-serif; background-color: #FFFFFF; }
-    .header-container { display: flex; justify-content: flex-start; align-items: center; background: linear-gradient(90deg, #603494, #4a2678); color: white; padding: 20px 30px; border-radius: 10px; margin-bottom: 20px; }
-    .header-title { font-size: 42px; font-weight: bold; }
-    .header-subtitle { font-size: 18px; margin-top: 5px; }
-    .stButton>button { background-color: #603494; color: white; border-radius: 8px; font-weight: bold; transition: 0.3s; }
-    .stButton>button:hover { background-color: #4a2678; transform: scale(1.05); }
-    .footer-carousel { text-align: center; font-size: 18px; color: #603494; font-weight: bold; margin-top: 30px; padding: 10px; border-top: 2px solid #603494; }
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #FFFFFF;
+    }
+    .header-container {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        background: linear-gradient(90deg, #603494, #4a2678);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .header-title {
+        font-size: 42px;
+        font-weight: bold;
+    }
+    .header-subtitle {
+        font-size: 18px;
+        margin-top: 5px;
+    }
+    .stButton>button {
+        background-color: #603494;
+        color: white;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #4a2678;
+        transform: scale(1.05);
+    }
+    .footer-carousel {
+        text-align: center;
+        font-size: 18px;
+        color: #603494;
+        font-weight: bold;
+        margin-top: 30px;
+        padding: 10px;
+        border-top: 2px solid #603494;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -62,7 +103,9 @@ if not user_resp.data or not user_resp.data[0].get("user_admin", False):
 
 # ------------------ SECURITY FUNCTION ------------------
 def secure_filename(filename: str, max_length: int = 255) -> str:
-    if not filename: return "file"
+    """Sanitize filenames to prevent directory traversal or injection."""
+    if not filename:
+        return "file"
     filename = os.path.basename(filename)
     filename = unicodedata.normalize("NFKD", filename)
     filename = filename.encode("utf-8", "ignore").decode("utf-8")
@@ -73,14 +116,19 @@ def secure_filename(filename: str, max_length: int = 255) -> str:
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# replace old confirm state with a simpler pending_delete entry
 if "pending_delete" not in st.session_state:
     st.session_state["pending_delete"] = None
 if "confirm_clear" not in st.session_state:
     st.session_state["confirm_clear"] = False
 
-# ------------------ FETCH DATA ------------------
+# ------------------ FETCH DATA FROM SUPABASE ------------------
 def fetch_all_submissions():
-    forms = supabase.table("forms").select("*").eq("form_verified", False).gt("form_stepcount", 9999).execute().data
+    forms = supabase.table("forms") \
+        .select("*") \
+        .eq("form_verified", False) \
+        .gt("form_stepcount", 9999) \
+        .execute().data
     users = supabase.table("users").select("user_id, user_name").execute().data
     if not forms:
         return pd.DataFrame()
@@ -90,6 +138,31 @@ def fetch_all_submissions():
 
 df = fetch_all_submissions()
 
+# ------------------ SIMPLE CONFIRM DELETE (CSS-RESISTANT) ------------------
+# Show a minimal confirmation widget when a pending delete is set.
+if st.session_state["pending_delete"]:
+    pd = st.session_state["pending_delete"]
+    st.warning(f"Are you sure you want to permanently delete the submission for **{pd['user_name']}** on **{pd['form_date']}**?")
+    confirm_cb = st.checkbox("I understand this will permanently delete the submission.", key="confirm_delete_cb")
+    colA, colB = st.columns(2)
+    with colA:
+        # Delete button is disabled until the checkbox is ticked
+        if st.button("✅ Delete", disabled=not confirm_cb):
+            try:
+                supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
+                safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
+                file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception:
+                st.error("Error deleting submission.")  # keep message generic
+            st.session_state["pending_delete"] = None
+            st.rerun()
+    with colB:
+        if st.button("❌ Cancel"):
+            st.session_state["pending_delete"] = None
+            st.rerun()
+
 # ------------------ SIDEBAR ------------------
 st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
 if st.sidebar.button("Logout"):
@@ -97,7 +170,7 @@ if st.sidebar.button("Logout"):
     st.session_state.username = ""
     st.rerun()
 
-# ------------------ 1. HIGH-STEP SUBMISSIONS ------------------
+# ------------------ 1. HIGH-STEP SUBMISSIONS (>10,000) ------------------
 st.subheader("📊 Unverified Submissions (Steps > 10,000)")
 
 if not df.empty:
@@ -123,14 +196,22 @@ if not df.empty:
         with col3:
             if st.button("✅ Verify", key=f"verify_{idx}"):
                 try:
-                    supabase.table("forms").update({"form_verified": True}).eq("form_id", row["form_id"]).execute()
-                    try: os.remove(file_path)
-                    except FileNotFoundError: pass
-                except Exception:
-                    st.error("Error verifying form.")
-                st.rerun()
+                    supabase.table("forms") \
+                        .update({"form_verified": True}) \
+                        .eq("form_id", row["form_id"]) \
+                        .execute()
 
+                    # Delete the image from uploads after verification, not needed anymore
+                    try:
+                        os.remove(file_path)
+                    except FileNotFoundError:
+                        pass
+
+                except Exception as e:
+                    st.error(f"Error verifying form, please try again later.")
+                st.rerun()
             if st.button("❌ Delete", key=f"delete_{idx}"):
+                # set a small pending_delete dict rather than relying on index
                 st.session_state["pending_delete"] = {
                     "form_id": row["form_id"],
                     "user_name": row["user_name"],
@@ -141,29 +222,6 @@ if not df.empty:
         st.markdown("---")
 else:
     st.info("No high-step unverified submissions found.")
-
-# ------------------ DELETE CONFIRMATION MODAL ------------------
-if st.session_state.get("pending_delete"):
-    pd = st.session_state["pending_delete"]
-    with st.modal("confirm_delete_modal", title="Confirm Deletion"):
-        st.warning(f"⚠️ Are you sure you want to permanently delete the submission for **{pd['user_name']}** on **{pd['form_date']}**?")
-        colA, colB = st.columns(2)
-        with colA:
-            if st.button("✅ Yes, Delete"):
-                try:
-                    supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
-                    safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
-                    file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-                    if os.path.exists(file_path): os.remove(file_path)
-                    st.success("Submission deleted successfully!")
-                except Exception:
-                    st.error("Error deleting submission.")
-                st.session_state["pending_delete"] = None
-                st.experimental_rerun()
-        with colB:
-            if st.button("❌ Cancel"):
-                st.session_state["pending_delete"] = None
-                st.experimental_rerun()
 
 # ------------------ 2. DOWNLOAD STEP DATA ------------------
 st.subheader("📥 Download Step Data")
