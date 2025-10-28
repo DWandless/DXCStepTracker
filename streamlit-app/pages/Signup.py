@@ -5,6 +5,7 @@ import re
 import random
 import logging
 from pathlib import Path
+from streamlit.components.v1 import html
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="Create an Account", layout="wide")
@@ -17,6 +18,13 @@ if logo_path.exists():
     st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 else:
     st.warning(f"⚠️ Logo not found at: {logo_path}")
+
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+html('''
+       <script>
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
+      </script>
+    ''')
 
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
@@ -192,11 +200,3 @@ st.markdown(
     "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
     unsafe_allow_html=True
 )
-
-# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-from streamlit.components.v1 import html
-html('''
-       <script>
-        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
-      </script>
-    ''')

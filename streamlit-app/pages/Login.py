@@ -4,6 +4,7 @@ import time
 import logging
 from db import supabase
 from pathlib import Path
+from streamlit.components.v1 import html
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="🔐 Login", layout="centered")
@@ -16,6 +17,13 @@ if logo_path.exists():
     st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 else:
     st.warning(f"⚠️ Logo not found at: {logo_path}")
+
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+html('''
+       <script>
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
+      </script>
+    ''')
 
 # ------------------ STYLES ------------------
 st.markdown("""

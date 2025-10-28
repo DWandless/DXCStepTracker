@@ -13,6 +13,7 @@ import random
 import html
 from pathlib import Path
 import urllib.parse
+from streamlit.components.v1 import html
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Movember Step Tracker", layout="wide")
@@ -26,6 +27,12 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 logo_path = Path(__file__).parent / "assets" / "logo.png"
 st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+html('''
+       <script>
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
+      </script>
+    ''')
 
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
