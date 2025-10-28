@@ -19,13 +19,6 @@ if logo_path.exists():
 else:
     st.warning(f"⚠️ Logo not found at: {logo_path}")
 
-# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-html('''
-       <script>
-        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
-      </script>
-    ''')
-
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
 <style>
@@ -200,3 +193,10 @@ st.markdown(
     "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
     unsafe_allow_html=True
 )
+
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+html('''
+       <script>
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
+      </script>
+    ''')
