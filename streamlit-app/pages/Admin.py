@@ -14,7 +14,9 @@ from pathlib import Path
 from streamlit.components.v1 import html as st_html
 
 # ------------------ PAGE CONFIG ------------------
-st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide")
+logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo2.png"
+
+st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide", page_icon=logo_path2)
 
 # Add a top logo in sidebar before Streamlit’s nav
 # Resolve logo path dynamically

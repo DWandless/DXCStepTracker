@@ -7,8 +7,9 @@ from pathlib import Path
 from streamlit.components.v1 import html as st_html
 
 # ------------------ PAGE CONFIG ------------------
-st.set_page_config(page_title="🏆 Leaderboard", layout="wide")
+logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo2.png"
 
+st.set_page_config(page_title="🏆 Leaderboard", layout="wide", page_icon=logo_path2)
 
 # Resolve logo path so it works from any page
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
