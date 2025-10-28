@@ -92,7 +92,7 @@ def authenticate(username, password):
             return None
 
     except Exception as e:
-        logging.error(f"Authentication error for {username}: {e}")
+        logging.error(f"Authentication error for this user, please try agan later.")
         time.sleep(1)  # slow down brute force
         return None
 

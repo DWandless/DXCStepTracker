@@ -192,3 +192,16 @@ st.markdown(
     "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
     unsafe_allow_html=True
 )
+
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+div[data-testid="stDecoration"] {display: none !important;}
+div[data-testid="stStatusWidget"] {display: none !important;}
+div[data-testid="stAppStatusWidget"] {display: none !important;}
+div[data-testid="stFooter"] {display: none !important;}
+</style>
+""", unsafe_allow_html=True)
