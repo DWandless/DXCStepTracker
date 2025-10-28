@@ -4,7 +4,7 @@ import time
 import logging
 from db import supabase
 from pathlib import Path
-from streamlit.components.v1 import html
+from streamlit.components.v1 import html as st_html
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="🔐 Login", layout="centered")
@@ -148,7 +148,7 @@ st.page_link("pages/Signup.py", label="📝 Don't have an account? Sign up now")
 st.markdown("<div class='footer'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
 
 # ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-html(
+st_html(
     """
     <script>
     window.addEventListener('load', () => {

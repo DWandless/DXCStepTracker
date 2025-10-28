@@ -5,7 +5,7 @@ import re
 import random
 import logging
 from pathlib import Path
-from streamlit.components.v1 import html
+from streamlit.components.v1 import html as st_html
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="Create an Account", layout="wide")
@@ -195,7 +195,7 @@ st.markdown(
 )
 
 # ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-html(
+st_html(
     """
     <script>
     window.addEventListener('load', () => {

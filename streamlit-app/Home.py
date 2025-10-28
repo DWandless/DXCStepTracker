@@ -13,7 +13,7 @@ import random
 import html
 from pathlib import Path
 import urllib.parse
-from streamlit.components.v1 import html
+from streamlit.components.v1 import html as st_html
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Movember Step Tracker", layout="wide")
@@ -585,7 +585,7 @@ st.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
 st.markdown("<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
 
 # ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-html(
+st_html(
     """
     <script>
     window.addEventListener('load', () => {

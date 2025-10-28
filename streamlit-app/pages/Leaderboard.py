@@ -4,7 +4,7 @@ import time
 from db import supabase
 import random
 from pathlib import Path
-from streamlit.components.v1 import html
+from streamlit.components.v1 import html as st_html
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="🏆 Leaderboard", layout="wide")
@@ -212,7 +212,7 @@ st.markdown(
 )
 
 # ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-html(
+st_html(
     """
     <script>
     window.addEventListener('load', () => {
