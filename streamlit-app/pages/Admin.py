@@ -138,59 +138,42 @@ def fetch_all_submissions():
 
 df = fetch_all_submissions()
 
-# ------------------ SIMPLE CONFIRM DELETE (CENTERED & MOBILE-FRIENDLY) ------------------
+# ------------------ DELETE BUTTON TRIGGERING MODAL ------------------
 if st.session_state.get("pending_delete"):
     pd = st.session_state["pending_delete"]
 
-    # Centered container
-    with st.container():
-        # Optional: add some spacing above
-        st.write("\n")
+    # Main delete trigger button
+    if st.button(f"🗑️ Delete submission for {pd['user_name']}"):
         
-        # Use st.markdown with HTML + CSS for a centered, card-like style
-        st.markdown(
-            f"""
-            <div style="
-                max-width: 500px; 
-                margin: auto; 
-                padding: 20px; 
-                border: 1px solid #ffcc00; 
-                border-radius: 10px; 
-                background-color: #fff3cd;
-            ">
-                <p style="font-size:16px; text-align:center;">
-                    ⚠️ Are you sure you want to permanently delete the submission for 
-                    <strong>{pd['user_name']}</strong> on <strong>{pd['form_date']}</strong>?
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        # Open a modal popup
+        with st.modal("confirm_delete_modal", title="Confirm Deletion"):
+            st.write(f"⚠️ Are you sure you want to permanently delete the submission for **{pd['user_name']}** on **{pd['form_date']}**?")
 
-        # Confirmation checkbox
-        confirm_cb = st.checkbox(
-            "I understand this will permanently delete the submission.", 
-            key="confirm_delete_cb"
-        )
+            colA, colB = st.columns(2)
+            with colA:
+                if st.button("✅ Yes, Delete"):
+                    try:
+                        # Delete from database
+                        supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
 
-        # Buttons side by side but responsive
-        colA, colB = st.columns([1, 1])
-        with colA:
-            if st.button("✅ Delete", disabled=not confirm_cb):
-                try:
-                    supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
-                    safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
-                    file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
-                except Exception:
-                    st.error("Error deleting submission.")
-                st.session_state["pending_delete"] = None
-                st.rerun()
-        with colB:
-            if st.button("❌ Cancel"):
-                st.session_state["pending_delete"] = None
-                st.rerun()
+                        # Delete uploaded file if exists
+                        safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
+                        file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+
+                        st.success("Submission deleted successfully!")
+                    except Exception:
+                        st.error("Error deleting submission.")
+                    
+                    # Clear pending delete and close modal
+                    st.session_state["pending_delete"] = None
+                    st.experimental_rerun()
+
+            with colB:
+                if st.button("❌ Cancel"):
+                    st.session_state["pending_delete"] = None
+                    st.experimental_rerun()
 
 # ------------------ SIDEBAR ------------------
 st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
