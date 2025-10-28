@@ -246,21 +246,27 @@ with tab1:
 with tab2:
     st.header("Daily Progress")
     df = fetch_user_forms(user_id)
+
     if not df.empty:
+        # Aggregate daily steps
         daily_steps = df.groupby("form_date")["form_stepcount"].sum().reset_index()
         total_steps = int(df["form_stepcount"].sum())
 
+        # Display metrics
         col1, col2, col3 = st.columns(3)
         col1.metric("Total Steps", total_steps)
-        today_steps = int(daily_steps[daily_steps["form_date"] == str(datetime.now().date())]["form_stepcount"].sum() or 0)
+        today_steps = int(
+            daily_steps[daily_steps["form_date"] == str(datetime.now().date())]["form_stepcount"].sum() or 0
+        )
         col2.metric("Steps Today", today_steps)
         col3.metric("Days Participated", daily_steps["form_date"].nunique())
 
         col4, col5, col6 = st.columns(3)
         col4.metric("Average Daily Steps", int(daily_steps["form_stepcount"].mean()))
-        col5.metric("Estimated Distance (km)", round(total_steps * 0.0008, 2))
-        col6.metric("Estimated Calories Burned", int(total_steps * 0.04))
+        col5.metric("Total Estimated Distance (km)", round(total_steps * 0.0008, 2))
+        col6.metric("Total Estimated Calories Burned", int(total_steps * 0.04))
 
+        # Ensure form_date is a datetime.date object
         daily_steps["form_date"] = pd.to_datetime(daily_steps["form_date"]).dt.date
         sorted_dates = sorted(daily_steps["form_date"].unique())
 
@@ -281,17 +287,27 @@ with tab2:
         else:
             st.info("No active streak.")
 
+        # ---------------- Plotly Chart ----------------
+        import plotly.express as px
+
         fig = px.bar(
-            daily_steps, x="form_date", y="form_stepcount",
+            daily_steps,
+            x="form_date",
+            y="form_stepcount",
             title=f"{safe_username}'s Steps per Day",
             color_discrete_sequence=["#603494"],
             labels={"form_date": "Date", "form_stepcount": "Step Count"},
             template="plotly_white"
         )
-        st.plotly_chart(fig, use_container_width=True)
+
+        # Force x-axis to show only date
+        fig.update_xaxes(tickformat="%Y-%m-%d")
+
+        # Display static chart (no interactivity)
+        st.plotly_chart(fig, use_container_width=True, config={"staticPlot": True})
+
     else:
         st.info("No submissions yet.")
-
 
 # ------------------ NEW FEATURES SECTION ------------------
 # ------------------ HELPER FUNCTIONS FOR BADGES TAB ------------------
