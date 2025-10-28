@@ -194,34 +194,9 @@ st.markdown(
 )
 
 # ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-st.markdown("""
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-div[data-testid="stDecoration"] {display: none !important;}
-div[data-testid="stStatusWidget"] {display: none !important;}
-div[data-testid="stAppStatusWidget"] {display: none !important;}
-div[data-testid="stFooter"] {display: none !important;}
-</style>
-""", unsafe_allow_html=True)
-
 from streamlit.components.v1 import html
 html('''
        <script>
         window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
       </script>
     ''')
-
-st.markdown("""
-<style>
-div[data-testid="stDecoration"], div[data-testid="stStatusWidget"], div[data-testid="stAppStatusWidget"] {
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-footer {
-    visibility: hidden !important;
-    height: 0 !important;
-}
-</style>
-""", unsafe_allow_html=True)
