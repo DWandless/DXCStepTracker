@@ -18,13 +18,6 @@ if logo_path.exists():
 else:
     st.warning(f"⚠️ Logo not found at: {logo_path}")
 
-# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-html('''
-       <script>
-        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
-      </script>
-    ''')
-
 # ------------------ STYLES ------------------
 st.markdown("""
 <style>
@@ -153,3 +146,16 @@ st.page_link("pages/Signup.py", label="📝 Don't have an account? Sign up now")
 
 # ------------------ FOOTER ------------------
 st.markdown("<div class='footer'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
+
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+html(
+    """
+    <script>
+    window.addEventListener('load', () => {
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`)
+            .forEach(e => e.style.display = 'none');
+    });
+    </script>
+    """,
+    height=0,
+)

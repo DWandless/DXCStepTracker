@@ -27,13 +27,6 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 logo_path = Path(__file__).parent / "assets" / "logo.png"
 st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 
-# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-html('''
-       <script>
-        window.top.document.querySelectorAll(`[href*="streamlit.io"]`).forEach(e => e.setAttribute("style", "display: none;"));
-      </script>
-    ''')
-
 # ------------------ DXC BRANDING & MOVEMBER CSS ------------------
 st.markdown("""
 <style>
@@ -590,3 +583,16 @@ carousel_messages = [
 msg = random.choice(carousel_messages)
 st.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
 st.markdown("<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
+
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+html(
+    """
+    <script>
+    window.addEventListener('load', () => {
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`)
+            .forEach(e => e.style.display = 'none');
+    });
+    </script>
+    """,
+    height=0,
+)
