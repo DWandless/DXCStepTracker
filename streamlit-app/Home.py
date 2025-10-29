@@ -7,6 +7,7 @@ from PIL import Image, UnidentifiedImageError
 import re, unicodedata, random, html, io
 from pathlib import Path
 from db import supabase
+from streamlit.components.v1 import html as st_html
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / "assets" / "logo3.png"
@@ -75,6 +76,22 @@ def fetch_user_forms(user_id):
     except Exception:
         return pd.DataFrame()
 
+def get_last_submission_time(user_id):
+    try:
+        response = (
+            supabase.table("forms")
+            .select("form_created_at")
+            .eq("user_id", user_id)
+            .order("form_created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if response.data and len(response.data) == 1:
+            return datetime.fromisoformat(response.data[0]["form_created_at"])
+    except Exception:
+        pass
+    return None
+
 # ------------------ LOGIN ------------------
 if not st.session_state.get("logged_in"):
     st.warning("Please log in first.")
@@ -94,11 +111,11 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "🗣️ Movember Shout-Out"])
+tab1, tab2, tab3 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "📢 Movember Shout-Out"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
-    st.header("Submit Your Steps")
+    st.header("➕ Submit Your Steps")
     date_col, step_col = st.columns(2)
     with date_col: step_date = st.date_input("Date")
     with step_col: steps = st.number_input("Step Count", min_value=0, step=100)
@@ -116,7 +133,14 @@ with tab1:
 
     if st.button("Submit"):
         now = datetime.now()
-        if steps <= 0 or steps > 100000:
+        last_submission = st.session_state.get("last_submission_time") or get_last_submission_time(user_id)
+
+        # --- 5-minute cooldown check ---
+        if last_submission and now - last_submission < timedelta(minutes=5):
+            remaining = timedelta(minutes=5) - (now - last_submission)
+            minutes, seconds = divmod(remaining.total_seconds(), 60)
+            st.warning(f"⏳ Please wait {int(minutes)}m {int(seconds)}s before submitting again.")
+        elif steps <= 0 or steps > 100000:
             st.error("Enter a valid step count (1–100,000).")
         elif not screenshot:
             st.error("Please upload a screenshot.")
@@ -127,13 +151,21 @@ with tab1:
                 path = os.path.join(UPLOAD_FOLDER, filename)
                 img.save(path, format="JPEG", quality=85, optimize=True)
                 supabase.table("forms").insert({
-                    "form_filepath": filename, "form_stepcount": steps,
-                    "form_date": str(step_date), "user_id": user_id, "form_verified": False
+                    "form_filepath": filename,
+                    "form_stepcount": steps,
+                    "form_date": str(step_date),
+                    "user_id": user_id,
+                    "form_verified": False
                 }).execute()
+
+                # Record new submission time
+                st.session_state.last_submission_time = now
+
                 st.success("✅ Step count submitted successfully!")
                 st.balloons()
-            except Exception:
+            except Exception as e:
                 st.error("Error processing upload.")
+                st.exception(e)
 
 # ------------------ TAB 2: DAILY PROGRESS ------------------
 with tab2:
@@ -159,16 +191,20 @@ with tab2:
 
         c4, c5, c6 = st.columns(3)
         c4.metric("Avg Daily Steps", avg_steps)
-        c5.metric("Distance (km)", distance_km)
-        c6.metric("Calories Burned", calories)
+        c5.metric("Total Distance (km)", distance_km)
+        c6.metric("Total Calories Burned", calories)
 
-        # --- Chart ---
         fig = px.bar(
-            daily_steps, x="form_date", y="form_stepcount",
-            title=f"{safe_username}'s Daily Steps", color_discrete_sequence=["#603494"]
+            daily_steps,
+            x="form_date",
+            y="form_stepcount",
+            title=f"{safe_username}'s Steps per Day",
+            color_discrete_sequence=["#603494"],
+            labels={"form_date": "Date", "form_stepcount": "Step Count"},
+            template="plotly_white"
         )
-        fig.update_layout(template="plotly_white")
-        st.plotly_chart(fig, use_container_width=True)
+        fig.update_xaxes(tickformat="%Y-%m-%d")
+        st.plotly_chart(fig, use_container_width=True, config={"staticPlot": True})
 
         # --- Streak ---
         sorted_dates = sorted(daily_steps["form_date"])
@@ -250,3 +286,16 @@ carousel_msgs = [
     "💪 DXC supports Movember — keep moving!"
 ]
 st.markdown(f"<div class='footer-carousel'>{random.choice(carousel_msgs)}</div>", unsafe_allow_html=True)
+
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+st_html(
+    """
+    <script>
+    window.addEventListener('load', () => {
+        window.top.document.querySelectorAll(`[href*="streamlit.io"]`)
+            .forEach(e => e.style.display = 'none');
+    });
+    </script>
+    """,
+    height=0,
+)
