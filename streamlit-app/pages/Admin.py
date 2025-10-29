@@ -159,7 +159,7 @@ if st.session_state["pending_delete"]:
             st.session_state["pending_delete"] = None
             st.rerun()
     with colB:
-        if st.button("❌ Cancel"):
+        if st.button("❌ Cancel", key="cancel_delete_btn"):
             st.session_state["pending_delete"] = None
             st.rerun()
 
@@ -287,7 +287,7 @@ else:
                 st.error("Error verifying credentials.")
 
     # --- Cancel button OUTSIDE the form ---
-    if st.button("❌ Cancel"):
+    if st.button("❌ Cancel", key="cancel_clear_btn"):
         st.session_state["confirm_clear"] = False
         st.rerun()
 
