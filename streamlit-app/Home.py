@@ -163,7 +163,7 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "🏅 Badges & Achievements", "🗣️ Movember Shout-Out", "💜 About Movember"])
+tab1, tab2, tab3, tab4 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "🏅 Badges & Achievements", "🗣️ Movember Shout-Out"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -558,31 +558,6 @@ with tab4:
 
     else:
         st.info("No steps submitted yet. Start moving to unlock badges and share your progress!")
-
-# ------------------ TAB 5: ABOUT MOVEMBER ------------------
-with tab5:
-    st.header("About Movember")
-    st.markdown(""" 
-    **Movember** is a global movement committed to changing the face of men's health.
-    Every November, participants grow mustaches and take on fitness challenges to raise
-    awareness and funds for:
-
-    - 🧠 **Mental Health & Suicide Prevention**  
-    - 💪 **Prostate Cancer Research**  
-    - 🩺 **Testicular Cancer Support**
-
-    ### 🚶 Why Steps?
-    Physical activity plays a major role in both physical and mental well-being.  
-    By tracking your steps, you’re not only improving your health — you’re also supporting
-    Movember’s mission for men everywhere.
-
-    ---
-    ### 📚 Learn More
-    - [Movember Official Website](https://uk.movember.com)
-    - [Men’s Health Resources](https://movember.com/mens-health)
-    - [Get Involved / Donate](https://uk.movember.com/get-involved)
-    - [DXC Official Website](https://dxc.com)
-    """)
 
 # ------------------ FOOTER CAROUSEL ------------------
 carousel_messages = [
