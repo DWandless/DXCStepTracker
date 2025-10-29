@@ -111,7 +111,7 @@ if st.sidebar.button("Logout"):
     st.rerun()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3 = st.tabs(["➕ Submit Steps", "📊 Daily Progress", "📢 Movember Shout-Out"])
+tab1, tab2 = st.tabs(["➕ Submit Steps", "📊 Daily Progress"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -157,6 +157,13 @@ with tab1:
                     "user_id": user_id,
                     "form_verified": False
                 }).execute()
+
+                # Delete the image if steps are under 10,000 (not required for verification)
+                if steps < 10000:
+                    try:
+                        os.remove(path)
+                    except FileNotFoundError:
+                        pass
 
                 # Record new submission time
                 st.session_state.last_submission_time = now
@@ -273,11 +280,6 @@ with tab2:
             else:
                 for c in challenges:
                     st.write(f"- {c}")
-
-# ------------------ TAB 3: SHOUT OUT ------------------
-with tab3:
-    st.subheader("📢 Share Your Movember Journey")
-    st.info("Coming soon: Share your stats on LinkedIn and X!")
 
 # ------------------ FOOTER ------------------
 carousel_msgs = [
