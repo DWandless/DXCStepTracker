@@ -90,13 +90,12 @@ def authenticate(username, password):
             if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
                 return "admin" if user_data.get("user_admin", False) else "user"
         else:
-            # Perform dummy bcrypt to normalize timing
             bcrypt.checkpw(password.encode("utf-8"), FAKE_HASH)
             return None
 
     except Exception as e:
-        logging.error(f"Authentication error for this user, please try agan later.")
-        time.sleep(1)  # slow down brute force
+        logging.error("Authentication error for this user, please try again later.")
+        time.sleep(1)
         return None
 
 # ------------------ LOGIN FLOW ------------------
@@ -147,10 +146,33 @@ if st.session_state.logged_in:
 st.markdown("---")
 st.page_link("pages/Signup.py", label="📝 Don't have an account? Sign up now")
 
+# ------------------ ABOUT MOVEMBER (EXPANDER) ------------------
+with st.expander("ℹ️ Learn more about Movember"):
+    st.markdown("""
+    **Movember** is a global movement committed to changing the face of men's health.  
+    Every November, participants grow mustaches and take on fitness challenges to raise
+    awareness and funds for:
+
+    - 🧠 **Mental Health & Suicide Prevention**  
+    - 💪 **Prostate Cancer Research**  
+    - 🩺 **Testicular Cancer Support**
+
+    ### 🚶 Why Steps?
+    Physical activity plays a major role in both physical and mental well-being.  
+    By tracking your steps, you’re not only improving your health — you’re also supporting
+    Movember’s mission for men everywhere.
+
+    ---
+    ### 📚 Learn More
+    - [Movember Official Website](https://uk.movember.com)
+    - [Men’s Health Resources](https://movember.com/mens-health)
+    - [Get Involved / Donate](https://uk.movember.com/team/2401475)
+    """)
+
 # ------------------ FOOTER ------------------
 st.markdown("<div class='footer'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
 
-# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
+# ------------------ HIDE STREAMLIT STYLE ELEMENTS ------------------
 st_html(
     """
     <script>
