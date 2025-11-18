@@ -136,8 +136,8 @@ with tab1:
         last_submission = st.session_state.get("last_submission_time") or get_last_submission_time(user_id)
 
         # --- 1-minute cooldown check ---
-        if last_submission and now - last_submission < timedelta(minutes=1): # Brian wicks wanted this changed :)
-            remaining = timedelta(minutes=1) - (now - last_submission)
+        if last_submission and now - last_submission < timedelta(seconds=60): # Brian wicks wanted this changed :)
+            remaining = timedelta(seconds=60) - (now - last_submission)
             minutes, seconds = divmod(remaining.total_seconds(), 60)
             st.warning(f"⏳ Please wait {int(minutes)}m {int(seconds)}s before submitting again.")
         elif steps <= 0 or steps > 100000:
