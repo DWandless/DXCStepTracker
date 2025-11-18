@@ -139,7 +139,7 @@ with tab1:
         if last_submission and now - last_submission < timedelta(seconds=60): # Brian wicks wanted this changed :)
             remaining = timedelta(seconds=60) - (now - last_submission)
             minutes, seconds = divmod(remaining.total_seconds(), 60)
-            st.warning(f"⏳ Please wait {int(minutes)}m {int(seconds)}s before submitting again.")
+            st.warning(f"⏳ Please wait {int(seconds)}s before submitting again.")
         elif steps <= 0 or steps > 100000:
             st.error("Enter a valid step count (1–100,000).")
         elif not screenshot:
