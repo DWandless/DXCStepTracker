@@ -1,4 +1,4 @@
-# Movember Step Tracker
+# DXC Step Tracker
 
 A Streamlit web application for tracking steps during the Movember campaign, featuring user authentication, leaderboards, and automated health checks.
 
@@ -78,7 +78,7 @@ MovemberStepTracker/
 
 ## 🌐 Deployment
 
-The app is deployed on Streamlit Cloud: [https://movembersteptracker.streamlit.app/](https://movembersteptracker.streamlit.app/)
+The app is deployed on Streamlit Cloud: https://dxcsteptracker.streamlit.app/Signup
 
 ### GitHub Actions
 
@@ -90,22 +90,10 @@ Two automated workflows keep the services alive:
 ## 🗄️ Database Schema
 
 The application uses Supabase with the following main tables:
-- `members` - User accounts and authentication
-- `steps` - Daily step tracking data
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+- `users` - User accounts and authentication
+- `forms` - Daily step tracking data
 
 ## 📝 License
 
 This project is licensed under the MIT License.
 
-## 🎗️ About Movember
-
-This application supports the Movember movement, raising awareness for men's health issues including prostate cancer, testicular cancer, and mental health.
