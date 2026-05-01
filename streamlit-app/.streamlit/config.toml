@@ -40,3 +40,4 @@ backgroundColor = "#F8FBFF"                 # Very light blue (matches 25% gradi
 secondaryBackgroundColor = "#FFFFFF"        # White for widgets in sidebar
 primaryColor = "#F8FBFF"                    # Pastel blue (matches button gradient)
 textColor = "#31333F"                       # Dark text for readability
+borderColor = "#31333F"
