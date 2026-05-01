@@ -21,7 +21,7 @@ if logo_path.exists():
 else:
     st.warning(f"⚠️ Logo not found at: {logo_path}")
 
-# ------------------ DXC BRANDING & MOVEMBER CSS ------------------
+# ------------------ DXC BRANDING CSS ------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
@@ -33,7 +33,7 @@ st.markdown("""
         display: flex;
         justify-content: flex-start;
         align-items: center;
-        background: linear-gradient(90deg, #603494, #4a2678);
+        background: linear-gradient(90deg, #0066cc, #ff6600);
         color: white;
         padding: 20px 30px;
         border-radius: 10px;
@@ -42,24 +42,16 @@ st.markdown("""
     .header-title { font-size: 42px; font-weight: bold; }
     .header-subtitle { font-size: 18px; margin-top: 5px; }
     .stButton>button {
-        background-color: #603494;
+        background: linear-gradient(90deg, #0066cc, #ff6600);
         color: white;
         border-radius: 8px;
         font-weight: bold;
         transition: 0.3s;
+        border: none;
     }
     .stButton>button:hover {
-        background-color: #4a2678;
+        background: linear-gradient(90deg, #0052a3, #cc5200);
         transform: scale(1.05);
-    }
-    .footer-carousel {
-        text-align: center;
-        font-size: 18px;
-        color: #603494;
-        font-weight: bold;
-        margin-top: 30px;
-        padding: 10px;
-        border-top: 2px solid #603494;
     }
     .footer-branding {
         text-align: center;
@@ -74,8 +66,8 @@ st.markdown("""
 st.markdown("""
 <div class="header-container">
     <div>
-        <div class="header-title">Create an Account 🥸</div>
-        <div class="header-subtitle">Join the Movember Step Challenge and make a difference!</div>
+        <div class="header-title">Create an Account</div>
+        <div class="header-subtitle">Join the DXC Step Challenge and make a difference!</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -166,7 +158,7 @@ with st.form("signup_form"):
 # ------------------ SIDEBAR ------------------
 if st.session_state.get("username"):
     st.sidebar.markdown(
-        f"<h3 style='color:#603494;'>Welcome, {st.session_state.get('username')}!</h3>",
+        f"<h3 style='color:#0066cc;'>Welcome, {st.session_state.get('username')}!</h3>",
         unsafe_allow_html=True
     )
     if st.sidebar.button("Logout"):
@@ -174,26 +166,9 @@ if st.session_state.get("username"):
         st.session_state.username = ""
         st.rerun()
 
-# ------------------ FOOTER CAROUSEL ------------------
-carousel_messages = [
-    "💡 Movember Tip: Walking meetings are a great way to add steps!",
-    "🥸 Fun Fact: A mustache can grow up to 0.4mm per day!",
-    "🚶 Challenge: Hit 10,000 steps today and celebrate with a Mo-selfie!",
-    "💜 DXC supports Movember: Keep moving, keep growing!",
-    "🔥 Did you know? Just 30 minutes of walking can boost your mood and health!",
-    "🎯 Goal Reminder: Every step counts toward a healthier you and a great cause!",
-    "📸 Share your Mo! Post your mustache progress and inspire others!",
-    "🏆 Leaderboard Alert: Check who's leading the Mo-vement today!",
-    "🌍 Together we can make a difference—one step at a time!",
-    "💪 Pro Tip: Take the stairs instead of the elevator for an easy step boost!",
-    "🎉 Fun Challenge: Invite a colleague for a lunchtime walk and double your steps!",
-    "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
-]
-
-msg = random.choice(carousel_messages)
-st.markdown(f"<div class='footer-carousel'>{msg}</div>", unsafe_allow_html=True)
+# ------------------ FOOTER ------------------
 st.markdown(
-    "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
+    "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #0066cc;'>DXC Technology</div>",
     unsafe_allow_html=True
 )
 
