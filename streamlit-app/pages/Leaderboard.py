@@ -16,6 +16,10 @@ render_header("DXC Step Leaderboard", "Keep a Track of Leaders & Your Friends!")
 # ------------------ SECURITY: LOGIN CHECK ------------------
 username = check_login_required()
 
+# ------------------ SIDEBAR ------------------
+if render_sidebar_welcome(username):
+    handle_logout()
+
 # ------------------ FILTERS ------------------
 st.subheader("Filter Leaderboard")
 
@@ -100,10 +104,6 @@ else:
     if view_option != "Bottom 10" and not leaderboard.empty:
         top_user = leaderboard.iloc[0]
         st.success(f"✪ {top_user['Username']} is leading with {int(top_user['Step Count'])} steps!")
-
-# ------------------ SIDEBAR ------------------
-if render_sidebar_welcome(username):
-    handle_logout()
 
 # ------------------ FOOTER ------------------
 render_footer()
