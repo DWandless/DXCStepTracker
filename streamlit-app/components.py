@@ -68,7 +68,7 @@ def apply_dxc_theme():
         .stButton>button[kind="secondary"],
         .stFormSubmitButton>button {
             background-color: #FFFFFF !important;
-            border: 2px solid #7BA4DB !important;
+            border: 1px solid #7BA4DB !important;
             color: #31333F !important;
             border-radius: 8px;
             font-weight: bold;
@@ -76,7 +76,7 @@ def apply_dxc_theme():
         .stButton>button[kind="secondary"]:hover,
         .stFormSubmitButton>button:hover {
             background-color: #F8FBFF !important;
-            border: 2px solid #6B94CB !important;
+            border: 1px solid #6B94CB !important;
         }
         
         /* Sidebar border - creates visible divider */

@@ -8,7 +8,7 @@ import re, unicodedata, random, html, io
 from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
-                        secure_filename, get_user_id, fetch_user_forms)
+                        secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout)
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / "assets" / "logo.png"
@@ -54,18 +54,15 @@ if not user_id:
     st.stop()
 
 safe_username = html.escape(username)
-st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {safe_username}!</h3>", unsafe_allow_html=True)
-if st.sidebar.button("Logout"):
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.rerun()
+if render_sidebar_welcome(safe_username):
+    handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2 = st.tabs(["➕ Submit Steps", "📊 Daily Progress"])
+tab1, tab2 = st.tabs(["Submit Steps", "Daily Progress"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
-    st.header("➕ Submit Your Steps")
+    st.header("Submit Your Steps")
     date_col, step_col = st.columns(2)
     with date_col: step_date = st.date_input("Date")
     with step_col: steps = st.number_input("Step Count", min_value=0, step=100)
@@ -89,7 +86,7 @@ with tab1:
         if last_submission and now - last_submission < timedelta(seconds=60): # Brian wicks wanted this changed :)
             remaining = timedelta(seconds=60) - (now - last_submission)
             minutes, seconds = divmod(remaining.total_seconds(), 60)
-            st.warning(f"⏳ Please wait {int(seconds)}s before submitting again.")
+            st.warning(f"Please wait {int(seconds)}s before submitting again.")
         elif steps <= 0 or steps > 100000:
             st.error("Enter a valid step count (1–100,000).")
         elif not screenshot:
@@ -118,7 +115,7 @@ with tab1:
                 # Record new submission time
                 st.session_state.last_submission_time = now
 
-                st.success("✅ Step count submitted successfully!")
+                st.success("Step count submitted successfully!")
                 st.balloons()
             except Exception as e:
                 st.error("Error processing upload.")
@@ -126,7 +123,7 @@ with tab1:
 
 # ------------------ TAB 2: DAILY PROGRESS ------------------
 with tab2:
-    st.header("📊 Daily Progress")
+    st.header("Daily Progress")
     df = fetch_user_forms(user_id)
 
     if df.empty:
@@ -156,11 +153,15 @@ with tab2:
             x="form_date",
             y="form_stepcount",
             title=f"{safe_username}'s Steps per Day",
-            color_discrete_sequence=["#603494"],
+            color_discrete_sequence=["#7BA4DB"],
             labels={"form_date": "Date", "form_stepcount": "Step Count"},
             template="plotly_white"
         )
         fig.update_xaxes(tickformat="%Y-%m-%d")
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+        )
         st.plotly_chart(fig, use_container_width=True, config={"staticPlot": True})
 
         # --- Streak ---
@@ -175,10 +176,10 @@ with tab2:
                     break
             if sorted_dates[-1] != datetime.now().date():
                 streak = 0
-        st.success(f"🔥 Current Streak: {streak} days" if streak else "No active streak.")
+        st.success(f"Current Streak: {streak} days" if streak else "No active streak.")
 
         # ------------------ EXPANDER: BADGES & ACHIEVEMENTS ------------------
-        with st.expander("🏅 View Badges & Achievements", expanded=False):
+        with st.expander("View Badges & Achievements", expanded=False):
             def calculate_badges(total_steps, streak):
                 badges = []
                 if total_steps >= 10000: badges.append("10K Steps")
@@ -189,14 +190,14 @@ with tab2:
                 return badges
 
             def get_user_level(total_steps):
-                if total_steps < 50000: return "🌱 Mo’ Rookie"
-                elif total_steps < 150000: return "💪 Mo’ Pro"
-                else: return "🏆 Mo’ Champion"
+                if total_steps < 50000: return "Mo' Rookie"
+                elif total_steps < 150000: return "Mo' Pro"
+                else: return "Mo' Champion"
 
             badges = calculate_badges(total_steps, streak)
             level = get_user_level(total_steps)
 
-            st.subheader("🎮 Your Rank")
+            st.subheader("Your Rank")
             st.markdown(f"<h2 style='color:#603494;'>{level}</h2>", unsafe_allow_html=True)
 
             # Progress bar to next level
@@ -205,19 +206,19 @@ with tab2:
             if next_level:
                 progress = total_steps / level_thresholds[next_level]
                 st.progress(min(progress, 1.0))
-                st.info(f"🚀 {level_thresholds[next_level] - total_steps:,} steps to reach {next_level}!")
+                st.info(f"{level_thresholds[next_level] - total_steps:,} steps to reach {next_level}!")
             else:
-                st.success("🎉 You’re a Mo’ Champion! Keep inspiring others!")
+                st.success("You're a Mo' Champion! Keep inspiring others!")
 
-            st.subheader("🏅 Your Badges")
+            st.subheader("Your Badges")
             if badges:
                 cols = st.columns(3)
                 for i, badge in enumerate(badges):
-                    cols[i % 3].success(f"✅ {badge}")
+                    cols[i % 3].success(f"{badge}")
             else:
                 st.info("No badges yet. Keep walking!")
 
-            st.subheader("🔥 Challenges")
+            st.subheader("Challenges")
             challenges = []
             if today_steps < 10000:
                 challenges.append(f"Hit 10,000 steps today! You’re at {today_steps:,}.")
@@ -226,7 +227,7 @@ with tab2:
             if total_steps < 100000:
                 challenges.append("Reach 100,000 steps milestone!")
             if not challenges:
-                st.success("All challenges crushed! 🏆")
+                st.success("All challenges crushed!")
             else:
                 for c in challenges:
                     st.write(f"- {c}")

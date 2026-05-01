@@ -63,8 +63,8 @@ with st.form("signup_form"):
                 response = register_user(username, password, is_admin)
 
                 if response and response.data:
-                    st.success(f"✅ User '{username}' created successfully!")
-                    st.page_link("pages/Login.py", label="➡️ Click here to log in.")
+                    st.success(f"User '{username}' created successfully!")
+                    st.page_link("pages/Login.py", label="Click here to log in.")
                 else:
                     st.error("There was an issue creating your account. Please try again.")
             except Exception as e:

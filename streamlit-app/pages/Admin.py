@@ -67,7 +67,7 @@ if st.session_state["pending_delete"]:
     colA, colB = st.columns(2)
     with colA:
         # Delete button is disabled until the checkbox is ticked
-        if st.button("✅ Delete", disabled=not confirm_cb):
+        if st.button("Delete", disabled=not confirm_cb):
             try:
                 supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
                 safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
@@ -79,7 +79,7 @@ if st.session_state["pending_delete"]:
             st.session_state["pending_delete"] = None
             st.rerun()
     with colB:
-        if st.button("❌ Cancel", key="cancel_delete_btn"):
+        if st.button("Cancel", key="cancel_delete_btn"):
             st.session_state["pending_delete"] = None
             st.rerun()
 
@@ -88,7 +88,7 @@ if render_sidebar_welcome(username):
     handle_logout()
 
 # ------------------ 1. HIGH-STEP SUBMISSIONS (>10,000) ------------------
-st.subheader("📊 Unverified Submissions (Steps > 10,000)")
+st.subheader("Unverified Submissions (Steps > 10,000)")
 
 if not df.empty:
     for idx, row in df.iterrows():
@@ -111,7 +111,7 @@ if not df.empty:
                     st.warning("Screenshot not found.")
 
         with col3:
-            if st.button("✅ Verify", key=f"verify_{idx}"):
+            if st.button("Verify", key=f"verify_{idx}"):
                 try:
                     supabase.table("forms") \
                         .update({"form_verified": True}) \
@@ -127,7 +127,7 @@ if not df.empty:
                 except Exception as e:
                     st.error(f"Error verifying form, please try again later.")
                 st.rerun()
-            if st.button("❌ Delete", key=f"delete_{idx}"):
+            if st.button("Delete", key=f"delete_{idx}"):
                 # set a small pending_delete dict rather than relying on index
                 st.session_state["pending_delete"] = {
                     "form_id": row["form_id"],
@@ -178,7 +178,7 @@ else:
     # --- RE-AUTHENTICATION STEP ---
     with st.form("reauth_form"):
         admin_password = st.text_input("Re-enter your password to confirm:", type="password")
-        submitted = st.form_submit_button("✅ Confirm and Delete")
+        submitted = st.form_submit_button("Confirm and Delete")
 
         if submitted:
             try:
@@ -193,7 +193,7 @@ else:
                             if os.path.exists(UPLOAD_FOLDER):
                                 shutil.rmtree(UPLOAD_FOLDER)
                                 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                            st.success("✅ All data cleared successfully!")
+                            st.success("All data cleared successfully!")
                         except Exception:
                             st.error("Error clearing data. Please check logs.")
                     else:
@@ -204,7 +204,7 @@ else:
                 st.error("Error verifying credentials.")
 
     # --- Cancel button OUTSIDE the form ---
-    if st.button("❌ Cancel", key="cancel_clear_btn"):
+    if st.button("Cancel", key="cancel_clear_btn"):
         st.session_state["confirm_clear"] = False
         st.rerun()
 
