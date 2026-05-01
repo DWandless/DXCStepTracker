@@ -1,21 +1,35 @@
-[general]
-email = "your_email@example.com"
-# The email address used for Streamlit sharing and notifications.
-
 [server]
-headless = true
-# Run the server in headless mode (no browser UI).
-port = 8501
-# The port on which the Streamlit app will run.
-enableCORS = false
-# Disable CORS for local development.
+enableStaticServing = true
+
+[client]
+toolbarMode = "minimal"
 
 [theme]
-primaryColor = "#F39C12"
-# The primary color of the app's theme.
-backgroundColor = "#FFFFFF"
-# The background color of the app.
-secondaryBackgroundColor = "#F0F0F0"
-# The secondary background color of the app.
-textColor = "#000000"
-# The text color used in the app.
+# Primary Colors - Blue to Orange Gradient Theme
+primaryColor = "#55a0e2"                    # Vibrant blue
+backgroundColor = "#E3F2FD"                 # Very light blue
+secondaryBackgroundColor = "#E3F2FD"        # Soft blue secondary
+linkColor = "#FF9800"                       # Orange accent
+baseRadius = "large"
+buttonRadius = "large"
+borderColor = "#cadff0"
+
+# Font Configuration
+font = "Inter-Regular, sans-serif"
+headingFont = "GT-Standard-L-Extended-Medium, sans-serif"
+baseFontSize = 16
+baseFontWeight = 400
+headingFontWeights = 500
+
+# Custom Font Faces
+[[theme.fontFaces]]
+family = "GT-Standard-L-Extended-Medium"
+url = "assets/GT-Standard-L-Extended-Medium.otf"
+weight = "500"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter-Regular"
+url = "assets/Inter-Regular.otf"
+weight = "400"
+style = "normal"
