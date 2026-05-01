@@ -99,7 +99,7 @@ else:
     # Highlight top performer (only for All or Top 10 views)
     if view_option != "Bottom 10" and not leaderboard.empty:
         top_user = leaderboard.iloc[0]
-        st.success(f"𐃯 {top_user['Username']} is leading with {int(top_user['Step Count'])} steps!")
+        st.success(f"✪ {top_user['Username']} is leading with {int(top_user['Step Count'])} steps!")
 
 # ------------------ SIDEBAR ------------------
 if render_sidebar_welcome(username):

@@ -176,7 +176,7 @@ with tab2:
                     break
             if sorted_dates[-1] != datetime.now().date():
                 streak = 0
-        st.success(f"Current Streak: {streak} days" if streak else "No active streak.")
+        st.success(f"🗲 Current Streak: {streak} days" if streak else "No active streak.")
 
 # ------------------ FOOTER ------------------
 render_footer()
