@@ -63,6 +63,11 @@ def apply_dxc_theme():
             transform: scale(1.05);
         }
         
+        /* Sidebar styling */
+        [data-testid="stSidebar"] {
+            background-color: #E3F2FD;  /* Light blue matching gradient background */
+        }
+        
         .footer-branding {
             text-align: center;
             font-size: 14px;
