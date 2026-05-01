@@ -38,6 +38,7 @@ style = "normal"
 [theme.sidebar]
 backgroundColor = "#F8FBFF"                 # Very light blue (matches 25% gradient point)
 secondaryBackgroundColor = "#FFFFFF"        # White for widgets in sidebar
-primaryColor = "#F8FBFF"                    # Pastel blue (matches button gradient)
+primaryColor = "#7BA4DB"                    # Pastel blue (matches button gradient)
 textColor = "#31333F"                       # Dark text for readability
-borderColor = "#31333F"
+borderColor = "#E3F2FD"                     # Light blue border for widgets
+showWidgetBorder = false                    # Hide borders on input widgets (set to true to show always)

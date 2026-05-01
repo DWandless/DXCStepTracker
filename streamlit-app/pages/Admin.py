@@ -14,12 +14,12 @@ from components import (apply_dxc_theme, setup_logo, render_header, render_foote
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
-st.set_page_config(page_title="🔐 Admin Dashboard", layout="wide", page_icon=logo_path)
+st.set_page_config(page_title="Admin Dashboard", layout="wide", page_icon=logo_path)
 
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
 setup_logo(Path(__file__).resolve().parents[1])
-render_header("🔐 Admin Dashboard", "Manage submissions, verify evidence, and maintain the challenge securely.")
+render_header("Admin Dashboard", "Manage submissions, verify evidence, and maintain the challenge securely.")
 
 # ------------------ LOGIN & ROLE CHECK ------------------
 username = check_login_required()
