@@ -24,22 +24,49 @@ st.logo(str(logo_path), icon_image=str(logo_path), size="large")
 # ------------------ CUSTOM STYLES ------------------
 st.markdown("""
 <style>
-    body { font-family: 'Roboto', sans-serif; background-color: #fff; }
+    /* White to Blue to Orange Gradient Background */
+    .stApp {
+        background: linear-gradient(135deg, 
+            #FFFFFF 0%,     /* White */
+            #F8FBFF 25%,    /* Light blue */
+            #E3F2FD 50%,    /* Soft blue */
+            #FFF3E0 75%,    /* Light orange */
+            #FFE0B2 100%    /* Soft orange */
+        );
+        min-height: 100vh;
+    }
+    
+    /* Make Streamlit header transparent */
+    .stApp header {
+        background: rgba(255, 255, 255, 0) !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
     .header-container {
         display: flex; justify-content: flex-start; align-items: center;
-        background: linear-gradient(90deg, #603494, #4a2678);
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
         color: white; padding: 20px 30px; border-radius: 10px;
         margin-bottom: 20px;
     }
     .header-title { font-size: 42px; font-weight: bold; }
+    .header-subtitle { font-size: 18px; margin-top: 5px; }
+    
     .stButton>button {
-        background-color: #603494; color: white; border-radius: 8px;
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
+        color: white; border-radius: 8px;
         font-weight: bold; transition: 0.3s;
+        border: none;
     }
-    .stButton>button:hover { background-color: #4a2678; transform: scale(1.05); }
-    .footer-carousel {
-        text-align: center; font-size: 18px; color: #603494; font-weight: bold;
-        margin-top: 30px; padding: 10px; border-top: 2px solid #603494;
+    .stButton>button:hover { 
+        background: linear-gradient(90deg, #6B94CB, #EF8A5C);
+        transform: scale(1.05); 
+    }
+    
+    .footer-branding {
+        text-align: center; font-size: 14px; color: #666;
+        margin-top: 40px; padding-top: 20px;
+        border-top: 2px solid #7BA4DB;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -282,12 +309,10 @@ with tab2:
                     st.write(f"- {c}")
 
 # ------------------ FOOTER ------------------
-carousel_msgs = [
-    "💡 Movember Tip: Walking meetings are great for adding steps!",
-    "🔥 Challenge: Hit 10,000 steps today!",
-    "💪 DXC supports Movember — keep moving!"
-]
-st.markdown(f"<div class='footer-carousel'>{random.choice(carousel_msgs)}</div>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #7BA4DB;'>DXC Technology</div>",
+    unsafe_allow_html=True
+)
 
 # ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
 st_html(

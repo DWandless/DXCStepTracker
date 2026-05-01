@@ -23,29 +23,51 @@ else:
 # ------------------ STYLES ------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-    body { font-family: 'Roboto', sans-serif; background-color: #FFFFFF; }
+    /* White to Blue to Orange Gradient Background */
+    .stApp {
+        background: linear-gradient(135deg, 
+            #FFFFFF 0%,     /* White */
+            #F8FBFF 25%,    /* Light blue */
+            #E3F2FD 50%,    /* Soft blue */
+            #FFF3E0 75%,    /* Light orange */
+            #FFE0B2 100%    /* Soft orange */
+        );
+        min-height: 100vh;
+    }
+    
+    /* Make Streamlit header transparent */
+    .stApp header {
+        background: rgba(255, 255, 255, 0) !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
     .header-container {
         text-align: center;
-        background: linear-gradient(90deg, #603494, #4a2678);
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
         color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;
     }
     .header-title { font-size: 36px; font-weight: bold; }
     .header-subtitle { font-size: 18px; margin-top: 5px; }
     .stButton>button {
-        background-color: #603494; color: white; border-radius: 8px;
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
+        color: white; border-radius: 8px;
         font-weight: bold; transition: 0.3s;
+        border: none;
     }
-    .stButton>button:hover { background-color: #4a2678; transform: scale(1.05); }
-    .footer { text-align: center; font-size: 14px; color: #603494; margin-top: 30px; }
+    .stButton>button:hover { 
+        background: linear-gradient(90deg, #6B94CB, #EF8A5C);
+        transform: scale(1.05); 
+    }
+    .footer-branding { text-align: center; font-size: 14px; color: #666; margin-top: 30px; }
 </style>
 """, unsafe_allow_html=True)
 
 # ------------------ HEADER ------------------
 st.markdown("""
 <div class="header-container">
-    <div class="header-title">Movember Step Tracker 🥸</div>
-    <div class="header-subtitle">Log in to start tracking your steps and join the Mo-vement!</div>
+    <div class="header-title">DXC Step Tracker</div>
+    <div class="header-subtitle">Log in to start tracking your steps!</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -138,7 +160,7 @@ else:
 
 # ------------------ SIDEBAR ------------------
 if st.session_state.logged_in:
-    st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {st.session_state.username}!</h3>", unsafe_allow_html=True)
+    st.sidebar.markdown(f"<h3 style='color:#7BA4DB;'>Welcome, {st.session_state.username}!</h3>", unsafe_allow_html=True)
     if st.sidebar.button("Logout"):
         logout()
 
@@ -146,31 +168,11 @@ if st.session_state.logged_in:
 st.markdown("---")
 st.page_link("pages/Signup.py", label="📝 Don't have an account? Sign up now")
 
-# ------------------ ABOUT MOVEMBER (EXPANDER) ------------------
-with st.expander("ℹ️ Learn more about Movember"):
-    st.markdown("""
-    **Movember** is a global movement committed to changing the face of men's health.  
-    Every November, participants grow mustaches and take on fitness challenges to raise
-    awareness and funds for:
-
-    - 🧠 **Mental Health & Suicide Prevention**  
-    - 💪 **Prostate Cancer Research**  
-    - 🩺 **Testicular Cancer Support**
-
-    ### 🚶 Why Steps?
-    Physical activity plays a major role in both physical and mental well-being.  
-    By tracking your steps, you’re not only improving your health — you’re also supporting
-    Movember’s mission for men everywhere.
-
-    ---
-    ### 📚 Learn More
-    - [Movember Official Website](https://uk.movember.com)
-    - [Men’s Health Resources](https://movember.com/mens-health)
-    - [Get Involved / Donate](https://uk.movember.com/team/2401475)
-    """)
-
 # ------------------ FOOTER ------------------
-st.markdown("<div class='footer'>DXC Technology | Movember 2025</div>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #7BA4DB;'>DXC Technology</div>",
+    unsafe_allow_html=True
+)
 
 # ------------------ HIDE STREAMLIT STYLE ELEMENTS ------------------
 st_html(
