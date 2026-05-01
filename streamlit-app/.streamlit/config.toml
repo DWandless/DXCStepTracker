@@ -33,3 +33,10 @@ family = "Inter-Regular"
 url = "assets/Inter-Regular.otf"
 weight = "400"
 style = "normal"
+
+# Sidebar-specific theme
+[theme.sidebar]
+backgroundColor = "#F8FBFF"                 # Very light blue (matches 25% gradient point)
+secondaryBackgroundColor = "#FFFFFF"        # White for widgets in sidebar
+primaryColor = "#7BA4DB"                    # Pastel blue (matches button gradient)
+textColor = "#31333F"                       # Dark text for readability
