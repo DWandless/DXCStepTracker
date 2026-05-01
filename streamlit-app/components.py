@@ -68,26 +68,6 @@ def apply_dxc_theme():
             border-right: 2px solid #7BA4DB !important;
         }
         
-        /* Input field borders - always visible */
-        .stTextInput > div > div > input,
-        .stTextArea > div > div > textarea,
-        .stSelectbox > div > div,
-        .stDateInput > div > div > input,
-        .stNumberInput > div > div > input {
-            border: 1px solid #E3F2FD !important;
-            border-radius: 8px;
-        }
-        
-        /* Input field borders on focus - darker blue */
-        .stTextInput > div > div > input:focus,
-        .stTextArea > div > div > textarea:focus,
-        .stSelectbox > div > div:focus-within,
-        .stDateInput > div > div > input:focus,
-        .stNumberInput > div > div > input:focus {
-            border: 2px solid #7BA4DB !important;
-            box-shadow: 0 0 0 1px #7BA4DB;
-        }
-        
         .footer-branding {
             text-align: center;
             font-size: 14px;

@@ -12,7 +12,7 @@ secondaryBackgroundColor = "#F8FBFF"        # Very light blue (sidebar - matches
 linkColor = "#FF9A6C"                       # Orange accent (matches button gradient)
 baseRadius = "large"
 buttonRadius = "large"
-borderColor = "#cadff0"
+borderColor = "#7BA4DB"
 
 # Font Configuration
 font = "Inter-Regular, sans-serif"
