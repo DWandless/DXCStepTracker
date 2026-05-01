@@ -58,39 +58,6 @@ def fetch_all_submissions():
 
 df = fetch_all_submissions()
 
-# ------------------ SIMPLE CONFIRM DELETE (CSS-RESISTANT) ------------------
-# Show a minimal confirmation widget when a pending delete is set.
-if st.session_state["pending_delete"]:
-    pd = st.session_state["pending_delete"]
-    st.markdown("---")
-    st.error(f"### Confirm Deletion")
-    st.markdown(f"You are about to permanently delete the submission for:")
-    st.markdown(f"- **User:** {pd['user_name']}")
-    st.markdown(f"- **Date:** {pd['form_date']}")
-    st.markdown(f"- **Steps:** {pd.get('steps', 'N/A')}")
-    st.markdown("")
-    confirm_cb = st.checkbox("⚠ I understand this action cannot be undone", key="confirm_delete_cb")
-    st.markdown("")
-    colA, colB, colC = st.columns([1, 1, 2])
-    with colA:
-        if st.button("🗙 Delete Permanently", disabled=not confirm_cb, type="secondary"):
-            try:
-                supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
-                safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
-                file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                st.success("Submission deleted successfully!")
-            except Exception:
-                st.error("Error deleting submission.")
-            st.session_state["pending_delete"] = None
-            st.rerun()
-    with colB:
-        if st.button("Cancel", key="cancel_delete_btn", type="secondary"):
-            st.session_state["pending_delete"] = None
-            st.rerun()
-    st.markdown("---")
-
 # ------------------ SIDEBAR ------------------
 if render_sidebar_welcome(username):
     handle_logout()
@@ -144,9 +111,41 @@ if not df.empty:
                     "form_id": row["form_id"],
                     "user_name": row["user_name"],
                     "form_date": row["form_date"],
+                    "form_stepcount": row["form_stepcount"],
                     "file": row.get("form_filepath", "")
                 }
                 st.rerun()
+        
+        # Show confirmation dialog inline if this row is being deleted
+        if st.session_state["pending_delete"] and st.session_state["pending_delete"]["form_id"] == row["form_id"]:
+            pd = st.session_state["pending_delete"]
+            st.error("### ⚠ Confirm Deletion")
+            st.markdown(f"You are about to permanently delete the submission for:")
+            st.markdown(f"- **User:** {pd['user_name']}")
+            st.markdown(f"- **Date:** {pd['form_date']}")
+            st.markdown(f"- **Steps:** {pd['form_stepcount']}")
+            st.markdown("")
+            confirm_cb = st.checkbox("I understand this action cannot be undone", key="confirm_delete_cb")
+            st.markdown("")
+            colA, colB, colC = st.columns([1, 1, 2])
+            with colA:
+                if st.button("🗙 Delete Permanently", disabled=not confirm_cb, type="secondary", key=f"confirm_delete_{idx}"):
+                    try:
+                        supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
+                        safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
+                        file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                        st.success("Submission deleted successfully!")
+                    except Exception:
+                        st.error("Error deleting submission.")
+                    st.session_state["pending_delete"] = None
+                    st.rerun()
+            with colB:
+                if st.button("Cancel", key=f"cancel_delete_{idx}", type="secondary"):
+                    st.session_state["pending_delete"] = None
+                    st.rerun()
+        
         st.markdown("---")
 else:
     st.info("No high-step unverified submissions found.")
