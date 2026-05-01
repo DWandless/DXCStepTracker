@@ -58,11 +58,11 @@ if render_sidebar_welcome(safe_username):
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2 = st.tabs(["Submit Steps", "Daily Progress"])
+tab1, tab2 = st.tabs(["✚ Submit Steps", "➜ Daily Progress"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
-    st.header("Submit Your Steps")
+    st.header("✚ Submit Your Steps")
     date_col, step_col = st.columns(2)
     with date_col: step_date = st.date_input("Date")
     with step_col: steps = st.number_input("Step Count", min_value=0, step=100)
@@ -123,7 +123,7 @@ with tab1:
 
 # ------------------ TAB 2: DAILY PROGRESS ------------------
 with tab2:
-    st.header("Daily Progress")
+    st.header("➜ Daily Progress")
     df = fetch_user_forms(user_id)
 
     if df.empty:
@@ -177,60 +177,6 @@ with tab2:
             if sorted_dates[-1] != datetime.now().date():
                 streak = 0
         st.success(f"Current Streak: {streak} days" if streak else "No active streak.")
-
-        # ------------------ EXPANDER: BADGES & ACHIEVEMENTS ------------------
-        with st.expander("View Badges & Achievements", expanded=False):
-            def calculate_badges(total_steps, streak):
-                badges = []
-                if total_steps >= 10000: badges.append("10K Steps")
-                if total_steps >= 50000: badges.append("50K Steps")
-                if total_steps >= 100000: badges.append("100K Steps")
-                if streak >= 7: badges.append("7-Day Streak")
-                if total_steps >= 200000: badges.append("Mo’ Legend")
-                return badges
-
-            def get_user_level(total_steps):
-                if total_steps < 50000: return "Mo' Rookie"
-                elif total_steps < 150000: return "Mo' Pro"
-                else: return "Mo' Champion"
-
-            badges = calculate_badges(total_steps, streak)
-            level = get_user_level(total_steps)
-
-            st.subheader("Your Rank")
-            st.markdown(f"<h2 style='color:#603494;'>{level}</h2>", unsafe_allow_html=True)
-
-            # Progress bar to next level
-            level_thresholds = {"Mo’ Rookie": 0, "Mo’ Pro": 50000, "Mo’ Champion": 150000}
-            next_level = "Mo’ Pro" if total_steps < 50000 else "Mo’ Champion" if total_steps < 150000 else None
-            if next_level:
-                progress = total_steps / level_thresholds[next_level]
-                st.progress(min(progress, 1.0))
-                st.info(f"{level_thresholds[next_level] - total_steps:,} steps to reach {next_level}!")
-            else:
-                st.success("You're a Mo' Champion! Keep inspiring others!")
-
-            st.subheader("Your Badges")
-            if badges:
-                cols = st.columns(3)
-                for i, badge in enumerate(badges):
-                    cols[i % 3].success(f"{badge}")
-            else:
-                st.info("No badges yet. Keep walking!")
-
-            st.subheader("Challenges")
-            challenges = []
-            if today_steps < 10000:
-                challenges.append(f"Hit 10,000 steps today! You’re at {today_steps:,}.")
-            if streak < 7:
-                challenges.append(f"Build a 7-day streak! Current: {streak} days.")
-            if total_steps < 100000:
-                challenges.append("Reach 100,000 steps milestone!")
-            if not challenges:
-                st.success("All challenges crushed!")
-            else:
-                for c in challenges:
-                    st.write(f"- {c}")
 
 # ------------------ FOOTER ------------------
 render_footer()

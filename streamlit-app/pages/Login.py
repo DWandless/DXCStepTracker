@@ -79,7 +79,7 @@ if st.session_state.logged_in:
 
 # ------------------ SIGN-UP LINK ------------------
 st.markdown("---")
-st.page_link("pages/Signup.py", label="📝 Don't have an account? Sign up now")
+st.page_link("pages/Signup.py", label="Don't have an account? Sign up now")
 
 # ------------------ FOOTER ------------------
 render_footer()

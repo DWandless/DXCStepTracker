@@ -141,7 +141,7 @@ else:
     st.info("No high-step unverified submissions found.")
 
 # ------------------ 2. DOWNLOAD STEP DATA ------------------
-st.subheader("📥 Download Step Data")
+st.subheader("Download Step Data")
 if not df.empty:
     csv_data = df.to_csv(index=False)
     st.download_button("Download Step Data CSV", csv_data, file_name="step_data.csv")
@@ -149,7 +149,7 @@ else:
     st.info("No step data available.")
 
 # ------------------ 3. EVIDENCE FOLDER ------------------
-st.subheader("📂 Evidence Folder")
+st.subheader("Evidence Folder")
 folder_path = os.path.abspath(UPLOAD_FOLDER)
 st.markdown(f"Path: `{folder_path}`")
 
@@ -166,7 +166,7 @@ else:
 
 
 # ------------------ 4. RESET CHALLENGE DATA ------------------
-st.subheader("⚠️ Reset Challenge Data")
+st.subheader("Reset Challenge Data")
 
 if not st.session_state.get("confirm_clear"):
     if st.button("Clear All Data"):
