@@ -20,20 +20,33 @@ if logo_path.exists():
 else:
     st.warning(f"⚠️ Logo not found at: {logo_path}")
 
-# ------------------ DXC BRANDING & MOVEMBER CSS ------------------
+# ------------------ DXC BRANDING CSS ------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-    body {
-        font-family: 'Roboto', sans-serif;
-        background-color: #FFFFFF;
+    /* White to Blue to Orange Gradient Background */
+    .stApp {
+        background: linear-gradient(135deg, 
+            #FFFFFF 0%,     /* White */
+            #F8FBFF 25%,    /* Light blue */
+            #E3F2FD 50%,    /* Soft blue */
+            #FFF3E0 75%,    /* Light orange */
+            #FFE0B2 100%    /* Soft orange */
+        );
+        min-height: 100vh;
     }
-    /* Hero Header */
+    
+    /* Make Streamlit header transparent */
+    .stApp header {
+        background: rgba(255, 255, 255, 0) !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
     .header-container {
         display: flex;
         justify-content: flex-start;
         align-items: center;
-        background: linear-gradient(90deg, #603494, #4a2678);
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
         color: white;
         padding: 20px 30px;
         border-radius: 10px;
@@ -47,27 +60,25 @@ st.markdown("""
         font-size: 18px;
         margin-top: 5px;
     }
-    /* Tabs & Buttons */
     .stButton>button {
-        background-color: #603494;
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
         color: white;
         border-radius: 8px;
         font-weight: bold;
         transition: 0.3s;
+        border: none;
     }
     .stButton>button:hover {
-        background-color: #4a2678;
+        background: linear-gradient(90deg, #6B94CB, #EF8A5C);
         transform: scale(1.05);
     }
-    /* Footer Carousel */
-    .footer-carousel {
+    .footer-branding {
         text-align: center;
-        font-size: 18px;
-        color: #603494;
-        font-weight: bold;
-        margin-top: 30px;
-        padding: 10px;
-        border-top: 2px solid #603494;
+        font-size: 14px;
+        color: #666;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 2px solid #7BA4DB;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -76,8 +87,8 @@ st.markdown("""
 header_html = """
 <div class="header-container">
     <div>
-        <div class="header-title">🏆 Movember Step Leaderboard</div>
-        <div class="header-subtitle">Track the leaders and keep moving for a cause!</div>
+        <div class="header-title">🏆 DXC Step Leaderboard</div>
+        <div class="header-subtitle">Track the leaders and keep moving!</div>
     </div>
 </div>
 """
@@ -176,39 +187,15 @@ else:
         st.success(f"🥇 {top_user['Username']} is leading with {int(top_user['Step Count'])} steps!")
 
 # ------------------ SIDEBAR ------------------
-st.sidebar.markdown(f"<h3 style='color:#603494;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<h3 style='color:#7BA4DB;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
 if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.rerun()
 
-# ------------------ FOOTER CAROUSEL ------------------
-carousel_messages = [
-    "💡 Movember Tip: Walking meetings are a great way to add steps!",
-    "🥸 Fun Fact: A mustache can grow up to 0.4mm per day!",
-    "🚶 Challenge: Hit 10,000 steps today and celebrate with a Mo-selfie!",
-    "💜 DXC supports Movember: Keep moving, keep growing!",
-    "🔥 Did you know? Just 30 minutes of walking can boost your mood and health!",
-    "🎯 Goal Reminder: Every step counts toward a healthier you and a great cause!",
-    "📸 Share your Mo! Post your mustache progress and inspire others!",
-    "🏆 Leaderboard Alert: Check who's leading the Mo-vement today!",
-    "🌍 Together we can make a difference—one step at a time!",
-    "💪 Pro Tip: Take the stairs instead of the elevator for an easy step boost!",
-    "🎉 Fun Challenge: Invite a colleague for a lunchtime walk and double your steps!",
-    "🥳 Celebrate small wins! Every 1,000 steps is a victory for your health!"
-]
-
-# Show one random message per page load
-carousel_placeholder = st.empty()
-msg = random.choice(carousel_messages)
-carousel_placeholder.markdown(
-    f"<div class='footer-carousel'>{msg}</div>",
-    unsafe_allow_html=True
-)
-
-# Render branding once (static)
+# ------------------ FOOTER ------------------
 st.markdown(
-    "<div class='footer-branding' style='color:#603494; text-align:center; font-weight:bold; margin-top:20px;'>DXC Technology | Movember 2025</div>",
+    "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #7BA4DB;'>DXC Technology</div>",
     unsafe_allow_html=True
 )
 
