@@ -50,7 +50,8 @@ def apply_dxc_theme():
         .header-title { font-size: 42px; font-weight: bold; }
         .header-subtitle { font-size: 18px; margin-top: 5px; }
         
-        .stButton>button {
+        /* Custom gradient buttons - exclude Logout and Submit */
+        .stButton>button:not([kind="secondary"]) {
             background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
             color: white;
             border-radius: 8px;
@@ -58,9 +59,16 @@ def apply_dxc_theme():
             transition: 0.3s;
             border: none;
         }
-        .stButton>button:hover {
+        .stButton>button:not([kind="secondary"]):hover {
             background: linear-gradient(90deg, #6B94CB, #EF8A5C);
             transform: scale(1.05);
+        }
+        
+        /* Keep default styling for Logout and other secondary buttons */
+        .stButton>button[kind="secondary"] {
+            background-color: transparent;
+            border: 1px solid #7BA4DB;
+            color: #7BA4DB;
         }
         
         /* Sidebar border - creates visible divider */
@@ -139,7 +147,7 @@ def render_sidebar_welcome(username):
         f"<h3 style='color:#7BA4DB;'>Welcome, {username}!</h3>",
         unsafe_allow_html=True
     )
-    return st.sidebar.button("Logout")
+    return st.sidebar.button("Logout", type="secondary")
 
 
 def hide_streamlit_branding():

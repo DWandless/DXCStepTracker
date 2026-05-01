@@ -81,7 +81,7 @@ with tab1:
         except UnidentifiedImageError:
             st.error("Invalid image."); st.stop()
 
-    if st.button("Submit"):
+    if st.button("Submit", type="secondary"):
         now = datetime.now()
         last_submission = st.session_state.get("last_submission_time") or get_last_submission_time(user_id)
 
