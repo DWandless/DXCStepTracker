@@ -20,7 +20,7 @@ st.set_page_config(page_title="Admin Dashboard", layout="wide", page_icon=logo_p
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
 setup_logo(Path(__file__).resolve().parents[1])
-render_header("Admin Dashboard", "Manage submissions, verify evidence, and maintain the challenge securely.")
+render_header("Admin Dashboard", "Manage submissions and verify evidence.")
 
 # ------------------ LOGIN & ROLE CHECK ------------------
 username = check_login_required()

@@ -11,7 +11,7 @@ st.set_page_config(page_title="Leaderboard", layout="wide", page_icon=logo_path2
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
 setup_logo(Path(__file__).resolve().parents[1])
-render_header("DXC Step Leaderboard", "Track the leaders and keep moving!")
+render_header("DXC Step Leaderboard", "Keep a Track of Leaders & Your Friends!")
 
 # ------------------ SECURITY: LOGIN CHECK ------------------
 username = check_login_required()

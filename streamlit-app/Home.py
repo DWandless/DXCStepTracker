@@ -21,7 +21,7 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
 setup_logo()
-render_header("DXC Step Tracker", "Track your steps, make every move count for men's health!")
+render_header("DXC Step Tracker", "Keep Moving and Track your steps below!")
 
 # ------------------ HELPERS ------------------
 # Utility functions now imported from components
@@ -64,9 +64,23 @@ tab1, tab2 = st.tabs(["✚ Submit Steps", "➜ Daily Progress"])
 with tab1:
     st.header("✚ Submit Your Steps")
     date_col, step_col = st.columns(2)
-    with date_col: step_date = st.date_input("Date")
-    with step_col: steps = st.number_input("Step Count", min_value=0, step=100)
-    screenshot = st.file_uploader("Upload Screenshot (PNG/JPG)", type=["png", "jpg", "jpeg"])
+    with date_col: 
+        step_date = st.date_input(
+            "Date",
+            help="Select the date when you recorded these steps. You can submit steps for past dates."
+        )
+    with step_col: 
+        steps = st.number_input(
+            "Step Count", 
+            min_value=0, 
+            step=100,
+            help="Enter the total number of steps you walked on this date (1-100,000)."
+        )
+    screenshot = st.file_uploader(
+        "Upload Screenshot (PNG/JPG)", 
+        type=["png", "jpg", "jpeg"],
+        help="Upload a screenshot from your fitness tracker or step counter app as proof of your steps. Required for all submissions."
+    )
 
     if screenshot:
         if screenshot.size > MAX_UPLOAD_SIZE:
