@@ -63,6 +63,10 @@ def apply_dxc_theme():
             transform: scale(1.05);
         }
         
+        /* Sidebar border - creates visible divider */
+        [data-testid="stSidebar"] {
+            border-right: 2px solid #7BA4DB !important;
+        }
         
         .footer-branding {
             text-align: center;
