@@ -73,7 +73,7 @@ if st.session_state["pending_delete"]:
     st.markdown("")
     colA, colB, colC = st.columns([1, 1, 2])
     with colA:
-        if st.button("🗙 Delete Permanently", disabled=not confirm_cb, type="primary"):
+        if st.button("🗙 Delete Permanently", disabled=not confirm_cb, type="secondary"):
             try:
                 supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
                 safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))

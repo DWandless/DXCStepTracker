@@ -129,7 +129,7 @@ with tab1:
                 # Record new submission time
                 st.session_state.last_submission_time = now
 
-                st.success("Step count submitted successfully!")
+                st.success("✔ Step count submitted successfully!")
                 st.balloons()
             except Exception as e:
                 st.error("Error processing upload.")
