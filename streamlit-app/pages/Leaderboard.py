@@ -1,105 +1,20 @@
 import streamlit as st
 import pandas as pd
-import time
 from db import supabase
-import random
 from pathlib import Path
-from streamlit.components.v1 import html as st_html
+from components import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, check_login_required, handle_logout
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
-
 st.set_page_config(page_title="🏆 Leaderboard", layout="wide", page_icon=logo_path2)
 
-# Resolve logo path so it works from any page
-logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
-
-# Check if file actually exists
-if logo_path.exists():
-    st.logo(str(logo_path), icon_image=str(logo_path), size="large")
-else:
-    st.warning(f"⚠️ Logo not found at: {logo_path}")
-
-# ------------------ DXC BRANDING CSS ------------------
-st.markdown("""
-<style>
-    /* White to Blue to Orange Gradient Background */
-    .stApp {
-        background: linear-gradient(135deg, 
-            #FFFFFF 0%,     /* White */
-            #F8FBFF 25%,    /* Light blue */
-            #E3F2FD 50%,    /* Soft blue */
-            #FFF3E0 75%,    /* Light orange */
-            #FFE0B2 100%    /* Soft orange */
-        );
-        min-height: 100vh;
-    }
-    
-    /* Make Streamlit header transparent */
-    .stApp header {
-        background: rgba(255, 255, 255, 0) !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-    
-    .header-container {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
-        color: white;
-        padding: 20px 30px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    .header-title {
-        font-size: 42px;
-        font-weight: bold;
-    }
-    .header-subtitle {
-        font-size: 18px;
-        margin-top: 5px;
-    }
-    .stButton>button {
-        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
-        color: white;
-        border-radius: 8px;
-        font-weight: bold;
-        transition: 0.3s;
-        border: none;
-    }
-    .stButton>button:hover {
-        background: linear-gradient(90deg, #6B94CB, #EF8A5C);
-        transform: scale(1.05);
-    }
-    .footer-branding {
-        text-align: center;
-        font-size: 14px;
-        color: #666;
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 2px solid #7BA4DB;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# ------------------ HERO HEADER ------------------
-header_html = """
-<div class="header-container">
-    <div>
-        <div class="header-title">🏆 DXC Step Leaderboard</div>
-        <div class="header-subtitle">Track the leaders and keep moving!</div>
-    </div>
-</div>
-"""
-st.markdown(header_html, unsafe_allow_html=True)
+# ------------------ APPLY THEME & LOGO ------------------
+apply_dxc_theme()
+setup_logo(Path(__file__).resolve().parents[1])
+render_header("🏆 DXC Step Leaderboard", "Track the leaders and keep moving!")
 
 # ------------------ SECURITY: LOGIN CHECK ------------------
-if not st.session_state.get("logged_in"):
-    st.warning("Please log in first.")
-    st.stop()
-
-username = st.session_state.get("username", "Guest")
+username = check_login_required()
 
 # ------------------ FILTERS ------------------
 st.subheader("Filter Leaderboard")
@@ -187,27 +102,9 @@ else:
         st.success(f"🥇 {top_user['Username']} is leading with {int(top_user['Step Count'])} steps!")
 
 # ------------------ SIDEBAR ------------------
-st.sidebar.markdown(f"<h3 style='color:#7BA4DB;'>Welcome, {username}!</h3>", unsafe_allow_html=True)
-if st.sidebar.button("Logout"):
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.rerun()
+if render_sidebar_welcome(username):
+    handle_logout()
 
 # ------------------ FOOTER ------------------
-st.markdown(
-    "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #7BA4DB;'>DXC Technology</div>",
-    unsafe_allow_html=True
-)
-
-# ------------------ HIDE STREAMLIT STYLE ELEMENTS TEST ------------------
-st_html(
-    """
-    <script>
-    window.addEventListener('load', () => {
-        window.top.document.querySelectorAll(`[href*="streamlit.io"]`)
-            .forEach(e => e.style.display = 'none');
-    });
-    </script>
-    """,
-    height=0,
-)
+render_footer()
+hide_streamlit_branding()
