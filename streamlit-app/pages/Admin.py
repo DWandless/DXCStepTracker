@@ -89,6 +89,7 @@ if render_sidebar_welcome(username):
 
 # ------------------ 1. HIGH-STEP SUBMISSIONS (>10,000) ------------------
 st.subheader("Unverified Submissions (Steps > 10,000)")
+st.info("Review and verify step submissions over 10,000 steps. Check the screenshot evidence and click 'Verify' to approve or 'Delete' to remove suspicious entries.")
 
 if not df.empty:
     for idx, row in df.iterrows():
@@ -142,6 +143,7 @@ else:
 
 # ------------------ 2. DOWNLOAD STEP DATA ------------------
 st.subheader("Download Step Data")
+st.info("Export all step submission data as a CSV file for analysis, reporting, or backup purposes.")
 if not df.empty:
     csv_data = df.to_csv(index=False)
     st.download_button("Download Step Data CSV", csv_data, file_name="step_data.csv")
@@ -150,6 +152,7 @@ else:
 
 # ------------------ 3. EVIDENCE FOLDER ------------------
 st.subheader("Evidence Folder")
+st.info("Download all uploaded screenshot evidence as a ZIP file for archival or review purposes.")
 folder_path = os.path.abspath(UPLOAD_FOLDER)
 st.markdown(f"Path: `{folder_path}`")
 
@@ -167,6 +170,7 @@ else:
 
 # ------------------ 4. RESET CHALLENGE DATA ------------------
 st.subheader("Reset Challenge Data")
+st.warning("⚠ Danger Zone: This will permanently delete ALL step submissions and uploaded screenshots from the database. Use this only to reset the challenge or clear test data.")
 
 if not st.session_state.get("confirm_clear"):
     if st.button("Clear All Data"):
