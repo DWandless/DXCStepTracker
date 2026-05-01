@@ -24,11 +24,25 @@ else:
 # ------------------ DXC BRANDING CSS ------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-    body {
-        font-family: 'Roboto', sans-serif;
-        background-color: #FFFFFF;
+    /* White to Blue to Orange Gradient Background */
+    .stApp {
+        background: linear-gradient(135deg, 
+            #FFFFFF 0%,     /* White */
+            #F8FBFF 25%,    /* Light blue */
+            #E3F2FD 50%,    /* Soft blue */
+            #FFF3E0 75%,    /* Light orange */
+            #FFE0B2 100%    /* Soft orange */
+        );
+        min-height: 100vh;
     }
+    
+    /* Make Streamlit header transparent */
+    .stApp header {
+        background: rgba(255, 255, 255, 0) !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    
     .header-container {
         display: flex;
         justify-content: flex-start;
@@ -57,7 +71,9 @@ st.markdown("""
         text-align: center;
         font-size: 14px;
         color: #666;
-        margin-top: 10px;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 2px solid #7BA4DB;
     }
 </style>
 """, unsafe_allow_html=True)
