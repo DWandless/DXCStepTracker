@@ -62,34 +62,44 @@ df = fetch_all_submissions()
 # Show a minimal confirmation widget when a pending delete is set.
 if st.session_state["pending_delete"]:
     pd = st.session_state["pending_delete"]
-    st.warning(f"Are you sure you want to permanently delete the submission for **{pd['user_name']}** on **{pd['form_date']}**?")
-    confirm_cb = st.checkbox("I understand this will permanently delete the submission.", key="confirm_delete_cb")
-    colA, colB = st.columns(2)
+    st.markdown("---")
+    st.error(f"### Confirm Deletion")
+    st.markdown(f"You are about to permanently delete the submission for:")
+    st.markdown(f"- **User:** {pd['user_name']}")
+    st.markdown(f"- **Date:** {pd['form_date']}")
+    st.markdown(f"- **Steps:** {pd.get('steps', 'N/A')}")
+    st.markdown("")
+    confirm_cb = st.checkbox("⚠ I understand this action cannot be undone", key="confirm_delete_cb")
+    st.markdown("")
+    colA, colB, colC = st.columns([1, 1, 2])
     with colA:
-        # Delete button is disabled until the checkbox is ticked
-        if st.button("Delete", disabled=not confirm_cb):
+        if st.button("❌ Delete Permanently", disabled=not confirm_cb, type="primary"):
             try:
                 supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
                 safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
                 file_path = os.path.join(UPLOAD_FOLDER, safe_name)
                 if os.path.exists(file_path):
                     os.remove(file_path)
+                st.success("Submission deleted successfully!")
             except Exception:
-                st.error("Error deleting submission.")  # keep message generic
+                st.error("Error deleting submission.")
             st.session_state["pending_delete"] = None
             st.rerun()
     with colB:
-        if st.button("Cancel", key="cancel_delete_btn"):
+        if st.button("Cancel", key="cancel_delete_btn", type="secondary"):
             st.session_state["pending_delete"] = None
             st.rerun()
+    st.markdown("---")
 
 # ------------------ SIDEBAR ------------------
 if render_sidebar_welcome(username):
     handle_logout()
 
 # ------------------ 1. HIGH-STEP SUBMISSIONS (>10,000) ------------------
-st.subheader("Unverified Submissions (Steps > 10,000)")
-st.info("Review and verify step submissions over 10,000 steps. Check the screenshot evidence and click 'Verify' to approve or 'Delete' to remove suspicious entries.")
+st.subheader(
+    "Unverified Submissions (Steps > 10,000)",
+    help="Review and verify step submissions over 10,000 steps. Check the screenshot evidence and click 'Verify' to approve or 'Delete' to remove suspicious entries."
+)
 
 if not df.empty:
     for idx, row in df.iterrows():
@@ -142,8 +152,10 @@ else:
     st.info("No high-step unverified submissions found.")
 
 # ------------------ 2. DOWNLOAD STEP DATA ------------------
-st.subheader("Download Step Data")
-st.info("Export all step submission data as a CSV file for analysis, reporting, or backup purposes.")
+st.subheader(
+    "Download Step Data",
+    help="Export all step submission data as a CSV file for analysis, reporting, or backup purposes."
+)
 if not df.empty:
     csv_data = df.to_csv(index=False)
     st.download_button("Download Step Data CSV", csv_data, file_name="step_data.csv")
@@ -151,8 +163,10 @@ else:
     st.info("No step data available.")
 
 # ------------------ 3. EVIDENCE FOLDER ------------------
-st.subheader("Evidence Folder")
-st.info("Download all uploaded screenshot evidence as a ZIP file for archival or review purposes.")
+st.subheader(
+    "Evidence Folder",
+    help="Download all uploaded screenshot evidence as a ZIP file for archival or review purposes."
+)
 folder_path = os.path.abspath(UPLOAD_FOLDER)
 st.markdown(f"Path: `{folder_path}`")
 
@@ -169,8 +183,11 @@ else:
 
 
 # ------------------ 4. RESET CHALLENGE DATA ------------------
-st.subheader("Reset Challenge Data")
-st.warning("⚠ Danger Zone: This will permanently delete ALL step submissions and uploaded screenshots from the database. Use this only to reset the challenge or clear test data.")
+st.subheader(
+    "Reset Challenge Data",
+    help="Danger Zone: This will permanently delete ALL step submissions and uploaded screenshots from the database. Use this only to reset the challenge or clear test data."
+)
+st.error("⚠ Warning: This action will delete all data and cannot be undone!")
 
 if not st.session_state.get("confirm_clear"):
     if st.button("Clear All Data"):
