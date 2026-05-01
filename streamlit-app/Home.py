@@ -10,7 +10,7 @@ from db import supabase
 from streamlit.components.v1 import html as st_html
 
 # ------------------ PAGE CONFIG ------------------
-logo_path2 = Path(__file__).resolve().parent / "assets" / "logo3.png"
+logo_path2 = Path(__file__).resolve().parent / "assets" / "logo.png"
 st.set_page_config(page_title="DXC Step Tracker", layout="wide", page_icon=logo_path2)
 
 UPLOAD_FOLDER = "uploads"
