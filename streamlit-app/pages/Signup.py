@@ -4,7 +4,9 @@ import bcrypt
 import re
 import logging
 from pathlib import Path
-from components import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, handle_logout
+from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
+                        hide_streamlit_branding, handle_logout, setup_logging, sanitize_username,
+                        validate_password, register_user)
 
 # ------------------ CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
@@ -16,39 +18,10 @@ setup_logo(Path(__file__).resolve().parents[1])
 render_header("Create an Account", "Join the DXC Step Challenge and make a difference!")
 
 # ------------------ LOGGING SETUP ------------------
-logging.basicConfig(filename="app.log", level=logging.ERROR,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+setup_logging()
 
-# ------------------ INPUT SANITIZATION ------------------
-def sanitize_username(username: str) -> str:
-    username = username.strip()
-    if not re.match(r"^[A-Za-z0-9 _.-]{3,50}$", username):
-        raise ValueError(
-            "Username must be 3–50 characters long and contain only letters, numbers, spaces, dots, underscores, or hyphens."
-        )
-    return username
-
-# ------------------ PASSWORD VALIDATION ------------------
-def validate_password(password: str) -> bool:
-    """Require at least 8 chars, one letter, one digit, one special char."""
-    return bool(re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$', password))
-
-# ------------------ REGISTER USER FUNCTION ------------------
-def register_user(username: str, password: str, is_admin: bool = False):
-    try:
-        username = sanitize_username(username)
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-        response = supabase.table("users").insert({
-            "user_name": username,
-            "user_password": hashed_password,
-            "user_admin": is_admin
-        }).execute()
-        return response
-
-    except Exception as e:
-        logging.error(f"Signup error for {username}: {e}")
-        return None
+# ------------------ VALIDATION & REGISTRATION ------------------
+# Validation and registration functions now imported from components
 
 # ------------------ REGISTRATION FORM ------------------
 st.subheader("Sign Up")

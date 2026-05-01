@@ -9,7 +9,8 @@ import unicodedata
 import time
 from db import supabase
 import bcrypt
-from components import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, check_login_required, handle_logout
+from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
+                        hide_streamlit_branding, check_login_required, handle_logout, secure_filename)
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
@@ -28,15 +29,7 @@ if not user_resp.data or not user_resp.data[0].get("user_admin", False):
     st.stop()
 
 # ------------------ SECURITY FUNCTION ------------------
-def secure_filename(filename: str, max_length: int = 255) -> str:
-    """Sanitize filenames to prevent directory traversal or injection."""
-    if not filename:
-        return "file"
-    filename = os.path.basename(filename)
-    filename = unicodedata.normalize("NFKD", filename)
-    filename = filename.encode("utf-8", "ignore").decode("utf-8")
-    filename = re.sub(r"[^A-Za-z0-9.\-_]", "_", filename)
-    return filename[:max_length]
+# secure_filename now imported from components
 
 # ------------------ CONFIG & STATE ------------------
 UPLOAD_FOLDER = "uploads"

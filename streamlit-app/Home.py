@@ -7,7 +7,8 @@ from PIL import Image, UnidentifiedImageError
 import re, unicodedata, random, html, io
 from pathlib import Path
 from db import supabase
-from components import apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding
+from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
+                        secure_filename, get_user_id, fetch_user_forms)
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / "assets" / "logo.png"
@@ -23,26 +24,7 @@ setup_logo()
 render_header("DXC Step Tracker", "Track your steps, make every move count for men's health!")
 
 # ------------------ HELPERS ------------------
-def secure_filename(filename):
-    if not filename: return "file"
-    filename = os.path.basename(filename)
-    filename = unicodedata.normalize("NFKD", filename).encode("utf-8", "ignore").decode("utf-8")
-    filename = re.sub(r"[^A-Za-z0-9.\-_]", "_", filename)
-    return filename[:255]
-
-def get_user_id(username):
-    try:
-        res = supabase.table("users").select("user_id").eq("user_name", username).execute()
-        if res.data: return res.data[0]["user_id"]
-    except Exception: pass
-    return None
-
-def fetch_user_forms(user_id):
-    try:
-        res = supabase.table("forms").select("*").eq("user_id", user_id).execute()
-        return pd.DataFrame(res.data) if res.data else pd.DataFrame()
-    except Exception:
-        return pd.DataFrame()
+# Utility functions now imported from components
 
 def get_last_submission_time(user_id):
     try:

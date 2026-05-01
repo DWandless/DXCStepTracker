@@ -4,7 +4,8 @@ import time
 import logging
 from db import supabase
 from pathlib import Path
-from components import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, handle_logout
+from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
+                        hide_streamlit_branding, handle_logout, setup_logging, sanitize_username, authenticate)
 
 # ------------------ CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
@@ -16,7 +17,7 @@ setup_logo(Path(__file__).resolve().parents[1])
 render_header("DXC Step Tracker", "Log in to start tracking your steps!")
 
 # ------------------ LOGGING ------------------
-logging.basicConfig(filename="app.log", level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
+setup_logging()
 
 # ------------------ SESSION DEFAULTS ------------------
 defaults = {
@@ -31,34 +32,7 @@ for key, val in defaults.items():
         st.session_state[key] = val
 
 # ------------------ UTILITIES ------------------
-def sanitize_username(username: str) -> str:
-    username = username.strip()
-    if not username or len(username) < 3:
-        raise ValueError("Username must be at least 3 characters long.")
-    return username
-
-# Logout function now imported from components
-
-# ------------------ AUTHENTICATION ------------------
-def authenticate(username, password):
-    """Verify credentials securely and return role or None."""
-    FAKE_HASH = bcrypt.hashpw(b"fakepassword", bcrypt.gensalt())  # for timing defense
-    try:
-        response = supabase.table("users").select("user_password, user_admin").eq("user_name", username).limit(1).execute()
-
-        if response.data and len(response.data) == 1:
-            user_data = response.data[0]
-            stored_hash = user_data["user_password"].encode("utf-8")
-            if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
-                return "admin" if user_data.get("user_admin", False) else "user"
-        else:
-            bcrypt.checkpw(password.encode("utf-8"), FAKE_HASH)
-            return None
-
-    except Exception as e:
-        logging.error("Authentication error for this user, please try again later.")
-        time.sleep(1)
-        return None
+# Authentication and utility functions now imported from components
 
 # ------------------ LOGIN FLOW ------------------
 if st.session_state.lockout_time > time.time():
