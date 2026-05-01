@@ -7,6 +7,7 @@ import pandas as pd
 import re
 import unicodedata
 import time
+from pathlib import Path
 from db import supabase
 import bcrypt
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,

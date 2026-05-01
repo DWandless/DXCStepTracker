@@ -40,5 +40,3 @@ backgroundColor = "#F8FBFF"                 # Very light blue (matches 25% gradi
 secondaryBackgroundColor = "#FFFFFF"        # White for widgets in sidebar
 primaryColor = "#7BA4DB"                    # Pastel blue (matches button gradient)
 textColor = "#31333F"                       # Dark text for readability
-borderColor = "#E3F2FD"                     # Light blue border for widgets
-showWidgetBorder = false                    # Hide borders on input widgets (set to true to show always)
