@@ -64,11 +64,19 @@ def apply_dxc_theme():
             transform: scale(1.05);
         }
         
-        /* Keep default styling for Logout and other secondary buttons */
-        .stButton>button[kind="secondary"] {
-            background-color: transparent;
-            border: 1px solid #7BA4DB;
-            color: #7BA4DB;
+        /* Secondary buttons and form submit buttons - white background, blue border */
+        .stButton>button[kind="secondary"],
+        .stFormSubmitButton>button {
+            background-color: #FFFFFF !important;
+            border: 2px solid #7BA4DB !important;
+            color: #31333F !important;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .stButton>button[kind="secondary"]:hover,
+        .stFormSubmitButton>button:hover {
+            background-color: #F8FBFF !important;
+            border: 2px solid #6B94CB !important;
         }
         
         /* Sidebar border - creates visible divider */
