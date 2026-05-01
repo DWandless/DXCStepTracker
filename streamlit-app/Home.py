@@ -48,7 +48,7 @@ st.markdown("""
 st.markdown("""
 <div class="header-container">
     <div>
-        <div class="header-title">🏃 Movember Step Tracker</div>
+        <div class="header-title">DXC Step Tracker</div>
         <div class="header-subtitle">Track your steps, make every move count for men's health!</div>
     </div>
 </div>
