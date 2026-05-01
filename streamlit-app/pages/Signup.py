@@ -33,7 +33,7 @@ st.markdown("""
         display: flex;
         justify-content: flex-start;
         align-items: center;
-        background: linear-gradient(90deg, #0066cc, #ff6600);
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
         color: white;
         padding: 20px 30px;
         border-radius: 10px;
@@ -42,7 +42,7 @@ st.markdown("""
     .header-title { font-size: 42px; font-weight: bold; }
     .header-subtitle { font-size: 18px; margin-top: 5px; }
     .stButton>button {
-        background: linear-gradient(90deg, #0066cc, #ff6600);
+        background: linear-gradient(90deg, #7BA4DB, #FF9A6C);
         color: white;
         border-radius: 8px;
         font-weight: bold;
@@ -50,7 +50,7 @@ st.markdown("""
         border: none;
     }
     .stButton>button:hover {
-        background: linear-gradient(90deg, #0052a3, #cc5200);
+        background: linear-gradient(90deg, #6B94CB, #EF8A5C);
         transform: scale(1.05);
     }
     .footer-branding {
@@ -158,7 +158,7 @@ with st.form("signup_form"):
 # ------------------ SIDEBAR ------------------
 if st.session_state.get("username"):
     st.sidebar.markdown(
-        f"<h3 style='color:#0066cc;'>Welcome, {st.session_state.get('username')}!</h3>",
+        f"<h3 style='color:#7BA4DB;'>Welcome, {st.session_state.get('username')}!</h3>",
         unsafe_allow_html=True
     )
     if st.sidebar.button("Logout"):
@@ -168,7 +168,7 @@ if st.session_state.get("username"):
 
 # ------------------ FOOTER ------------------
 st.markdown(
-    "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #0066cc;'>DXC Technology</div>",
+    "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #7BA4DB;'>DXC Technology</div>",
     unsafe_allow_html=True
 )
 
