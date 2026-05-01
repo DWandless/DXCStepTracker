@@ -162,6 +162,21 @@ with tab2:
         c5.metric("Total Distance (km)", distance_km)
         c6.metric("Total Calories Burned", calories)
 
+        # --- Streak ---
+        sorted_dates = sorted(daily_steps["form_date"])
+        streak = 0
+        if sorted_dates:
+            streak = 1
+            for i in range(len(sorted_dates) - 1, 0, -1):
+                if (sorted_dates[i] - sorted_dates[i - 1]) == timedelta(days=1):
+                    streak += 1
+                else:
+                    break
+            if sorted_dates[-1] != datetime.now().date():
+                streak = 0
+        st.success(f"🗲 Current Streak: {streak} days" if streak else "No active streak.")
+
+        # --- Graph ---
         fig = px.bar(
             daily_steps,
             x="form_date",
@@ -177,20 +192,6 @@ with tab2:
             paper_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig, use_container_width=True, config={"staticPlot": True})
-
-        # --- Streak ---
-        sorted_dates = sorted(daily_steps["form_date"])
-        streak = 0
-        if sorted_dates:
-            streak = 1
-            for i in range(len(sorted_dates) - 1, 0, -1):
-                if (sorted_dates[i] - sorted_dates[i - 1]) == timedelta(days=1):
-                    streak += 1
-                else:
-                    break
-            if sorted_dates[-1] != datetime.now().date():
-                streak = 0
-        st.success(f"🗲 Current Streak: {streak} days" if streak else "No active streak.")
 
 # ------------------ FOOTER ------------------
 render_footer()
