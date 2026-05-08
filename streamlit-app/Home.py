@@ -221,8 +221,9 @@ with tab3:
                 
                 with col2:
                     st.subheader("Team Members")
-                    for member in team_members.data:
-                        st.markdown(f"- {member['user_name']}")
+                    with st.expander(f"View Members ({len(team_members.data)}/4)", expanded=False):
+                        for member in team_members.data:
+                            st.markdown(f"• {member['user_name']}")
                 
                 st.markdown("---")
                 
