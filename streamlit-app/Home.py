@@ -120,7 +120,7 @@ with tab1:
                 }).execute()
 
                 # Delete the image if steps are under 10,000 (not required for verification)
-                if steps < 10000:
+                if steps < 20000:
                     try:
                         os.remove(path)
                     except FileNotFoundError:

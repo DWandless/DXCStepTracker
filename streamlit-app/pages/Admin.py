@@ -47,7 +47,7 @@ def fetch_all_submissions():
     forms = supabase.table("forms") \
         .select("*") \
         .eq("form_verified", False) \
-        .gt("form_stepcount", 9999) \
+        .gt("form_stepcount", 19999) \
         .execute().data
     users = supabase.table("users").select("user_id, user_name").execute().data
     if not forms:
@@ -62,10 +62,10 @@ df = fetch_all_submissions()
 if render_sidebar_welcome(username):
     handle_logout()
 
-# ------------------ 1. HIGH-STEP SUBMISSIONS (>10,000) ------------------
+# ------------------ 1. HIGH-STEP SUBMISSIONS (>20,000) ------------------
 st.subheader(
-    "Unverified Submissions (Steps > 10,000)",
-    help="Review and verify step submissions over 10,000 steps. Check the screenshot evidence and click 'Verify' to approve or 'Delete' to remove suspicious entries."
+    "Unverified Submissions (Steps > 20,000)",
+    help="Review and verify step submissions over 20,000 steps. Check the screenshot evidence and click 'Verify' to approve or 'Delete' to remove suspicious entries."
 )
 
 if not df.empty:

@@ -2,7 +2,7 @@
 
 A Streamlit web application for tracking steps during the Movember campaign, featuring user authentication, leaderboards, and automated health checks.
 
-## 🚀 Features
+## Features
 
 - **User Authentication**: Secure signup/login with bcrypt password hashing
 - **Step Tracking**: Log and track daily steps
@@ -10,7 +10,7 @@ A Streamlit web application for tracking steps during the Movember campaign, fea
 - **Admin Dashboard**: Manage users and view statistics
 - **Automated Keep-Alive**: GitHub Actions to keep Supabase and Streamlit app active
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 MovemberStepTracker/
@@ -36,7 +36,7 @@ MovemberStepTracker/
 └── README.md
 ```
 
-## 🛠️ Setup Instructions
+## Setup Instructions
 
 ### Prerequisites
 
@@ -76,7 +76,7 @@ MovemberStepTracker/
    streamlit run Home.py
    ```
 
-## 🌐 Deployment
+## Deployment
 
 The app is deployed on Streamlit Cloud: https://dxcsteptracker.streamlit.app/Signup
 
@@ -93,7 +93,7 @@ The application uses Supabase with the following main tables:
 - `users` - User accounts and authentication
 - `forms` - Daily step tracking data
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License.
 
