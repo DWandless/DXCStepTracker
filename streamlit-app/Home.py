@@ -58,7 +58,7 @@ if render_sidebar_welcome(safe_username):
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3 = st.tabs(["✚ Submit Steps", "➜ Daily Progress", "☻ Teams"])
+tab1, tab2, tab3 = st.tabs(["✚ Submit Steps", "➜ Daily Progress", "⚑ Teams"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -254,8 +254,6 @@ with tab3:
             st.error("Error loading team information.")
     else:
         # User is not in a team
-        st.info("You are not currently part of a team. Join an existing team or create your own!")
-        
         # Check if user is already a team leader
         try:
             is_leader = supabase.table("teams").select("team_id").eq("team_leader", username).execute()
