@@ -194,7 +194,7 @@ with tab2:
 
 # ------------------ TAB 3: TEAMS ------------------
 with tab3:
-    st.header("Team Management")
+    st.header("⚑ Team Management")
     
     # Get user's current team
     try:
