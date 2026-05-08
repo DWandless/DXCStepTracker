@@ -301,6 +301,23 @@ def fetch_user_forms(user_id: int):
 
 # ==================== AUTHENTICATION FUNCTIONS ====================
 
+def is_admin(username: str) -> bool:
+    """
+    Check if a username is in the admin list from secrets.
+    
+    Args:
+        username: Username to check
+        
+    Returns:
+        True if user is an admin, False otherwise
+    """
+    try:
+        admin_list = st.secrets.get("ADMIN_USERS", [])
+        return username in admin_list
+    except Exception:
+        return False
+
+
 def authenticate(username: str, password: str):
     """
     Verify credentials securely and return role or None.
@@ -315,13 +332,14 @@ def authenticate(username: str, password: str):
     """
     FAKE_HASH = bcrypt.hashpw(b"fakepassword", bcrypt.gensalt())  # for timing defense
     try:
-        response = supabase.table("users").select("user_password, user_admin").eq("user_name", username).limit(1).execute()
+        response = supabase.table("users").select("user_password").eq("user_name", username).limit(1).execute()
 
         if response.data and len(response.data) == 1:
             user_data = response.data[0]
             stored_hash = user_data["user_password"].encode("utf-8")
             if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
-                return "admin" if user_data.get("user_admin", False) else "user"
+                # Check admin status from secrets.toml instead of database
+                return "admin" if is_admin(username) else "user"
         else:
             bcrypt.checkpw(password.encode("utf-8"), FAKE_HASH)
             return None
@@ -331,14 +349,14 @@ def authenticate(username: str, password: str):
         return None
 
 
-def register_user(username: str, password: str, is_admin: bool = False):
+def register_user(username: str, password: str):
     """
     Register a new user with hashed password.
+    Note: Admin status is now managed via secrets.toml, not database.
     
     Args:
         username: Username (will be sanitized)
         password: Plain text password (will be hashed)
-        is_admin: Whether user should have admin privileges
         
     Returns:
         Supabase response if successful, None otherwise
@@ -349,8 +367,7 @@ def register_user(username: str, password: str, is_admin: bool = False):
 
         response = supabase.table("users").insert({
             "user_name": username,
-            "user_password": hashed_password,
-            "user_admin": is_admin
+            "user_password": hashed_password
         }).execute()
         return response
 

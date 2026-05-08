@@ -24,8 +24,10 @@ render_header("Admin Dashboard", "Manage submissions and verify evidence.")
 
 # ------------------ LOGIN & ROLE CHECK ------------------
 username = check_login_required()
-user_resp = supabase.table("users").select("user_admin").eq("user_name", username).limit(1).execute()
-if not user_resp.data or not user_resp.data[0].get("user_admin", False):
+
+# Check if user is in admin list from secrets
+admin_list = st.secrets.get("ADMIN_USERS", [])
+if username not in admin_list:
     st.error("Access denied: Admins only.")
     st.stop()
 

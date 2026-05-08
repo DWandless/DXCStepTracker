@@ -31,7 +31,6 @@ with st.form("signup_form"):
     username = st.text_input("Enter your full name")
     password = st.text_input("Choose a password", type="password")
     confirm_password = st.text_input("Confirm password", type="password")
-    is_admin = False  # Always false for security
 
     submitted = st.form_submit_button("Register")
 
@@ -60,7 +59,7 @@ with st.form("signup_form"):
                     st.stop()
 
                 # --- Attempt Registration ---
-                response = register_user(username, password, is_admin)
+                response = register_user(username, password)
 
                 if response and response.data:
                     st.success(f"User '{username}' created successfully!")
