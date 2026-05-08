@@ -227,14 +227,31 @@ with tab3:
                 
                 st.markdown("---")
                 
-                # Leave team button
-                if st.button("Leave Team", type="secondary"):
-                    try:
-                        supabase.table("users").update({"team_id": None}).eq("user_id", user_id).execute()
-                        st.success("You have left the team.")
-                        st.rerun()
-                    except Exception:
-                        st.error("Error leaving team. Please try again.")
+                # Check if current user is the team leader
+                is_team_leader = (username == team['team_leader'])
+                
+                if is_team_leader:
+                    # Team leader can delete the team
+                    st.warning("As team leader, deleting the team will unassign all members.")
+                    if st.button("Delete Team", type="primary", key="delete_team_btn"):
+                        try:
+                            # Unassign all team members
+                            supabase.table("users").update({"team_id": None}).eq("team_id", current_team_id).execute()
+                            # Delete the team
+                            supabase.table("teams").delete().eq("team_id", current_team_id).execute()
+                            st.success("Team deleted successfully. All members have been unassigned.")
+                            st.rerun()
+                        except Exception:
+                            st.error("Error deleting team. Please try again.")
+                else:
+                    # Regular members can leave the team
+                    if st.button("Leave Team", type="secondary", key="leave_team_btn"):
+                        try:
+                            supabase.table("users").update({"team_id": None}).eq("user_id", user_id).execute()
+                            st.success("You have left the team.")
+                            st.rerun()
+                        except Exception:
+                            st.error("Error leaving team. Please try again.")
         except Exception:
             st.error("Error loading team information.")
     else:
