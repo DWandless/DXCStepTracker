@@ -21,7 +21,7 @@ if render_sidebar_welcome(username):
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2 = st.tabs(["👤 Individual Leaderboard", "⚑ Team Leaderboard"])
+tab1, tab2 = st.tabs(["Individual Leaderboard", "Team Leaderboard"])
 
 # ------------------ TAB 1: INDIVIDUAL LEADERBOARD ------------------
 with tab1:
