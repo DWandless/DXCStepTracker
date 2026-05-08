@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import time
 from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, 
@@ -92,11 +93,19 @@ def create_team(team_name, team_leader_username, user_id):
             team_id = team_response.data[0]["team_id"]
             
             # Assign the user to the team
-            supabase.table("users").update({
+            update_response = supabase.table("users").update({
                 "team_id": team_id
             }).eq("user_id", user_id).execute()
             
-            return True, team_id
+            # Verify the update was successful
+            if update_response.data and len(update_response.data) > 0:
+                return True, team_id
+            else:
+                # Rollback: delete the team if user assignment failed
+                supabase.table("teams").delete().eq("team_id", team_id).execute()
+                st.error("Failed to assign you to the team. Please try again.")
+                return False, None
+            
         return False, None
     except Exception as e:
         st.error(f"Error creating team: {str(e)}")
@@ -129,7 +138,11 @@ def leave_team(user_id):
         return False
 
 # ------------------ MAIN CONTENT ------------------
+# Force refresh of user's team status
 current_team_id = get_user_team_id(user_id)
+
+# Debug: Show current team_id (remove this after testing)
+st.write(f"Debug - Current team_id: {current_team_id}, user_id: {user_id}")
 
 if current_team_id:
     # User is already in a team - show team info
@@ -230,6 +243,11 @@ else:
                         if success:
                             st.success(f"Team '{team_name}' created successfully! You are now the team leader.")
                             st.balloons()
+                            # Small delay to ensure database commit
+                            time.sleep(0.5)
+                            # Clear any cached data
+                            if 'team_created' in st.session_state:
+                                del st.session_state['team_created']
                             st.rerun()
                         else:
                             st.error("Error creating team. Please try again.")
