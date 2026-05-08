@@ -373,8 +373,12 @@ def register_user(username: str, password: str):
             "user_name": username,
             "user_password": hashed_password
         }).execute()
+        
+        logging.info(f"User registration successful: {username}")
         return response
 
     except Exception as e:
-        logging.error(f"Signup error for {username}: {e}")
+        logging.error(f"Signup error for {username}: {type(e).__name__} - {str(e)}")
+        import traceback
+        logging.error(f"Traceback: {traceback.format_exc()}")
         return None
