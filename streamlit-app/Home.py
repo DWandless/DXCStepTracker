@@ -231,7 +231,6 @@ with tab3:
                 
                 if is_team_leader:
                     # Team leader can delete the team
-                    st.warning("As team leader, deleting the team will unassign all members.")
                     if st.button("Delete Team", type="secondary", key="delete_team_btn"):
                         try:
                             # Unassign all team members
