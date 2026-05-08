@@ -340,12 +340,16 @@ def authenticate(username: str, password: str):
             if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
                 # Check admin status from secrets.toml instead of database
                 return "admin" if is_admin(username) else "user"
+            else:
+                # Password doesn't match
+                return None
         else:
+            # User not found - use fake hash for timing defense
             bcrypt.checkpw(password.encode("utf-8"), FAKE_HASH)
             return None
 
     except Exception as e:
-        logging.error("Authentication error for this user, please try again later.")
+        logging.error(f"Authentication error: {str(e)}")
         return None
 
 
