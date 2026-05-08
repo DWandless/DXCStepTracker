@@ -211,7 +211,6 @@ with tab3:
             
             if team_info.data:
                 team = team_info.data[0]
-                st.success(f"You are a member of **{team['team_name']}**")
                 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -233,7 +232,7 @@ with tab3:
                 if is_team_leader:
                     # Team leader can delete the team
                     st.warning("As team leader, deleting the team will unassign all members.")
-                    if st.button("Delete Team", type="primary", key="delete_team_btn"):
+                    if st.button("Delete Team", type="secondary", key="delete_team_btn"):
                         try:
                             # Unassign all team members
                             supabase.table("users").update({"team_id": None}).eq("team_id", current_team_id).execute()
