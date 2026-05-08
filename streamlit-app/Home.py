@@ -58,7 +58,7 @@ if render_sidebar_welcome(safe_username):
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3 = st.tabs(["✚ Submit Steps", "➜ Daily Progress", "👥 Teams"])
+tab1, tab2, tab3 = st.tabs(["✚ Submit Steps", "➜ Daily Progress", "☻ Teams"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -194,7 +194,7 @@ with tab2:
 
 # ------------------ TAB 3: TEAMS ------------------
 with tab3:
-    st.header("☻ Team Management")
+    st.header("Team Management")
     
     # Get user's current team
     try:
