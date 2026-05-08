@@ -212,18 +212,13 @@ with tab3:
             if team_info.data:
                 team = team_info.data[0]
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.subheader("Team Information")
-                    st.markdown(f"**Team Name:** {team['team_name']}")
-                    st.markdown(f"**Team Leader:** {team['team_leader']}")
-                    st.markdown(f"**Members:** {len(team_members.data)}/4")
+                st.subheader("Team Information")
+                st.markdown(f"**Team Name:** {team['team_name']}")
+                st.markdown(f"**Team Leader:** {team['team_leader']}")
                 
-                with col2:
-                    st.subheader("Team Members")
-                    with st.expander(f"View Members ({len(team_members.data)}/4)", expanded=False):
-                        for member in team_members.data:
-                            st.markdown(f"• {member['user_name']}")
+                with st.expander(f"View Members ({len(team_members.data)}/4)", expanded=False):
+                    for member in team_members.data:
+                        st.markdown(f"• {member['user_name']}")
                 
                 st.markdown("---")
                 
