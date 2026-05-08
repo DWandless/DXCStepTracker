@@ -20,6 +20,9 @@ render_header("Team Management", "Join a team or create your own!")
 username = check_login_required()
 user_id = get_user_id(username)
 
+# Debug: Show username and user_id
+st.write(f"DEBUG - Logged in as: {username}, user_id: {user_id}")
+
 if not user_id:
     st.error("User not found.")
     st.stop()
@@ -118,13 +121,24 @@ def join_team(team_id, user_id):
         if get_team_member_count(team_id) >= 4:
             return False, "Team is full (maximum 4 members)"
         
+        # Debug: Check what we're trying to update
+        st.write(f"DEBUG - Attempting to join team_id: {team_id} for user_id: {user_id}")
+        
         # Assign user to team
-        supabase.table("users").update({
+        update_response = supabase.table("users").update({
             "team_id": team_id
         }).eq("user_id", user_id).execute()
         
-        return True, "Successfully joined team!"
+        # Debug: Check the response
+        st.write(f"DEBUG - Update response data: {update_response.data}")
+        
+        # Verify the update worked
+        if update_response.data and len(update_response.data) > 0:
+            return True, "Successfully joined team!"
+        else:
+            return False, "Failed to update your team assignment. Please try again."
     except Exception as e:
+        st.error(f"Exception details: {str(e)}")
         return False, f"Error joining team: {str(e)}"
 
 def leave_team(user_id):
