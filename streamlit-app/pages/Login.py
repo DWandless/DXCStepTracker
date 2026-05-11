@@ -155,7 +155,7 @@ if token:
                 logging.info(f"User logged in: {username} ({user_email})")
             
             st.success(f"Welcome, **{st.session_state.display_name}**!")
-            st.page_link("Home.py", label="Click here to go to Home", icon="🏠︎")
+            st.page_link("Home.py", label="🏠︎ Click here to go to Home")
             
             if st.button("Log out"):
                 st.session_state.clear()
