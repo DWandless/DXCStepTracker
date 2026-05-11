@@ -57,23 +57,38 @@ def get_or_create_user(email, display_name):
         return standardize_name(display_name)
 
 # ------------------ LOGIN FLOW ------------------
+# Check if user is authenticated via Streamlit's built-in auth
 user_is_logged_in = getattr(st.user, "is_logged_in", False)
 
+# DEBUG: Show authentication status
+st.write("🔍 **DEBUG INFO:**")
+st.write(f"- `st.user.is_logged_in`: {user_is_logged_in}")
+st.write(f"- `st.session_state.logged_in`: {st.session_state.get('logged_in', False)}")
+
 if user_is_logged_in:
+    st.write(f"- `st.user.email`: {getattr(st.user, 'email', 'N/A')}")
+    st.write(f"- `st.user.name`: {getattr(st.user, 'name', 'N/A')}")
+    
     email = st.user.email
     display_name = st.user.name or email
     
     if not st.session_state.logged_in:
+        st.info("🔄 Creating/fetching user from database...")
         username = get_or_create_user(email, display_name)
         st.session_state.logged_in = True
         st.session_state.username = username
         st.session_state.display_name = username
         logging.info(f"User logged in: {username} ({email})")
+        st.write(f"✅ User authenticated: {username}")
     
     # Auto-redirect to Home page after successful login
     st.success(f"Welcome, **{st.session_state.display_name}**! Redirecting to home...")
+    st.write("⏳ Redirecting in 2 seconds...")
+    import time
+    time.sleep(2)
     st.switch_page("Home.py")
 else:
+    st.write("❌ Not authenticated via Microsoft Entra")
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.display_name = ""

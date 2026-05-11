@@ -191,7 +191,8 @@ def handle_logout():
     """Handle user logout by clearing session state and rerunning."""
     st.session_state.logged_in = False
     st.session_state.username = ""
-    st.session_state.role = ""
+    st.session_state.display_name = ""
+    st.logout()  # Call Streamlit's logout for Entra
     st.rerun()
 
 
@@ -318,67 +319,73 @@ def is_admin(username: str) -> bool:
         return False
 
 
-def authenticate(username: str, password: str):
-    """
-    Verify credentials securely and return role or None.
-    Uses timing-safe comparison to prevent timing attacks.
-    
-    Args:
-        username: Username to authenticate
-        password: Password to verify
-        
-    Returns:
-        "admin" or "user" if authenticated, None otherwise
-    """
-    FAKE_HASH = bcrypt.hashpw(b"fakepassword", bcrypt.gensalt())  # for timing defense
-    try:
-        response = supabase.table("users").select("user_password").eq("user_name", username).limit(1).execute()
+# ==================== DEPRECATED: OLD PASSWORD-BASED AUTH ====================
+# These functions are no longer used since we switched to Microsoft Entra authentication.
+# Keeping them commented out for reference in case of rollback needs.
 
-        if response.data and len(response.data) == 1:
-            user_data = response.data[0]
-            stored_hash = user_data["user_password"].encode("utf-8")
-            if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
-                # Check admin status from secrets.toml instead of database
-                return "admin" if is_admin(username) else "user"
-            else:
-                # Password doesn't match
-                return None
-        else:
-            # User not found - use fake hash for timing defense
-            bcrypt.checkpw(password.encode("utf-8"), FAKE_HASH)
-            return None
+# def authenticate(username: str, password: str):
+#     """
+#     [DEPRECATED] Verify credentials securely and return role or None.
+#     Uses timing-safe comparison to prevent timing attacks.
+#     
+#     Args:
+#         username: Username to authenticate
+#         password: Password to verify
+#         
+#     Returns:
+#         "admin" or "user" if authenticated, None otherwise
+#     """
+#     FAKE_HASH = bcrypt.hashpw(b"fakepassword", bcrypt.gensalt())  # for timing defense
+#     try:
+#         response = supabase.table("users").select("user_password").eq("user_name", username).limit(1).execute()
+#
+#         if response.data and len(response.data) == 1:
+#             user_data = response.data[0]
+#             stored_hash = user_data["user_password"].encode("utf-8")
+#             if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
+#                 # Check admin status from secrets.toml instead of database
+#                 return "admin" if is_admin(username) else "user"
+#             else:
+#                 # Password doesn't match
+#                 return None
+#         else:
+#             # User not found - use fake hash for timing defense
+#             bcrypt.checkpw(password.encode("utf-8"), FAKE_HASH)
+#             return None
+#
+#     except Exception as e:
+#         logging.error(f"Authentication error: {str(e)}")
+#         return None
 
-    except Exception as e:
-        logging.error(f"Authentication error: {str(e)}")
-        return None
 
+# def register_user(username: str, password: str):
+#     """
+#     [DEPRECATED] Register a new user with hashed password.
+#     Note: Admin status is now managed via secrets.toml, not database.
+#     
+#     Args:
+#         username: Username (will be sanitized)
+#         password: Plain text password (will be hashed)
+#         
+#     Returns:
+#         Supabase response if successful, None otherwise
+#     """
+#     try:
+#         username = sanitize_username(username)
+#         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+#
+#         response = supabase.table("users").insert({
+#             "user_name": username,
+#             "user_password": hashed_password
+#         }).execute()
+#         
+#         logging.info(f"User registration successful: {username}")
+#         return response
+#
+#     except Exception as e:
+#         logging.error(f"Signup error for {username}: {type(e).__name__} - {str(e)}")
+#         import traceback
+#         logging.error(f"Traceback: {traceback.format_exc()}")
+#         return None
 
-def register_user(username: str, password: str):
-    """
-    Register a new user with hashed password.
-    Note: Admin status is now managed via secrets.toml, not database.
-    
-    Args:
-        username: Username (will be sanitized)
-        password: Plain text password (will be hashed)
-        
-    Returns:
-        Supabase response if successful, None otherwise
-    """
-    try:
-        username = sanitize_username(username)
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-        response = supabase.table("users").insert({
-            "user_name": username,
-            "user_password": hashed_password
-        }).execute()
-        
-        logging.info(f"User registration successful: {username}")
-        return response
-
-    except Exception as e:
-        logging.error(f"Signup error for {username}: {type(e).__name__} - {str(e)}")
-        import traceback
-        logging.error(f"Traceback: {traceback.format_exc()}")
-        return None
+# ==================== END DEPRECATED AUTH ====================
