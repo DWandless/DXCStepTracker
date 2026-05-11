@@ -99,40 +99,57 @@ if "code" in query_params and st.session_state["token"] is None:
 # ------------------ LOGGED-IN FLOW ------------------
 token = st.session_state["token"]
 
-if token and "access_token" in token:
+if token:
     # Get user info from token
     try:
-        # Extract email and name from token (simplified - you may need to decode JWT)
-        # For now, we'll use a simple approach
         import jwt
-        decoded = jwt.decode(token["access_token"], options={"verify_signature": False})
-        user_email = decoded.get("preferred_username") or decoded.get("email") or decoded.get("upn") or ""
-        user_name_raw = decoded.get("name", "Unknown User")
         
-        # Format name
-        if "," in user_name_raw:
-            last, first = [x.strip() for x in user_name_raw.split(",", 1)]
-            user_name = f"{first} {last}"
+        # Debug: Show what we received
+        st.write("🔍 **DEBUG: Token received**")
+        st.write(f"Token keys: {list(token.keys())}")
+        
+        # Try to decode access_token or id_token
+        token_to_decode = token.get("id_token") or token.get("access_token")
+        
+        if not token_to_decode:
+            st.error("No valid token found in response")
+            st.write(f"Token content: {token}")
         else:
-            user_name = user_name_raw.strip()
-        
-        if not st.session_state.logged_in:
-            username = get_or_create_user(user_email, user_name)
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.session_state.display_name = username
-            logging.info(f"User logged in: {username} ({user_email})")
-        
-        st.success(f"Welcome, **{st.session_state.display_name}**!")
-        st.page_link("Home.py", label="🏠 Click here to go to Home", icon="🏠")
-        
-        if st.button("Log out"):
-            st.session_state.clear()
-            st.rerun()
+            decoded = jwt.decode(token_to_decode, options={"verify_signature": False})
+            st.write(f"Decoded token claims: {decoded}")
+            
+            user_email = decoded.get("preferred_username") or decoded.get("email") or decoded.get("upn") or decoded.get("unique_name") or ""
+            user_name_raw = decoded.get("name", "Unknown User")
+            
+            st.write(f"Extracted email: {user_email}")
+            st.write(f"Extracted name: {user_name_raw}")
+            
+            # Format name
+            if "," in user_name_raw:
+                last, first = [x.strip() for x in user_name_raw.split(",", 1)]
+                user_name = f"{first} {last}"
+            else:
+                user_name = user_name_raw.strip()
+            
+            if not st.session_state.logged_in:
+                username = get_or_create_user(user_email, user_name)
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.display_name = username
+                logging.info(f"User logged in: {username} ({user_email})")
+            
+            st.success(f"Welcome, **{st.session_state.display_name}**!")
+            st.page_link("Home.py", label="🏠 Click here to go to Home", icon="🏠")
+            
+            if st.button("Log out"):
+                st.session_state.clear()
+                st.rerun()
     
     except Exception as e:
         st.error(f"Error processing authentication: {e}")
         logging.error(f"Token processing error: {e}")
+        import traceback
+        st.code(traceback.format_exc())
         if st.button("Try Again"):
             st.session_state.clear()
             st.rerun()

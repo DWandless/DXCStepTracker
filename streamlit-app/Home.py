@@ -45,7 +45,6 @@ def get_last_submission_time(user_id):
 # ------------------ LOGIN CHECK ------------------
 if not st.session_state.get("logged_in"):
     st.warning("Please log in first.")
-    st.page_link("pages/Login.py", label="🔐 Click here to log in")
     st.stop()
 
 username = st.session_state.get("username")
