@@ -32,7 +32,7 @@ REDIRECT_URI = "https://dxcsteptracker.streamlit.app/"
 oauth = OAuth2Session(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
-    scope=["openid", "profile", "email"],
+    scope=["https://graph.microsoft.com/User.Read", "https://graph.microsoft.com/email", "openid", "profile"],
     redirect_uri=REDIRECT_URI,
 )
 
@@ -140,7 +140,7 @@ if token and "access_token" in token:
 else:
     auth_url, _ = oauth.create_authorization_url(
         AUTHORIZE_URL,
-        prompt="select_account",
+        prompt="consent",  # Force consent prompt for each user
         resource=CLIENT_ID,
     )
     
