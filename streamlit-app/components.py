@@ -189,10 +189,7 @@ def check_login_required():
 
 def handle_logout():
     """Handle user logout by clearing session state and rerunning."""
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.session_state.display_name = ""
-    st.logout()  # Call Streamlit's logout for Entra
+    st.session_state.clear()
     st.rerun()
 
 

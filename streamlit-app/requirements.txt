@@ -13,3 +13,4 @@ certifi
 httpx
 bcrypt
 authlib
+PyJWT
