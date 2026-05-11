@@ -27,7 +27,7 @@ TENANT_ID = "93f33571-550f-43cf-b09f-cd331338d086"
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 AUTHORIZE_URL = f"{AUTHORITY}/oauth2/authorize"
 TOKEN_URL = f"{AUTHORITY}/oauth2/token"
-REDIRECT_URI = "https://dxcsteptracker.streamlit.app/"
+REDIRECT_URI = "https://dxcsteptracker.streamlit.app/Login"
 
 # Use v1.0 OAuth with resource parameter (doesn't require Graph API permissions)
 oauth = OAuth2Session(
