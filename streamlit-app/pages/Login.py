@@ -138,7 +138,6 @@ if token:
                 st.session_state.user_email = user_email  # Also store email explicitly
                 logging.info(f"User logged in: {username} ({user_email})")
             
-            st.success(f"Welcome, **{st.session_state.display_name}**!")
             st.page_link("Home.py", label="🏠︎ Click here to go to Home")
             
             if st.button("Log out"):
@@ -165,7 +164,7 @@ else:
 
 # ------------------ SIDEBAR ------------------
 if st.session_state.logged_in:
-    if render_sidebar_welcome(st.session_state.username):
+    if render_sidebar_welcome():
         st.session_state.clear()
         st.rerun()
 

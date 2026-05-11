@@ -134,25 +134,29 @@ def render_header(title, subtitle):
 
 
 def render_footer():
-    """Render the DXC Technology footer."""
+    """Render the DXC Technology footer with blue divider."""
     st.markdown(
-        "<div class='footer-branding' style='text-align:center; font-weight:bold; margin-top:40px; padding-top:20px; border-top:2px solid #7BA4DB;'></div>",
+        "<div style='margin-top:60px; padding-top:20px; border-top:3px solid #7BA4DB;'></div>",
         unsafe_allow_html=True
     )
 
 
-def render_sidebar_welcome(username):
+def render_sidebar_welcome(display_name=None):
     """
     Render welcome message in sidebar with logout button.
+    Uses display_name from session state if not provided.
     
     Args:
-        username: Username to display
+        display_name: Display name to show (optional, defaults to session state)
         
     Returns:
         bool: True if logout button was clicked
     """
+    if display_name is None:
+        display_name = st.session_state.get("display_name", st.session_state.get("username", "User"))
+    
     st.sidebar.markdown(
-        f"<h3 style='color:#7BA4DB;'>Welcome, {username}!</h3>",
+        f"<h3 style='color:#7BA4DB;'>Welcome, {display_name}!</h3>",
         unsafe_allow_html=True
     )
     return st.sidebar.button("Logout", type="secondary")
@@ -314,75 +318,3 @@ def is_admin(user_email: str) -> bool:
         return user_email.lower() in [email.lower() for email in admin_emails]
     except Exception:
         return False
-
-
-# ==================== DEPRECATED: OLD PASSWORD-BASED AUTH ====================
-# These functions are no longer used since we switched to Microsoft Entra authentication.
-# Keeping them commented out for reference in case of rollback needs.
-
-# def authenticate(username: str, password: str):
-#     """
-#     [DEPRECATED] Verify credentials securely and return role or None.
-#     Uses timing-safe comparison to prevent timing attacks.
-#     
-#     Args:
-#         username: Username to authenticate
-#         password: Password to verify
-#         
-#     Returns:
-#         "admin" or "user" if authenticated, None otherwise
-#     """
-#     FAKE_HASH = bcrypt.hashpw(b"fakepassword", bcrypt.gensalt())  # for timing defense
-#     try:
-#         response = supabase.table("users").select("user_password").eq("user_name", username).limit(1).execute()
-#
-#         if response.data and len(response.data) == 1:
-#             user_data = response.data[0]
-#             stored_hash = user_data["user_password"].encode("utf-8")
-#             if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
-#                 # Check admin status from secrets.toml instead of database
-#                 return "admin" if is_admin(username) else "user"
-#             else:
-#                 # Password doesn't match
-#                 return None
-#         else:
-#             # User not found - use fake hash for timing defense
-#             bcrypt.checkpw(password.encode("utf-8"), FAKE_HASH)
-#             return None
-#
-#     except Exception as e:
-#         logging.error(f"Authentication error: {str(e)}")
-#         return None
-
-
-# def register_user(username: str, password: str):
-#     """
-#     [DEPRECATED] Register a new user with hashed password.
-#     Note: Admin status is now managed via secrets.toml, not database.
-#     
-#     Args:
-#         username: Username (will be sanitized)
-#         password: Plain text password (will be hashed)
-#         
-#     Returns:
-#         Supabase response if successful, None otherwise
-#     """
-#     try:
-#         username = sanitize_username(username)
-#         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-#
-#         response = supabase.table("users").insert({
-#             "user_name": username,
-#             "user_password": hashed_password
-#         }).execute()
-#         
-#         logging.info(f"User registration successful: {username}")
-#         return response
-#
-#     except Exception as e:
-#         logging.error(f"Signup error for {username}: {type(e).__name__} - {str(e)}")
-#         import traceback
-#         logging.error(f"Traceback: {traceback.format_exc()}")
-#         return None
-
-# ==================== END DEPRECATED AUTH ====================

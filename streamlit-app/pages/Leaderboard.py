@@ -17,7 +17,7 @@ render_header("DXC Step Leaderboard", "Keep a Track of Leaders & Your Friends!")
 username = check_login_required()
 
 # ------------------ SIDEBAR ------------------
-if render_sidebar_welcome(username):
+if render_sidebar_welcome():
     handle_logout()
 
 # ------------------ TABS ------------------

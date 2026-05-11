@@ -61,7 +61,7 @@ def fetch_all_submissions():
 df = fetch_all_submissions()
 
 # ------------------ SIDEBAR ------------------
-if render_sidebar_welcome(username):
+if render_sidebar_welcome():
     handle_logout()
 
 # ------------------ 1. HIGH-STEP SUBMISSIONS (>20,000) ------------------

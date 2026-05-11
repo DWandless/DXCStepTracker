@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError
-import re, unicodedata, random, html, io
+import re, unicodedata, random, io
 from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
@@ -48,14 +48,12 @@ if not st.session_state.get("logged_in"):
     st.stop()
 
 username = st.session_state.get("username")  # This is the email
-display_name = st.session_state.get("display_name", username)  # This is the formatted name
 user_id = get_user_id(username)
 if not user_id:
     st.error("User not found.")
     st.stop()
 
-safe_display_name = html.escape(display_name)
-if render_sidebar_welcome(safe_display_name):
+if render_sidebar_welcome():
     handle_logout()
 
 # ------------------ TABS ------------------
