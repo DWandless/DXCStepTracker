@@ -58,24 +58,37 @@ def standardize_name(name):
     return name
 
 def get_or_create_user(email, display_name):
-    """Get existing user or create new user in database, return role."""
+    """Get existing user or create new user in database, return formatted name."""
     try:
+        st.write(f"Checking database for user: {email}")
+        
         # Check if user exists by email
         result = supabase.table("users").select("user_id, user_name").eq("user_email", email).execute()
+        st.write(f"Database query result: {result.data}")
+        
         if result.data:
             # User exists, return their name
+            st.success(f"Existing user found: {result.data[0]['user_name']}")
             return result.data[0]["user_name"]
         else:
             # New user - create account
             standardized_name = standardize_name(display_name)
-            supabase.table("users").insert({
+            st.write(f"Creating new user: {standardized_name} ({email})")
+            
+            insert_result = supabase.table("users").insert({
                 "user_email": email,
                 "user_name": standardized_name,
             }).execute()
+            
+            st.write(f"Insert result: {insert_result.data}")
+            st.success(f"New user created: {standardized_name}")
             logging.info(f"New user created: {email} ({standardized_name})")
             return standardized_name
     except Exception as e:
+        st.error(f"Database error in get_or_create_user: {e}")
         logging.error(f"Database error in get_or_create_user: {e}")
+        import traceback
+        st.code(traceback.format_exc())
         return standardize_name(display_name)
 
 # ------------------ HANDLE MICROSOFT REDIRECT ------------------
@@ -142,7 +155,7 @@ if token:
                 logging.info(f"User logged in: {username} ({user_email})")
             
             st.success(f"Welcome, **{st.session_state.display_name}**!")
-            st.page_link("Home.py", label="🏠 Click here to go to Home", icon="🏠")
+            st.page_link("Home.py", label="Click here to go to Home", icon="🏠︎")
             
             if st.button("Log out"):
                 st.session_state.clear()
