@@ -23,10 +23,11 @@ render_header("Admin Dashboard", "Manage submissions and verify evidence.")
 
 # ------------------ LOGIN & ROLE CHECK ------------------
 username = check_login_required()
+user_email = st.session_state.get("user_email", "")
 
-# Check if user is in admin list from secrets
-admin_list = st.secrets.get("ADMIN_USERS", [])
-if username not in admin_list:
+# Check if user email is in admin list from secrets
+admin_emails = st.secrets.get("ADMIN_EMAILS", [])
+if user_email.lower() not in [email.lower() for email in admin_emails]:
     st.error("Access denied: Admins only.")
     st.stop()
 

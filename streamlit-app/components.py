@@ -299,19 +299,19 @@ def fetch_user_forms(user_id: int):
 
 # ==================== AUTHENTICATION FUNCTIONS ====================
 
-def is_admin(username: str) -> bool:
+def is_admin(user_email: str) -> bool:
     """
-    Check if a username is in the admin list from secrets.
+    Check if a user email is in the admin list from secrets.
     
     Args:
-        username: Username to check
+        user_email: User email to check
         
     Returns:
         True if user is an admin, False otherwise
     """
     try:
-        admin_list = st.secrets.get("ADMIN_USERS", [])
-        return username in admin_list
+        admin_emails = st.secrets.get("ADMIN_EMAILS", [])
+        return user_email.lower() in [email.lower() for email in admin_emails]
     except Exception:
         return False
 
