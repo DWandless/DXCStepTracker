@@ -29,10 +29,11 @@ AUTHORIZE_URL = f"{AUTHORITY}/oauth2/authorize"
 TOKEN_URL = f"{AUTHORITY}/oauth2/token"
 REDIRECT_URI = "https://dxcsteptracker.streamlit.app/"
 
+# Use v1.0 OAuth with resource parameter (doesn't require Graph API permissions)
 oauth = OAuth2Session(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
-    scope=["https://graph.microsoft.com/User.Read", "https://graph.microsoft.com/email", "openid", "profile"],
+    scope=["openid"],  # Minimal scope for v1.0
     redirect_uri=REDIRECT_URI,
 )
 
@@ -138,10 +139,11 @@ if token and "access_token" in token:
 
 # ------------------ LOGIN BUTTON (NOT LOGGED IN) ------------------
 else:
+    # Create auth URL with resource parameter for v1.0 endpoint
     auth_url, _ = oauth.create_authorization_url(
         AUTHORIZE_URL,
-        prompt="consent",  # Force consent prompt for each user
-        resource=CLIENT_ID,
+        prompt="select_account",
+        resource=CLIENT_ID,  # v1.0 uses resource parameter instead of scope
     )
     
     st.markdown("### Sign in to DXC Step Tracker")
