@@ -59,12 +59,6 @@ def get_or_create_user(email, display_name):
 # ------------------ LOGIN FLOW ------------------
 user_is_logged_in = getattr(st.user, "is_logged_in", False)
 
-# Debug: Show authentication status
-st.write(f"DEBUG: user_is_logged_in = {user_is_logged_in}")
-if user_is_logged_in:
-    st.write(f"DEBUG: email = {st.user.email}")
-    st.write(f"DEBUG: name = {st.user.name}")
-
 if user_is_logged_in:
     email = st.user.email
     display_name = st.user.name or email
@@ -76,9 +70,9 @@ if user_is_logged_in:
         st.session_state.display_name = username
         logging.info(f"User logged in: {username} ({email})")
     
-    st.success(f"Welcome, **{st.session_state.display_name}**!")
-    st.page_link("Home.py", label=" 🏠︎ Click here to go to the home page.")
-    st.button("Log out", on_click=st.logout)
+    # Auto-redirect to Home page after successful login
+    st.success(f"Welcome, **{st.session_state.display_name}**! Redirecting to home...")
+    st.switch_page("Home.py")
 else:
     st.session_state.logged_in = False
     st.session_state.username = ""
