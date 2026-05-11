@@ -1,11 +1,9 @@
 import streamlit as st
-import bcrypt
-import time
 import logging
 from db import supabase
 from pathlib import Path
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
-                        hide_streamlit_branding, handle_logout, setup_logging, sanitize_username, authenticate)
+                        hide_streamlit_branding, setup_logging)
 
 # ------------------ CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
@@ -24,58 +22,69 @@ defaults = {
     "logged_in": False,
     "username": "",
     "role": "",
-    "login_attempts": 0,
-    "lockout_time": 0,
+    "display_name": "",
 }
 for key, val in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
 # ------------------ UTILITIES ------------------
-# Authentication and utility functions now imported from components
+def standardize_name(name):
+    """Convert name from 'last, first' format to 'first last' format."""
+    if "," in name:
+        parts = name.split(",", 1)
+        return f"{parts[1].strip()} {parts[0].strip()}"
+    return name
+
+def get_or_create_user(email, display_name):
+    """Get existing user or create new user in database, return role."""
+    try:
+        result = supabase.table("users").select("role").eq("user_email", email).execute()
+        if result.data:
+            return result.data[0]["role"]
+        else:
+            standardized_name = standardize_name(display_name)
+            supabase.table("users").insert({
+                "user_email": email,
+                "user_name": standardized_name,
+                "user_password": "",
+                "role": "user",
+            }).execute()
+            return "user"
+    except Exception as e:
+        logging.error(f"Database error: {e}")
+        return "user"
 
 # ------------------ LOGIN FLOW ------------------
-if st.session_state.lockout_time > time.time():
-    st.error("Too many failed attempts. Please wait a few seconds and try again.")
-    st.stop()
+user_is_logged_in = getattr(st.user, "is_logged_in", False)
 
-if st.session_state.logged_in:
+if user_is_logged_in:
+    email = st.user.email
+    display_name = st.user.name or email
+    
+    if not st.session_state.logged_in:
+        role = get_or_create_user(email, display_name)
+        st.session_state.logged_in = True
+        st.session_state.username = email
+        st.session_state.role = role
+        st.session_state.display_name = standardize_name(display_name)
+    
+    st.success(f"Welcome, **{st.session_state.display_name}**!")
     st.info(f"Logged in as **{st.session_state.username}** ({st.session_state.role})")
     st.page_link("Home.py", label=" 🏠︎ Click here to go to the home page.")
+    st.button("Log out", on_click=st.logout)
 else:
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Log In")
-
-    if submitted:
-        try:
-            username = sanitize_username(username)
-        except ValueError as e:
-            st.error(str(e))
-            st.stop()
-
-        role = authenticate(username, password)
-
-        if role:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.session_state.role = role
-            st.session_state.login_attempts = 0
-            st.success(f"Welcome, {username}!")
-            st.rerun()
-        else:
-            st.session_state.login_attempts += 1
-            st.error("Invalid username or password.")
-
-            if st.session_state.login_attempts >= 5:
-                st.session_state.lockout_time = time.time() + 30  # 30-second cooldown
-                st.warning("Too many failed attempts. Please wait 30 seconds.")
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.session_state.role = ""
+    st.session_state.display_name = ""
+    st.button("Sign in with Microsoft", on_click=st.login)
 
 # ------------------ SIDEBAR ------------------
 if st.session_state.logged_in:
     if render_sidebar_welcome(st.session_state.username):
-        handle_logout()
+        st.logout()
+        st.rerun()
 
 # ------------------ SIGN-UP LINK ------------------
 st.markdown("---")

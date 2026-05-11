@@ -43,6 +43,42 @@ def get_last_submission_time(user_id):
     return None
 
 # ------------------ LOGIN ------------------
+def standardize_name(name):
+    """Convert name from 'last, first' format to 'first last' format."""
+    if "," in name:
+        parts = name.split(",", 1)
+        return f"{parts[1].strip()} {parts[0].strip()}"
+    return name
+
+def get_or_create_user(email, display_name):
+    """Get existing user or create new user in database, return role."""
+    try:
+        result = supabase.table("users").select("role").eq("user_email", email).execute()
+        if result.data:
+            return result.data[0]["role"]
+        else:
+            standardized_name = standardize_name(display_name)
+            supabase.table("users").insert({
+                "user_email": email,
+                "user_name": standardized_name,
+                "user_password": "",
+                "role": "user",
+            }).execute()
+            return "user"
+    except Exception:
+        return "user"
+
+user_is_logged_in = getattr(st.user, "is_logged_in", False)
+
+if user_is_logged_in and not st.session_state.get("logged_in"):
+    email = st.user.email
+    display_name = st.user.name or email
+    role = get_or_create_user(email, display_name)
+    st.session_state.logged_in = True
+    st.session_state.username = email
+    st.session_state.role = role
+    st.session_state.display_name = standardize_name(display_name)
+
 if not st.session_state.get("logged_in"):
     st.warning("Please log in first.")
     st.stop()

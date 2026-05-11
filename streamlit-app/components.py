@@ -265,16 +265,16 @@ def validate_password(password: str) -> bool:
 
 def get_user_id(username: str):
     """
-    Get user ID from username.
+    Get user ID from username (email).
     
     Args:
-        username: Username to look up
+        username: User email to look up
         
     Returns:
         User ID if found, None otherwise
     """
     try:
-        res = supabase.table("users").select("user_id").eq("user_name", username).execute()
+        res = supabase.table("users").select("user_id").eq("user_email", username).execute()
         if res.data:
             return res.data[0]["user_id"]
     except Exception:
