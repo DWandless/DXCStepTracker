@@ -43,9 +43,11 @@ if "token" not in st.session_state:
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "username" not in st.session_state:
-    st.session_state["username"] = ""
+    st.session_state["username"] = ""  # Will store email
 if "display_name" not in st.session_state:
-    st.session_state["display_name"] = ""
+    st.session_state["display_name"] = ""  # Will store formatted name
+if "user_email" not in st.session_state:
+    st.session_state["user_email"] = ""
 
 # ------------------ UTILITIES ------------------
 def standardize_name(name):
@@ -134,8 +136,9 @@ if token:
             if not st.session_state.logged_in:
                 username = get_or_create_user(user_email, user_name)
                 st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.display_name = username
+                st.session_state.username = user_email  # Store email for database lookups
+                st.session_state.display_name = username  # Store formatted name for display
+                st.session_state.user_email = user_email  # Also store email explicitly
                 logging.info(f"User logged in: {username} ({user_email})")
             
             st.success(f"Welcome, **{st.session_state.display_name}**!")
