@@ -60,10 +60,15 @@ def get_or_create_user(email, display_name):
 # Check if user is authenticated via Streamlit's built-in auth
 st.write("🔍 **DEBUG INFO:**")
 st.write(f"- `st.user` object: {st.user}")
-st.write(f"- `st.user` type: {type(st.user)}")
-st.write(f"- `st.user` dir: {dir(st.user)}")
 
-# Try different ways to check authentication
+# Try to get user dict
+try:
+    user_dict = st.user.to_dict()
+    st.write(f"- `st.user.to_dict()`: {user_dict}")
+except Exception as e:
+    st.write(f"- `st.user.to_dict()` error: {e}")
+
+# Check authentication status
 user_is_logged_in = getattr(st.user, "is_logged_in", False)
 st.write(f"- `st.user.is_logged_in`: {user_is_logged_in}")
 st.write(f"- `st.session_state.logged_in`: {st.session_state.get('logged_in', False)}")
@@ -71,6 +76,13 @@ st.write(f"- `st.session_state.logged_in`: {st.session_state.get('logged_in', Fa
 # Check if email exists (alternative way to verify auth)
 user_email = getattr(st.user, "email", None)
 st.write(f"- `st.user.email`: {user_email}")
+
+# Check all keys
+try:
+    keys = st.user.keys()
+    st.write(f"- `st.user.keys()`: {list(keys)}")
+except Exception as e:
+    st.write(f"- `st.user.keys()` error: {e}")
 
 if user_email:
     # User is authenticated (has email from Entra)
@@ -89,12 +101,10 @@ if user_email:
         logging.info(f"User logged in: {username} ({email})")
         st.write(f"✅ User authenticated: {username}")
     
-    # Auto-redirect to Home page after successful login
-    st.success(f"Welcome, **{st.session_state.display_name}**! Redirecting to home...")
-    st.write("⏳ Redirecting in 2 seconds...")
-    import time
-    time.sleep(2)
-    st.switch_page("Home.py")
+    # Show success and manual link instead of auto-redirect
+    st.success(f"Welcome, **{st.session_state.display_name}**!")
+    st.page_link("Home.py", label="🏠 Click here to go to Home", icon="🏠")
+    st.button("Log out", on_click=st.logout)
 else:
     st.write("❌ Not authenticated via Microsoft Entra (no email found)")
     st.session_state.logged_in = False
