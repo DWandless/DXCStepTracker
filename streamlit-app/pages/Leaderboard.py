@@ -8,6 +8,10 @@ from components import apply_dxc_theme, setup_logo, render_header, render_footer
 logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
 st.set_page_config(page_title="Leaderboard", layout="wide", page_icon=logo_path2)
 
+# ------------------ FOOTER & BRANDING (ALWAYS RENDER) ------------------
+render_footer()
+hide_streamlit_branding()
+
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
 setup_logo(Path(__file__).resolve().parents[1])
@@ -124,7 +128,7 @@ with tab2:
     with col2:
         team_view_option = st.selectbox(
             "Show:",
-            ["All", "Top 5"],
+            ["All", "Top 10", "Bottom 10"],
             key="team_view"
         )
     
@@ -185,33 +189,33 @@ with tab2:
             "member_count": "Members"
         }, inplace=True)
         
-        # Sort by total steps
-        team_leaderboard = team_leaderboard.sort_values("Total Steps", ascending=False)
-        
-        # Apply view filter
-        if team_view_option == "Top 5":
-            team_leaderboard = team_leaderboard.head(5)
+        # ------------------ SORTING OPTIONS ------------------
+        if team_view_option == "Top 10":
+            team_leaderboard = team_leaderboard.sort_values("Total Steps", ascending=False).head(10)
+        elif team_view_option == "Bottom 10":
+            team_leaderboard = team_leaderboard.sort_values("Total Steps", ascending=True).head(10)
+        else:  # All
+            team_leaderboard = team_leaderboard.sort_values("Total Steps", ascending=False)
         
         team_leaderboard.reset_index(drop=True, inplace=True)
         team_leaderboard.index += 1  # Start rank from 1
         
-        # ------------------ DISPLAY TEAM LEADERBOARD ------------------
+        # ------------------ DISPLAY ------------------
         st.subheader("Team Leaderboard")
         if team_selected_date:
             st.caption(f"Showing results for **{team_selected_date}**")
         else:
             st.caption("Showing **all-time** results")
         
-        st.dataframe(team_leaderboard, use_container_width=True)
-        
-        # Highlight top team
-        if not team_leaderboard.empty:
-            top_team = team_leaderboard.iloc[0]
-            st.success(f"✪ **{top_team['Team Name']}** is leading with {int(top_team['Total Steps'])} total steps!")
+        if team_leaderboard.empty:
+            st.info("No data available to display.")
+        else:
+            st.dataframe(team_leaderboard, use_container_width=True)
+            
+            # Highlight top team (only for All or Top 10 views)
+            if team_view_option != "Bottom 10" and not team_leaderboard.empty:
+                top_team = team_leaderboard.iloc[0]
+                st.success(f"✪ {top_team['Team Name']} is leading with {int(top_team['Total Steps'])} steps!")
         
     except Exception as e:
         st.error(f"Error loading team leaderboard: {str(e)}")
-
-# ------------------ FOOTER ------------------
-render_footer()
-hide_streamlit_branding()
