@@ -60,35 +60,25 @@ def standardize_name(name):
 def get_or_create_user(email, display_name):
     """Get existing user or create new user in database, return formatted name."""
     try:
-        st.write(f"Checking database for user: {email}")
-        
         # Check if user exists by email
         result = supabase.table("users").select("user_id, user_name").eq("user_email", email).execute()
-        st.write(f"Database query result: {result.data}")
         
         if result.data:
             # User exists, return their name
-            st.success(f"Existing user found: {result.data[0]['user_name']}")
             return result.data[0]["user_name"]
         else:
             # New user - create account
             standardized_name = standardize_name(display_name)
-            st.write(f"Creating new user: {standardized_name} ({email})")
             
-            insert_result = supabase.table("users").insert({
+            supabase.table("users").insert({
                 "user_email": email,
                 "user_name": standardized_name,
             }).execute()
             
-            st.write(f"Insert result: {insert_result.data}")
-            st.success(f"New user created: {standardized_name}")
             logging.info(f"New user created: {email} ({standardized_name})")
             return standardized_name
     except Exception as e:
-        st.error(f"Database error in get_or_create_user: {e}")
         logging.error(f"Database error in get_or_create_user: {e}")
-        import traceback
-        st.code(traceback.format_exc())
         return standardize_name(display_name)
 
 # ------------------ HANDLE MICROSOFT REDIRECT ------------------
@@ -119,25 +109,19 @@ if token:
     try:
         import jwt
         
-        # Debug: Show what we received
-        st.write("🔍 **DEBUG: Token received**")
-        st.write(f"Token keys: {list(token.keys())}")
-        
-        # Try to decode access_token or id_token
+        # Decode token
         token_to_decode = token.get("id_token") or token.get("access_token")
         
         if not token_to_decode:
-            st.error("No valid token found in response")
-            st.write(f"Token content: {token}")
+            st.error("Authentication failed. Please try again.")
+            if st.button("Try Again"):
+                st.session_state.clear()
+                st.rerun()
         else:
             decoded = jwt.decode(token_to_decode, options={"verify_signature": False})
-            st.write(f"Decoded token claims: {decoded}")
             
             user_email = decoded.get("preferred_username") or decoded.get("email") or decoded.get("upn") or decoded.get("unique_name") or ""
             user_name_raw = decoded.get("name", "Unknown User")
-            
-            st.write(f"Extracted email: {user_email}")
-            st.write(f"Extracted name: {user_name_raw}")
             
             # Format name
             if "," in user_name_raw:
@@ -164,8 +148,6 @@ if token:
     except Exception as e:
         st.error(f"Error processing authentication: {e}")
         logging.error(f"Token processing error: {e}")
-        import traceback
-        st.code(traceback.format_exc())
         if st.button("Try Again"):
             st.session_state.clear()
             st.rerun()
@@ -179,8 +161,6 @@ else:
         resource=CLIENT_ID,  # v1.0 uses resource parameter instead of scope
     )
     
-    st.markdown("### Sign in to DXC Step Tracker")
-    st.write("Please sign in with your Microsoft account to access the application.")
     st.link_button("Sign in with Microsoft", auth_url, type="primary")
 
 # ------------------ SIDEBAR ------------------
