@@ -31,7 +31,6 @@ with st.form("signup_form"):
     username = st.text_input("Enter your full name")
     password = st.text_input("Choose a password", type="password")
     confirm_password = st.text_input("Confirm password", type="password")
-    is_admin = False  # Always false for security
 
     submitted = st.form_submit_button("Register")
 
@@ -60,16 +59,18 @@ with st.form("signup_form"):
                     st.stop()
 
                 # --- Attempt Registration ---
-                response = register_user(username, password, is_admin)
+                response = register_user(username, password)
 
                 if response and response.data:
                     st.success(f"User '{username}' created successfully!")
                     st.page_link("pages/Login.py", label="Click here to log in.")
                 else:
-                    st.error("There was an issue creating your account. Please try again.")
+                    st.error("There was an issue creating your account. Please check the logs or try again.")
+                    st.error("Check app.log for details.")
             except Exception as e:
                 logging.error(f"Unexpected signup error: {e}")
-                st.error("An unexpected error occurred. Please contact support.")
+                st.error(f"An unexpected error occurred: {str(e)}")
+                st.error("Please contact support.")
 
 # ------------------ SIDEBAR ------------------
 if st.session_state.get("username"):

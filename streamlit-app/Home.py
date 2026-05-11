@@ -94,7 +94,7 @@ if render_sidebar_welcome(safe_username):
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2 = st.tabs(["✚ Submit Steps", "➜ Daily Progress"])
+tab1, tab2, tab3 = st.tabs(["✚ Submit Steps", "➜ Daily Progress", "⚑ Teams"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -227,6 +227,204 @@ with tab2:
             paper_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig, use_container_width=True, config={"staticPlot": True})
+
+# ------------------ TAB 3: TEAMS ------------------
+with tab3:
+    st.header("⚑ Team Management")
+    
+    # Get user's current team
+    try:
+        user_data = supabase.table("users").select("team_id").eq("user_id", user_id).execute()
+        current_team_id = user_data.data[0].get("team_id") if user_data.data else None
+    except Exception:
+        current_team_id = None
+    
+    if current_team_id:
+        # User is in a team - show team info
+        try:
+            team_info = supabase.table("teams").select("*").eq("team_id", current_team_id).execute()
+            team_members = supabase.table("users").select("user_name").eq("team_id", current_team_id).execute()
+            
+            if team_info.data:
+                team = team_info.data[0]
+                
+                st.subheader("Team Information")
+                st.markdown(f"**Team Name:** {team['team_name']}")
+                st.markdown(f"**Team Leader:** {team['team_leader']}")
+                
+                with st.expander(f"View Members ({len(team_members.data)}/4)", expanded=False):
+                    for member in team_members.data:
+                        st.markdown(f"• {member['user_name']}")
+                
+                st.markdown("---")
+                
+                # Check if current user is the team leader
+                is_team_leader = (username == team['team_leader'])
+                
+                if is_team_leader:
+                    # Team leader can delete the team
+                    if st.button("Delete Team", type="secondary", key="delete_team_btn"):
+                        try:
+                            # Unassign all team members
+                            supabase.table("users").update({"team_id": None}).eq("team_id", current_team_id).execute()
+                            # Delete the team
+                            supabase.table("teams").delete().eq("team_id", current_team_id).execute()
+                            st.success("Team deleted successfully. All members have been unassigned.")
+                            st.rerun()
+                        except Exception:
+                            st.error("Error deleting team. Please try again.")
+                else:
+                    # Regular members can leave the team
+                    if st.button("Leave Team", type="secondary", key="leave_team_btn"):
+                        try:
+                            supabase.table("users").update({"team_id": None}).eq("user_id", user_id).execute()
+                            st.success("You have left the team.")
+                            st.rerun()
+                        except Exception:
+                            st.error("Error leaving team. Please try again.")
+        except Exception:
+            st.error("Error loading team information.")
+    else:
+        # User is not in a team
+        # Check if user is already a team leader
+        try:
+            is_leader = supabase.table("teams").select("team_id").eq("team_leader", username).execute()
+            user_is_leader = len(is_leader.data) > 0 if is_leader.data else False
+        except Exception:
+            user_is_leader = False
+        
+        # Show tabs based on whether user is a team leader
+        if user_is_leader:
+            # User is a team leader but not in a team - only show join option
+            st.warning("You already created a team. You can only join existing teams.")
+            
+            st.subheader("Available Teams")
+            try:
+                all_teams = supabase.table("teams").select("*").execute()
+                
+                if all_teams.data:
+                    available_teams = []
+                    for team in all_teams.data:
+                        members = supabase.table("users").select("user_id").eq("team_id", team["team_id"]).execute()
+                        member_count = len(members.data) if members.data else 0
+                        
+                        if member_count < 4:
+                            team["member_count"] = member_count
+                            available_teams.append(team)
+                    
+                    if available_teams:
+                        for team in available_teams:
+                            col1, col2, col3 = st.columns([3, 1, 1])
+                            
+                            with col1:
+                                st.markdown(f"### {team['team_name']}")
+                                st.caption(f"Leader: {team['team_leader']}")
+                            
+                            with col2:
+                                st.metric("Members", f"{team['member_count']}/4")
+                            
+                            with col3:
+                                if st.button("Join", key=f"join_leader_{team['team_id']}", type="secondary"):
+                                    try:
+                                        supabase.table("users").update({"team_id": team['team_id']}).eq("user_id", user_id).execute()
+                                        st.success("Successfully joined team!")
+                                        st.rerun()
+                                    except Exception:
+                                        st.error("Error joining team.")
+                            
+                            st.markdown("---")
+                    else:
+                        st.info("No teams available to join.")
+                else:
+                    st.info("No teams exist yet.")
+            except Exception:
+                st.error("Error loading teams.")
+        else:
+            # User is not a team leader - show both tabs
+            subtab1, subtab2 = st.tabs(["Join a Team", "Create a Team"])
+            
+            with subtab1:
+                st.subheader("Available Teams")
+                try:
+                    all_teams = supabase.table("teams").select("*").execute()
+                    
+                    if all_teams.data:
+                        available_teams = []
+                        for team in all_teams.data:
+                            members = supabase.table("users").select("user_id").eq("team_id", team["team_id"]).execute()
+                            member_count = len(members.data) if members.data else 0
+                            
+                            if member_count < 4:
+                                team["member_count"] = member_count
+                                available_teams.append(team)
+                        
+                        if available_teams:
+                            for team in available_teams:
+                                col1, col2, col3 = st.columns([3, 1, 1])
+                                
+                                with col1:
+                                    st.markdown(f"### {team['team_name']}")
+                                    st.caption(f"Leader: {team['team_leader']}")
+                                
+                                with col2:
+                                    st.metric("Members", f"{team['member_count']}/4")
+                                
+                                with col3:
+                                    if st.button("Join", key=f"join_{team['team_id']}", type="secondary"):
+                                        try:
+                                            supabase.table("users").update({"team_id": team['team_id']}).eq("user_id", user_id).execute()
+                                            st.success("Successfully joined team!")
+                                            st.rerun()
+                                        except Exception:
+                                            st.error("Error joining team.")
+                                
+                                st.markdown("---")
+                        else:
+                            st.info("No teams available to join.")
+                    else:
+                        st.info("No teams exist yet. Be the first to create one!")
+                except Exception:
+                    st.error("Error loading teams.")
+            
+            with subtab2:
+                st.subheader("Create Your Team")
+                st.write("As team leader, you'll manage your team.")
+                
+                with st.form("create_team_form"):
+                    team_name = st.text_input(
+                        "Team Name",
+                        max_chars=50,
+                        help="Choose a unique name for your team (max 50 characters)"
+                    )
+                    
+                    submitted = st.form_submit_button("Create Team", type="secondary")
+                    
+                    if submitted:
+                        if not team_name or len(team_name.strip()) < 3:
+                            st.error("Team name must be at least 3 characters long.")
+                        else:
+                            try:
+                                existing = supabase.table("teams").select("team_name").eq("team_name", team_name.strip()).execute()
+                                
+                                if existing.data:
+                                    st.error("A team with this name already exists.")
+                                else:
+                                    team_response = supabase.table("teams").insert({
+                                        "team_name": team_name.strip(),
+                                        "team_leader": username
+                                    }).execute()
+                                    
+                                    if team_response.data:
+                                        new_team_id = team_response.data[0]["team_id"]
+                                        supabase.table("users").update({"team_id": new_team_id}).eq("user_id", user_id).execute()
+                                        
+                                        st.success(f"Team '{team_name}' created successfully!")
+                                        st.balloons()
+                                        st.rerun()
+                                    else:
+                                        st.error("Error creating team.")
+                            except Exception as e:
+                                st.error(f"Error: {str(e)}")
 
 # ------------------ FOOTER ------------------
 render_footer()
