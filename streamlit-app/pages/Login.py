@@ -2,6 +2,7 @@ import streamlit as st
 import logging
 from db import supabase
 from pathlib import Path
+from authlib.integrations.requests_client import OAuth2Session
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
                         hide_streamlit_branding, setup_logging)
 
@@ -17,15 +18,33 @@ render_header("DXC Step Tracker", "Log in to start tracking your steps!")
 # ------------------ LOGGING ------------------
 setup_logging()
 
+# ------------------ AZURE OAUTH CONFIG ------------------
+azure = st.secrets["azure"]
+CLIENT_ID = azure["client_id"]
+CLIENT_SECRET = azure["client_secret"]
+TENANT_ID = "93f33571-550f-43cf-b09f-cd331338d086"
+
+AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+AUTHORIZE_URL = f"{AUTHORITY}/oauth2/authorize"
+TOKEN_URL = f"{AUTHORITY}/oauth2/token"
+REDIRECT_URI = "https://dxcsteptracker.streamlit.app/"
+
+oauth = OAuth2Session(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    scope=["openid", "profile", "email"],
+    redirect_uri=REDIRECT_URI,
+)
+
 # ------------------ SESSION DEFAULTS ------------------
-defaults = {
-    "logged_in": False,
-    "username": "",
-    "display_name": "",
-}
-for key, val in defaults.items():
-    if key not in st.session_state:
-        st.session_state[key] = val
+if "token" not in st.session_state:
+    st.session_state["token"] = None
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
+if "display_name" not in st.session_state:
+    st.session_state["display_name"] = ""
 
 # ------------------ UTILITIES ------------------
 def standardize_name(name):
@@ -56,66 +75,83 @@ def get_or_create_user(email, display_name):
         logging.error(f"Database error in get_or_create_user: {e}")
         return standardize_name(display_name)
 
-# ------------------ LOGIN FLOW ------------------
-# Check if user is authenticated via Streamlit's built-in auth
-st.write("🔍 **DEBUG INFO:**")
-st.write(f"- `st.user` object: {st.user}")
+# ------------------ HANDLE MICROSOFT REDIRECT ------------------
+query_params = st.query_params
 
-# Try to get user dict
-try:
-    user_dict = st.user.to_dict()
-    st.write(f"- `st.user.to_dict()`: {user_dict}")
-except Exception as e:
-    st.write(f"- `st.user.to_dict()` error: {e}")
+if "code" in query_params and st.session_state["token"] is None:
+    try:
+        token = oauth.fetch_token(
+            url=TOKEN_URL,
+            grant_type="authorization_code",
+            code=query_params["code"],
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            redirect_uri=REDIRECT_URI,
+        )
+        st.session_state["token"] = token
+        st.query_params.clear()
+        st.rerun()
+    except Exception as e:
+        st.error(f"Authentication failed: {e}")
+        logging.error(f"OAuth token fetch error: {e}")
 
-# Check authentication status
-user_is_logged_in = getattr(st.user, "is_logged_in", False)
-st.write(f"- `st.user.is_logged_in`: {user_is_logged_in}")
-st.write(f"- `st.session_state.logged_in`: {st.session_state.get('logged_in', False)}")
+# ------------------ LOGGED-IN FLOW ------------------
+token = st.session_state["token"]
 
-# Check if email exists (alternative way to verify auth)
-user_email = getattr(st.user, "email", None)
-st.write(f"- `st.user.email`: {user_email}")
-
-# Check all keys
-try:
-    keys = st.user.keys()
-    st.write(f"- `st.user.keys()`: {list(keys)}")
-except Exception as e:
-    st.write(f"- `st.user.keys()` error: {e}")
-
-if user_email:
-    # User is authenticated (has email from Entra)
-    st.write(f"✅ Email found: {user_email}")
-    st.write(f"- `st.user.name`: {getattr(st.user, 'name', 'N/A')}")
+if token and "access_token" in token:
+    # Get user info from token
+    try:
+        # Extract email and name from token (simplified - you may need to decode JWT)
+        # For now, we'll use a simple approach
+        import jwt
+        decoded = jwt.decode(token["access_token"], options={"verify_signature": False})
+        user_email = decoded.get("preferred_username") or decoded.get("email") or decoded.get("upn") or ""
+        user_name_raw = decoded.get("name", "Unknown User")
+        
+        # Format name
+        if "," in user_name_raw:
+            last, first = [x.strip() for x in user_name_raw.split(",", 1)]
+            user_name = f"{first} {last}"
+        else:
+            user_name = user_name_raw.strip()
+        
+        if not st.session_state.logged_in:
+            username = get_or_create_user(user_email, user_name)
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.session_state.display_name = username
+            logging.info(f"User logged in: {username} ({user_email})")
+        
+        st.success(f"Welcome, **{st.session_state.display_name}**!")
+        st.page_link("Home.py", label="🏠 Click here to go to Home", icon="🏠")
+        
+        if st.button("Log out"):
+            st.session_state.clear()
+            st.rerun()
     
-    email = user_email
-    display_name = getattr(st.user, "name", email)
-    
-    if not st.session_state.logged_in:
-        st.info("🔄 Creating/fetching user from database...")
-        username = get_or_create_user(email, display_name)
-        st.session_state.logged_in = True
-        st.session_state.username = username
-        st.session_state.display_name = username
-        logging.info(f"User logged in: {username} ({email})")
-        st.write(f"✅ User authenticated: {username}")
-    
-    # Show success and manual link instead of auto-redirect
-    st.success(f"Welcome, **{st.session_state.display_name}**!")
-    st.page_link("Home.py", label="🏠 Click here to go to Home", icon="🏠")
-    st.button("Log out", on_click=st.logout)
+    except Exception as e:
+        st.error(f"Error processing authentication: {e}")
+        logging.error(f"Token processing error: {e}")
+        if st.button("Try Again"):
+            st.session_state.clear()
+            st.rerun()
+
+# ------------------ LOGIN BUTTON (NOT LOGGED IN) ------------------
 else:
-    st.write("❌ Not authenticated via Microsoft Entra (no email found)")
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.session_state.display_name = ""
-    st.button("Sign in with Microsoft", on_click=st.login)
+    auth_url, _ = oauth.create_authorization_url(
+        AUTHORIZE_URL,
+        prompt="select_account",
+        resource=CLIENT_ID,
+    )
+    
+    st.markdown("### Sign in to DXC Step Tracker")
+    st.write("Please sign in with your Microsoft account to access the application.")
+    st.link_button("Sign in with Microsoft", auth_url, type="primary")
 
 # ------------------ SIDEBAR ------------------
 if st.session_state.logged_in:
     if render_sidebar_welcome(st.session_state.username):
-        st.logout()
+        st.session_state.clear()
         st.rerun()
 
 # ------------------ FOOTER ------------------
