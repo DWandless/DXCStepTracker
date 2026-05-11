@@ -14,8 +14,7 @@ from components import (apply_dxc_theme, setup_logo, render_header, render_foote
 logo_path2 = Path(__file__).resolve().parent / "assets" / "logo.png"
 st.set_page_config(page_title="DXC Step Tracker", layout="wide", page_icon=logo_path2)
 
-# ------------------ FOOTER & BRANDING (ALWAYS RENDER) ------------------
-render_footer()
+# Hide branding early
 hide_streamlit_branding()
 
 UPLOAD_FOLDER = "uploads"
@@ -392,3 +391,6 @@ with tab3:
                                         st.error("Error creating team.")
                             except Exception as e:
                                 st.error(f"Error: {str(e)}")
+
+# ------------------ FOOTER (ALWAYS RENDER) ------------------
+render_footer()

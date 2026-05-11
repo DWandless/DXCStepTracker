@@ -16,8 +16,7 @@ from components import (apply_dxc_theme, setup_logo, render_header, render_foote
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
 st.set_page_config(page_title="Admin Dashboard", layout="wide", page_icon=logo_path)
 
-# ------------------ FOOTER & BRANDING (ALWAYS RENDER) ------------------
-render_footer()
+# Hide branding early
 hide_streamlit_branding()
 
 # ------------------ APPLY THEME & LOGO ------------------
@@ -221,3 +220,6 @@ else:
         if st.button("Cancel", key="cancel_clear_btn"):
             st.session_state["confirm_clear"] = False
             st.rerun()
+
+# ------------------ FOOTER (ALWAYS RENDER) ------------------
+render_footer()

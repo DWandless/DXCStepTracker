@@ -8,8 +8,7 @@ from components import apply_dxc_theme, setup_logo, render_header, render_footer
 logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
 st.set_page_config(page_title="Leaderboard", layout="wide", page_icon=logo_path2)
 
-# ------------------ FOOTER & BRANDING (ALWAYS RENDER) ------------------
-render_footer()
+# Hide branding early
 hide_streamlit_branding()
 
 # ------------------ APPLY THEME & LOGO ------------------
@@ -219,3 +218,6 @@ with tab2:
         
     except Exception as e:
         st.error(f"Error loading team leaderboard: {str(e)}")
+
+# ------------------ FOOTER (ALWAYS RENDER) ------------------
+render_footer()
