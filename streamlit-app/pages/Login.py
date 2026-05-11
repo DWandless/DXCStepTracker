@@ -21,7 +21,6 @@ setup_logging()
 defaults = {
     "logged_in": False,
     "username": "",
-    "role": "",
     "display_name": "",
 }
 for key, val in defaults.items():
@@ -39,21 +38,23 @@ def standardize_name(name):
 def get_or_create_user(email, display_name):
     """Get existing user or create new user in database, return role."""
     try:
-        result = supabase.table("users").select("role").eq("user_email", email).execute()
+        # Check if user exists by email
+        result = supabase.table("users").select("user_id, user_name").eq("user_email", email).execute()
         if result.data:
-            return result.data[0]["role"]
+            # User exists, return their name
+            return result.data[0]["user_name"]
         else:
+            # New user - create account
             standardized_name = standardize_name(display_name)
             supabase.table("users").insert({
                 "user_email": email,
                 "user_name": standardized_name,
-                "user_password": "",
-                "role": "user",
             }).execute()
-            return "user"
+            logging.info(f"New user created: {email} ({standardized_name})")
+            return standardized_name
     except Exception as e:
-        logging.error(f"Database error: {e}")
-        return "user"
+        logging.error(f"Database error in get_or_create_user: {e}")
+        return standardize_name(display_name)
 
 # ------------------ LOGIN FLOW ------------------
 user_is_logged_in = getattr(st.user, "is_logged_in", False)
@@ -63,20 +64,17 @@ if user_is_logged_in:
     display_name = st.user.name or email
     
     if not st.session_state.logged_in:
-        role = get_or_create_user(email, display_name)
+        username = get_or_create_user(email, display_name)
         st.session_state.logged_in = True
-        st.session_state.username = email
-        st.session_state.role = role
-        st.session_state.display_name = standardize_name(display_name)
+        st.session_state.username = username
+        st.session_state.display_name = username
     
     st.success(f"Welcome, **{st.session_state.display_name}**!")
-    st.info(f"Logged in as **{st.session_state.username}** ({st.session_state.role})")
     st.page_link("Home.py", label=" 🏠︎ Click here to go to the home page.")
     st.button("Log out", on_click=st.logout)
 else:
     st.session_state.logged_in = False
     st.session_state.username = ""
-    st.session_state.role = ""
     st.session_state.display_name = ""
     st.button("Sign in with Microsoft", on_click=st.login)
 
@@ -85,10 +83,6 @@ if st.session_state.logged_in:
     if render_sidebar_welcome(st.session_state.username):
         st.logout()
         st.rerun()
-
-# ------------------ SIGN-UP LINK ------------------
-st.markdown("---")
-st.page_link("pages/Signup.py", label="🗎 Don't have an account? Sign up now")
 
 # ------------------ FOOTER ------------------
 render_footer()
