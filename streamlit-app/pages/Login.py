@@ -58,19 +58,27 @@ def get_or_create_user(email, display_name):
 
 # ------------------ LOGIN FLOW ------------------
 # Check if user is authenticated via Streamlit's built-in auth
-user_is_logged_in = getattr(st.user, "is_logged_in", False)
-
-# DEBUG: Show authentication status
 st.write("🔍 **DEBUG INFO:**")
+st.write(f"- `st.user` object: {st.user}")
+st.write(f"- `st.user` type: {type(st.user)}")
+st.write(f"- `st.user` dir: {dir(st.user)}")
+
+# Try different ways to check authentication
+user_is_logged_in = getattr(st.user, "is_logged_in", False)
 st.write(f"- `st.user.is_logged_in`: {user_is_logged_in}")
 st.write(f"- `st.session_state.logged_in`: {st.session_state.get('logged_in', False)}")
 
-if user_is_logged_in:
-    st.write(f"- `st.user.email`: {getattr(st.user, 'email', 'N/A')}")
+# Check if email exists (alternative way to verify auth)
+user_email = getattr(st.user, "email", None)
+st.write(f"- `st.user.email`: {user_email}")
+
+if user_email:
+    # User is authenticated (has email from Entra)
+    st.write(f"✅ Email found: {user_email}")
     st.write(f"- `st.user.name`: {getattr(st.user, 'name', 'N/A')}")
     
-    email = st.user.email
-    display_name = st.user.name or email
+    email = user_email
+    display_name = getattr(st.user, "name", email)
     
     if not st.session_state.logged_in:
         st.info("🔄 Creating/fetching user from database...")
@@ -88,7 +96,7 @@ if user_is_logged_in:
     time.sleep(2)
     st.switch_page("Home.py")
 else:
-    st.write("❌ Not authenticated via Microsoft Entra")
+    st.write("❌ Not authenticated via Microsoft Entra (no email found)")
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.display_name = ""
