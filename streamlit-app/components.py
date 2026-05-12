@@ -281,14 +281,15 @@ def get_all_existing_codes(challenges: list[dict]) -> set[str]:
 
 def get_all_challenges():
     """
-    Fetch all challenges from the database.
+    Fetch all challenges from the Challenges.json file.
     
     Returns:
-        List of challenge dicts, or empty list if none found
+        List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        res = supabase.table("challenges").select("*").execute()
-        return res.data if res.data else []
+        with open("streamlit-app\\Challenges.json", "r") as f:
+            import json
+            return json.load(f)
     except Exception:
         return []
 
