@@ -11,7 +11,7 @@
             "title": "5‑Day Consistency",
             "description": "Hit your step goal for 5 days in a row.",
             "Reward": 10,
-            "Codes": []
+            "Codes": ["abc"]
         },
         "Challenge3": {
             "id": "Challenge3",

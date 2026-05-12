@@ -279,6 +279,7 @@ def get_all_existing_codes(challenges: list[dict]) -> set[str]:
                 existing.add(c.strip().upper())
     return existing
 
+
 def get_all_challenges():
     """
     Fetch all challenges from the Challenges.json file.
@@ -287,7 +288,7 @@ def get_all_challenges():
         List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        with open("Challenges.json", "r") as f:
+        with open("streamlit-app\\Challenges.json", "r") as f:
             import json
             return json.load(f)
     except Exception:
@@ -327,20 +328,18 @@ def generate_claim_code(challenges: list[dict], AlreadyGenerated: set[str], leng
 
 def validate_claim_code(challenges: list[dict], code: str) -> bool:
     """
-    Validate if a claim code exists in any challenge's Codes list.
+    Validate a claim code against the list of challenges.
     
     Args:
-        challenges: List of challenge dicts containing "Codes" lists
-        code: Claim code to validate
-        
+        challenges: List of challenge dicts, each containing a "Codes" list
+        code: The claim code to validate
+    
     Returns:
-        True if code is valid, False otherwise
+        True if the code is valid (exists in any challenge's "Codes" list), False otherwise
     """
-    code = code.strip().upper()
-    for ch in challenges:
-        if "Codes" in ch and isinstance(ch["Codes"], list):
-            if any(isinstance(c, str) and c.strip().upper() == code for c in ch["Codes"]):
-                return True
+    for challenge in challenges:
+        if code in challenges[challenge]["Codes"]:
+            return True
     return False
 
 # ==================== DATABASE FUNCTIONS ====================
