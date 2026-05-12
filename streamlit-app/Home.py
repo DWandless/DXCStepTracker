@@ -69,7 +69,7 @@ if render_sidebar_welcome():
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "AI Challenges",  "➜ Daily Progress", "⚑ Teams"])
+tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "✦ AI Challenges",  "➜ Daily Progress", "⚑ Teams"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -172,7 +172,7 @@ with tab1:
 
 # ------------------ TAB 2: AI Challenges ------------------
 with tab2:
-    st.header("🤖 AI Challenges")
+    st.header("✦ AI Challenges")
     st.caption("Complete challenges and redeem your unique claim codes.")
 
     # ------------------ Mock Challenge Data (UI only) ------------------
@@ -230,7 +230,7 @@ with tab2:
                             st.error("Please enter a claim code.")
                         else:
                             # UI-only behaviour (no backend)
-                            st.success("✅ Claim code submitted successfully!")
+                            st.success("Claim code submitted successfully!")
                             st.caption("Verification will be applied later.")
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
