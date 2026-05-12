@@ -172,8 +172,66 @@ with tab1:
 
 # ------------------ TAB 2: AI Challenges ------------------
 with tab2:
-    st.header("✚ AI Challenges")
+    st.header("🤖 AI Challenges")
+    st.caption("Complete challenges and redeem your unique claim codes.")
 
+    # ------------------ Mock Challenge Data (UI only) ------------------
+    challenges = [
+        {
+            "id": "challenge_1",
+            "title": "10k Steps Day",
+            "description": "Walk 10,000 steps in a single day and upload proof.",
+        },
+        {
+            "id": "challenge_2",
+            "title": "5‑Day Consistency",
+            "description": "Hit your step goal for 5 days in a row.",
+        },
+        {
+            "id": "challenge_3",
+            "title": "Team Effort",
+            "description": "All team members submit steps on the same day.",
+        },
+    ]
+
+    st.divider()
+
+    # ------------------ Challenges List ------------------
+    for ch in challenges:
+        with st.container(border=True):
+            left, right = st.columns([8, 2])
+
+            with left:
+                st.subheader(ch["title"])
+                st.write(ch["description"])
+
+            with right:
+                toggle_key = f"show_redeem_{ch['id']}"
+                if toggle_key not in st.session_state:
+                    st.session_state[toggle_key] = False
+
+                if st.button("Redeem", key=f"redeem_btn_{ch['id']}", type="secondary"):
+                    st.session_state[toggle_key] = not st.session_state[toggle_key]
+
+            # ------------------ Redeem UI ------------------
+            if st.session_state[toggle_key]:
+                st.markdown("**Redeem your challenge**")
+
+                with st.form(key=f"redeem_form_{ch['id']}", clear_on_submit=True):
+                    claim_code = st.text_input(
+                        "Enter unique claim code",
+                        placeholder="e.g. DXC-STEP-ABC123"
+                    )
+
+                    submitted = st.form_submit_button("Submit Code", type="primary")
+
+                    if submitted:
+                        if not claim_code.strip():
+                            st.error("Please enter a claim code.")
+                        else:
+                            # UI-only behaviour (no backend)
+                            st.success("✅ Claim code submitted successfully!")
+                            st.caption("Verification will be applied later.")
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
