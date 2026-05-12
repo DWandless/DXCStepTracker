@@ -127,6 +127,7 @@ with tab1:
                 img_bytes = img_byte_arr.getvalue()
                 
                 file_url = None
+                file_id = ""
                 
                 # For steps >= 20,000, upload to OneDrive
                 if steps >= 20000:
@@ -137,16 +138,14 @@ with tab1:
                         
                         if upload_result["success"]:
                             file_url = upload_result["url"]
-                            st.info("📁 Evidence uploaded to OneDrive for admin verification.")
+                            file_id = upload_result.get("file_id", "")
                         else:
-                            st.warning(f"Could not upload to OneDrive: {upload_result.get('error', 'Unknown error')}. Saving locally instead.")
                             # Fallback to local storage
                             path = os.path.join(UPLOAD_FOLDER, filename)
                             with open(path, 'wb') as f:
                                 f.write(img_bytes)
                             file_url = filename
                     else:
-                        st.warning("Could not access OneDrive. Saving locally instead.")
                         # Fallback to local storage
                         path = os.path.join(UPLOAD_FOLDER, filename)
                         with open(path, 'wb') as f:
@@ -157,13 +156,18 @@ with tab1:
                     file_url = "not_required"
                 
                 # Insert into database
-                supabase.table("forms").insert({
+                form_data = {
                     "form_filepath": file_url,
                     "form_stepcount": steps,
                     "form_date": str(step_date),
                     "user_id": user_id,
                     "form_verified": False if steps >= 20000 else True  # Auto-verify if < 20k
-                }).execute()
+                }
+                # Add file_id if it's a OneDrive file
+                if file_id:
+                    form_data["form_file_id"] = file_id
+                
+                supabase.table("forms").insert(form_data).execute()
 
                 # Record new submission time
                 st.session_state.last_submission_time = now
