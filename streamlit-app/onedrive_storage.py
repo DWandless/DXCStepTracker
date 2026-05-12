@@ -203,26 +203,50 @@ def get_file_id_from_sharing_url(sharing_url, access_token):
     """
     try:
         import base64
+        import urllib.parse
+        
+        # Clean the URL - remove any fragment or query parameters
+        clean_url = sharing_url.split('?')[0].split('#')[0]
         
         # Encode the sharing URL as base64 (URL-safe, without padding)
-        encoded_url = base64.urlsafe_b64encode(sharing_url.encode('utf-8')).decode('utf-8').rstrip('=')
+        # Microsoft Graph expects the URL to be base64-encoded without padding
+        encoded_url = base64.urlsafe_b64encode(clean_url.encode('utf-8')).decode('utf-8').rstrip('=')
         
         headers = {
             "Authorization": f"Bearer {access_token}"
         }
         
-        # Try the /shares endpoint first
+        # Try the /shares endpoint first (this is the recommended approach)
         url = f"{GRAPH_API_ENDPOINT}/shares/{encoded_url}/driveItem"
         response = requests.get(url, headers=headers)
+        
+        logging.info(f"Trying /shares endpoint with URL: {url}")
+        logging.info(f"Response status: {response.status_code}")
         
         if response.status_code == 200:
             file_id = response.json().get("id")
             logging.info(f"Successfully resolved sharing URL to file_id: {file_id}")
             return file_id
         
+        # Try with u! prefix for encoded URLs
+        encoded_url_with_prefix = f"u!{encoded_url}"
+        url = f"{GRAPH_API_ENDPOINT}/shares/{encoded_url_with_prefix}/driveItem"
+        response = requests.get(url, headers=headers)
+        
+        logging.info(f"Trying /shares endpoint with u! prefix: {url}")
+        logging.info(f"Response status: {response.status_code}")
+        
+        if response.status_code == 200:
+            file_id = response.json().get("id")
+            logging.info(f"Successfully resolved sharing URL to file_id (with u! prefix): {file_id}")
+            return file_id
+        
         # Fallback to /me/drive/shared endpoint
         url = f"{GRAPH_API_ENDPOINT}/me/drive/shared/{encoded_url}/driveitem"
         response = requests.get(url, headers=headers)
+        
+        logging.info(f"Trying /me/drive/shared endpoint: {url}")
+        logging.info(f"Response status: {response.status_code}")
         
         if response.status_code == 200:
             file_id = response.json().get("id")
