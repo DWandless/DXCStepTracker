@@ -1,0 +1,23 @@
+{
+        "Challenge1": {
+            "id": "Challenge1",
+            "title": "10k Steps Day",
+            "description": "Walk 10,000 steps in a single day and upload proof.",
+            "Reward": 10,
+            "Codes": []
+        },
+        "Challenge2": {
+            "id": "Challenge2",
+            "title": "5‑Day Consistency",
+            "description": "Hit your step goal for 5 days in a row.",
+            "Reward": 10,
+            "Codes": []
+        },
+        "Challenge3": {
+            "id": "Challenge3",
+            "title": "Team Effort",
+            "description": "All team members submit steps on the same day.",
+            "Reward": 10,
+            "Codes": []
+        }
+}

@@ -203,6 +203,30 @@ if not df.empty:
 else:
     st.info("No step data available.")
 
+# ------------------ 3. GENERATE CLAIM CODES ------------------
+st.subheader(
+    "Generate Claim Codes",
+    help="Create unique claim codes for verified step submissions."
+)
+from components import get_all_challenges, generate_claim_code
+
+ChallengesDropdown = st.selectbox("Select Challenge", options=[ch["title"] for ch in get_all_challenges()])
+num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
+if st.button("Generate Claim Codes"):
+    generated_codes = [generate_claim_code() for _ in range(num_codes)]
+
+    with open("../Challenges.json", "r+") as f:
+        import json
+        challenges = json.load(f)
+        for challenge in challenges:
+            if challenge["title"] == ChallengesDropdown:
+                challenge["Codes"].extend(generated_codes)
+        f.seek(0)
+        json.dump(challenges, f, indent=4)
+        f.truncate()
+
+    st.success(f"Generated {num_codes} claim codes for challenge: {ChallengesDropdown}")
+    st.write(generated_codes)
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()
