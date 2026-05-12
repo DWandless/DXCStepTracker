@@ -153,11 +153,10 @@ if token:
 
 # ------------------ LOGIN BUTTON (NOT LOGGED IN) ------------------
 else:
-    # Create auth URL with resource parameter for v1.0 endpoint
+    # Create auth URL (same as WWTW app)
     auth_url, _ = oauth.create_authorization_url(
         AUTHORIZE_URL,
         prompt="select_account",
-        resource=CLIENT_ID,  # v1.0 uses resource parameter instead of scope
     )
     
     st.link_button("Sign in with Microsoft", auth_url, type="primary")
