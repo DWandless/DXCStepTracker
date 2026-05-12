@@ -176,28 +176,12 @@ with tab2:
     st.caption("Complete challenges and redeem your unique claim codes.")
 
     # ------------------ Mock Challenge Data (UI only) ------------------
-    challenges = [
-        {
-            "id": "challenge_1",
-            "title": "10k Steps Day",
-            "description": "Walk 10,000 steps in a single day and upload proof.",
-        },
-        {
-            "id": "challenge_2",
-            "title": "5‑Day Consistency",
-            "description": "Hit your step goal for 5 days in a row.",
-        },
-        {
-            "id": "challenge_3",
-            "title": "Team Effort",
-            "description": "All team members submit steps on the same day.",
-        },
-    ]
 
     st.divider()
 
     # ------------------ Challenges List ------------------
-    for ch in challenges:
+    from components import get_all_challenges
+    for ch in get_all_challenges():
         with st.container(border=True):
             left, right = st.columns([8, 2])
 
@@ -224,14 +208,19 @@ with tab2:
                     )
 
                     submitted = st.form_submit_button("Submit Code", type="primary")
-
+                    from components import validate_claim_code
                     if submitted:
-                        if not claim_code.strip():
-                            st.error("Please enter a claim code.")
+                        if not validate_claim_code(get_all_challenges(), claim_code):
+                            st.error("Please enter a valid claim code.")
                         else:
+<<<<<<< HEAD
                             # UI-only behaviour (no backend)
                             st.success("Claim code submitted successfully!")
                             st.caption("Verification will be applied later.")
+=======
+                            
+                            st.success("✅ Claim code submitted successfully!")
+>>>>>>> beaf3e085a92a94d74dbb0766e47a71e0b3fe54e
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")

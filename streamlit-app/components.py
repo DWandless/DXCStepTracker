@@ -12,6 +12,7 @@ import logging
 from pathlib import Path
 from streamlit.components.v1 import html as st_html
 from db import supabase
+import string, random
 
 
 def apply_dxc_theme():
@@ -262,6 +263,81 @@ def validate_password(password: str) -> bool:
     """
     return bool(re.match(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$', password))
 
+# ==================== CHALLENGE FUNCTIONS ====================
+
+def get_all_existing_codes(challenges: list[dict]) -> set[str]:
+    """
+    Collect all claim codes across all challenges.
+
+    Returns:
+        A set of codes (uppercased) for fast membership checks.
+    """
+    existing = set()
+    for ch in challenges:
+        for c in ch.get("Codes", []):
+            if isinstance(c, str):
+                existing.add(c.strip().upper())
+    return existing
+
+def get_all_challenges():
+    """
+    Fetch all challenges from the database.
+    
+    Returns:
+        List of challenge dicts, or empty list if none found
+    """
+    try:
+        res = supabase.table("challenges").select("*").execute()
+        return res.data if res.data else []
+    except Exception:
+        return []
+
+def generate_claim_code(challenges: list[dict], length: int = 8, max_attempts: int = 10_000) -> str:
+    """
+    Generate a random alphanumeric claim code that is unique across all challenges.
+
+    Args:
+        challenges: List of challenge dicts containing "Codes" lists
+        length: Length of the claim code (default 8)
+        max_attempts: Safety cap to prevent infinite loops
+
+    Returns:
+        A unique randomly generated claim code
+
+    Raises:
+        RuntimeError: If a unique code cannot be found within max_attempts
+        ValueError: If length is invalid
+    """
+    if length < 4:
+        raise ValueError("length should be at least 4")
+    
+    characters = string.ascii_uppercase + string.digits
+    existing_codes = get_all_existing_codes(challenges)
+
+    for _ in range(max_attempts):
+        claim_code = ''.join(random.choice(characters) for _ in range(length))
+        if claim_code not in existing_codes:
+            return claim_code
+
+    raise RuntimeError("Unable to generate a unique claim code — increase length or max_attempts.")
+
+def validate_claim_code(challenges: list[dict], code: str) -> bool:
+    """
+    Validate if a claim code exists in any challenge's Codes list.
+    
+    Args:
+        challenges: List of challenge dicts containing "Codes" lists
+        code: Claim code to validate
+        
+    Returns:
+        True if code is valid, False otherwise
+    """
+    code = code.strip().upper()
+    for ch in challenges:
+        if "Codes" in ch and isinstance(ch["Codes"], list):
+            if any(isinstance(c, str) and c.strip().upper() == code for c in ch["Codes"]):
+                return True
+    return False
 
 # ==================== DATABASE FUNCTIONS ====================
 
