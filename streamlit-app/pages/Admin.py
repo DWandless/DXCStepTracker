@@ -11,7 +11,7 @@ from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
                         hide_streamlit_branding, check_login_required, handle_logout, secure_filename)
-from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token
+from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
@@ -45,8 +45,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # replace old confirm state with a simpler pending_delete entry
 if "pending_delete" not in st.session_state:
     st.session_state["pending_delete"] = None
-if "confirm_clear" not in st.session_state:
-    st.session_state["confirm_clear"] = False
 
 # ------------------ FETCH DATA FROM SUPABASE ------------------
 def fetch_all_submissions():
@@ -144,14 +142,45 @@ if not df.empty:
             with colA:
                 if st.button("🗙 Delete Permanently", disabled=not confirm_cb, type="secondary", key=f"confirm_delete_{idx}"):
                     try:
+                        filepath = pd.get("file", "")
+                        is_onedrive = filepath.startswith("http") or "sharepoint" in filepath.lower() or "onedrive" in filepath.lower()
+                        
+                        st.write(f"DEBUG: filepath = {filepath[:100]}...")
+                        st.write(f"DEBUG: is_onedrive = {is_onedrive}")
+                        
+                        # Delete from OneDrive if applicable
+                        if is_onedrive:
+                            access_token = get_access_token()
+                            st.write(f"DEBUG: access_token exists = {access_token is not None}")
+                            if not access_token:
+                                st.warning("Could not get access token - skipping OneDrive deletion")
+                            else:
+                                file_id = get_file_id_from_sharing_url(filepath, access_token)
+                                st.write(f"DEBUG: file_id = {file_id}")
+                                if not file_id:
+                                    st.warning(f"Could not resolve file_id from sharing URL - skipping OneDrive deletion. URL: {filepath[:50]}...")
+                                else:
+                                    deleted = delete_from_onedrive(file_id, access_token)
+                                    st.write(f"DEBUG: deleted from OneDrive = {deleted}")
+                                    if deleted:
+                                        st.info("File deleted from OneDrive")
+                                    else:
+                                        st.warning("Failed to delete from OneDrive - continuing with database deletion")
+                            # If token or file_id resolution fails, continue with database deletion
+                        
+                        # Delete from database
                         supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
-                        safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
-                        file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
+                        
+                        # Delete local file if applicable
+                        if not is_onedrive:
+                            safe_name = secure_filename(os.path.basename(str(filepath)))
+                            file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                        
                         st.success("Submission deleted successfully!")
-                    except Exception:
-                        st.error("Error deleting submission.")
+                    except Exception as e:
+                        st.error(f"Error deleting submission: {str(e)}")
                     st.session_state["pending_delete"] = None
                     st.rerun()
             with colB:
@@ -174,60 +203,6 @@ if not df.empty:
 else:
     st.info("No step data available.")
 
-# ------------------ 3. EVIDENCE FOLDER ------------------
-st.subheader(
-    "Evidence Folder",
-    help="Download all uploaded screenshot evidence as a ZIP file for archival or review purposes."
-)
-folder_path = os.path.abspath(UPLOAD_FOLDER)
-st.markdown(f"Path: `{folder_path}`")
-
-if os.path.exists(UPLOAD_FOLDER) and os.listdir(UPLOAD_FOLDER):
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w") as zipf:
-        for root, _, files in os.walk(UPLOAD_FOLDER):
-            for file in files:
-                zipf.write(os.path.join(root, file), arcname=file)
-    zip_buffer.seek(0)
-    st.download_button("Download All Evidence as ZIP", zip_buffer, file_name="evidence.zip")
-else:
-    st.info("No evidence files found.")
-
-
-# ------------------ 4. RESET CHALLENGE DATA ------------------
-st.subheader(
-    "Reset Challenge Data",
-    help="Danger Zone: This will permanently delete ALL step submissions and uploaded screenshots from the database. Use this only to reset the challenge or clear test data."
-)
-st.error("⚠ Warning: This action will delete all data and cannot be undone!")
-
-if not st.session_state.get("confirm_clear"):
-    if st.button("Clear All Data"):
-        st.session_state["confirm_clear"] = True
-        st.rerun()
-else:
-    st.warning("This will permanently delete ALL form submissions and uploaded screenshots. This action cannot be undone.")
-    
-    # Confirmation checkbox
-    confirm_checkbox = st.checkbox("⚠ I understand this action is permanent and cannot be undone")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑 Confirm and Delete All Data", type="primary", disabled=not confirm_checkbox):
-            try:
-                supabase.table("forms").delete().neq("form_id", 0).execute()
-                if os.path.exists(UPLOAD_FOLDER):
-                    shutil.rmtree(UPLOAD_FOLDER)
-                    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                st.success("All data cleared successfully!")
-                st.session_state["confirm_clear"] = False
-            except Exception as e:
-                st.error(f"Error clearing data: {str(e)}")
-    
-    with col2:
-        if st.button("Cancel", key="cancel_clear_btn"):
-            st.session_state["confirm_clear"] = False
-            st.rerun()
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()
