@@ -190,6 +190,42 @@ def delete_from_onedrive(file_id, access_token):
         return False
 
 
+def get_file_id_from_sharing_url(sharing_url, access_token):
+    """
+    Resolve a sharing URL to get the OneDrive file_id.
+    
+    Args:
+        sharing_url: SharePoint/OneDrive sharing URL
+        access_token: Microsoft Graph access token
+        
+    Returns:
+        str: file_id or None
+    """
+    try:
+        import base64
+        
+        # Encode the sharing URL as base64 (URL-safe, without padding)
+        encoded_url = base64.urlsafe_b64encode(sharing_url.encode('utf-8')).decode('utf-8').rstrip('=')
+        
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        # Use the encoded sharing URL to get the drive item
+        url = f"{GRAPH_API_ENDPOINT}/me/drive/shared/{encoded_url}/driveitem"
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            return response.json().get("id")
+        
+        logging.error(f"Failed to resolve sharing URL: {response.status_code} - {response.text}")
+        return None
+        
+    except Exception as e:
+        logging.error(f"Error resolving sharing URL: {e}")
+        return None
+
+
 def get_file_download_url(file_id, access_token):
     """
     Get a temporary download URL for a file.

@@ -11,7 +11,7 @@ from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
                         hide_streamlit_branding, check_login_required, handle_logout, secure_filename)
-from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token
+from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
@@ -142,11 +142,28 @@ if not df.empty:
             with colA:
                 if st.button("🗙 Delete Permanently", disabled=not confirm_cb, type="secondary", key=f"confirm_delete_{idx}"):
                     try:
+                        filepath = pd.get("file", "")
+                        is_onedrive = filepath.startswith("http") or "sharepoint" in filepath.lower() or "onedrive" in filepath.lower()
+                        
+                        # Delete from OneDrive if applicable
+                        if is_onedrive:
+                            access_token = get_access_token()
+                            if access_token:
+                                file_id = get_file_id_from_sharing_url(filepath, access_token)
+                                if file_id:
+                                    delete_from_onedrive(file_id, access_token)
+                            # If token or file_id resolution fails, continue with database deletion
+                        
+                        # Delete from database
                         supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
-                        safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
-                        file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
+                        
+                        # Delete local file if applicable
+                        if not is_onedrive:
+                            safe_name = secure_filename(os.path.basename(str(filepath)))
+                            file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                        
                         st.success("Submission deleted successfully!")
                     except Exception:
                         st.error("Error deleting submission.")
