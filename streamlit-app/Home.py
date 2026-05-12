@@ -9,6 +9,7 @@ from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
                         secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout)
+from onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / "assets" / "logo.png"
@@ -111,22 +112,50 @@ with tab1:
             try:
                 img = Image.open(screenshot).convert("RGB")
                 filename = secure_filename(f"{safe_username}_{step_date}_{datetime.now().strftime('%H%M%S')}.jpg")
-                path = os.path.join(UPLOAD_FOLDER, filename)
-                img.save(path, format="JPEG", quality=85, optimize=True)
+                
+                # Convert image to bytes
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format="JPEG", quality=85, optimize=True)
+                img_bytes = img_byte_arr.getvalue()
+                
+                file_url = None
+                
+                # For steps >= 20,000, upload to OneDrive
+                if steps >= 20000:
+                    access_token = get_access_token()
+                    
+                    if access_token:
+                        upload_result = upload_to_onedrive(img_bytes, filename, access_token)
+                        
+                        if upload_result["success"]:
+                            file_url = upload_result["url"]
+                            st.info("📁 Evidence uploaded to OneDrive for admin verification.")
+                        else:
+                            st.warning(f"Could not upload to OneDrive: {upload_result.get('error', 'Unknown error')}. Saving locally instead.")
+                            # Fallback to local storage
+                            path = os.path.join(UPLOAD_FOLDER, filename)
+                            with open(path, 'wb') as f:
+                                f.write(img_bytes)
+                            file_url = filename
+                    else:
+                        st.warning("Could not access OneDrive. Saving locally instead.")
+                        # Fallback to local storage
+                        path = os.path.join(UPLOAD_FOLDER, filename)
+                        with open(path, 'wb') as f:
+                            f.write(img_bytes)
+                        file_url = filename
+                else:
+                    # For steps < 20,000, don't save the file (not needed for verification)
+                    file_url = "not_required"
+                
+                # Insert into database
                 supabase.table("forms").insert({
-                    "form_filepath": filename,
+                    "form_filepath": file_url,
                     "form_stepcount": steps,
                     "form_date": str(step_date),
                     "user_id": user_id,
-                    "form_verified": False
+                    "form_verified": False if steps >= 20000 else True  # Auto-verify if < 20k
                 }).execute()
-
-                # Delete the image if steps are under 10,000 (not required for verification)
-                if steps < 20000:
-                    try:
-                        os.remove(path)
-                    except FileNotFoundError:
-                        pass
 
                 # Record new submission time
                 st.session_state.last_submission_time = now

@@ -11,6 +11,7 @@ from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
                         hide_streamlit_branding, check_login_required, handle_logout, secure_filename)
+from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
@@ -76,22 +77,36 @@ st.subheader(
 if not df.empty:
     for idx, row in df.iterrows():
         col1, col2, col3 = st.columns([1, 3, 2])
-        safe_name = secure_filename(os.path.basename(str(row.get("form_filepath", ""))))
-        file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-
+        filepath = row.get("form_filepath", "")
+        
+        # Check if it's a OneDrive URL or local file
+        is_onedrive = filepath.startswith("http") or "sharepoint" in filepath.lower() or "onedrive" in filepath.lower()
+        
         with col1:
-            if os.path.exists(file_path):
-                st.image(file_path, width=100)
+            if is_onedrive:
+                st.markdown("[📁 View in OneDrive](" + filepath + ")")
             else:
-                st.warning("No preview available.")
+                safe_name = secure_filename(os.path.basename(str(filepath)))
+                file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                if os.path.exists(file_path):
+                    st.image(file_path, width=100)
+                else:
+                    st.warning("No preview available.")
 
         with col2:
             st.markdown(f"**Name:** {row['user_name']} | **Date:** {row['form_date']} | **Steps:** {row['form_stepcount']}")
             with st.expander("View Full Screenshot"):
-                if os.path.exists(file_path):
-                    st.image(file_path, caption=f"Screenshot for {row['user_name']}", width="stretch")
+                if is_onedrive:
+                    st.markdown(f"**Evidence stored in OneDrive**")
+                    st.markdown(f"[🔗 Open in OneDrive]({filepath})")
+                    st.info("Click the link above to view the screenshot in OneDrive.")
                 else:
-                    st.warning("Screenshot not found.")
+                    safe_name = secure_filename(os.path.basename(str(filepath)))
+                    file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                    if os.path.exists(file_path):
+                        st.image(file_path, caption=f"Screenshot for {row['user_name']}", width="stretch")
+                    else:
+                        st.warning("Screenshot not found.")
 
         with col3:
             if st.button("Verify", key=f"verify_{idx}"):
@@ -101,11 +116,16 @@ if not df.empty:
                         .eq("form_id", row["form_id"]) \
                         .execute()
 
-                    # Delete the image from uploads after verification, not needed anymore
-                    try:
-                        os.remove(file_path)
-                    except FileNotFoundError:
-                        pass
+                    # Delete the image after verification
+                    if not is_onedrive:
+                        # Local file - delete from uploads folder
+                        try:
+                            safe_name = secure_filename(os.path.basename(str(filepath)))
+                            file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                            os.remove(file_path)
+                        except FileNotFoundError:
+                            pass
+                    # Note: OneDrive files are kept for records
 
                 except Exception as e:
                     st.error(f"Error verifying form, please try again later.")
