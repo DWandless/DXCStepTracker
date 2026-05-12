@@ -20,6 +20,15 @@ def get_access_token():
     """
     token = st.session_state.get("token")
     if token and "access_token" in token:
+        # Debug: Check what scopes are in the token
+        try:
+            import jwt
+            decoded = jwt.decode(token["access_token"], options={"verify_signature": False})
+            scopes = decoded.get("scp", "").split() if "scp" in decoded else []
+            logging.info(f"Token scopes: {scopes}")
+        except Exception as e:
+            logging.error(f"Could not decode token: {e}")
+        
         return token["access_token"]
     return None
 
@@ -32,7 +41,7 @@ def create_onedrive_folder_if_not_exists(access_token):
         access_token: Microsoft Graph access token
         
     Returns:
-        folder_id if successful, None otherwise
+        tuple: (folder_id, error_message) - folder_id if successful, None otherwise
     """
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -44,11 +53,18 @@ def create_onedrive_folder_if_not_exists(access_token):
         search_url = f"{GRAPH_API_ENDPOINT}/me/drive/root/children"
         response = requests.get(search_url, headers=headers)
         
-        if response.status_code == 200:
+        if response.status_code == 401:
+            return None, "Authentication failed - token may not have Files.ReadWrite permission"
+        elif response.status_code == 403:
+            return None, "Access denied - check Azure app permissions"
+        elif response.status_code == 200:
             items = response.json().get("value", [])
             for item in items:
                 if item.get("name") == ONEDRIVE_FOLDER and "folder" in item:
-                    return item["id"]
+                    return item["id"], None
+        else:
+            logging.error(f"Failed to list OneDrive: {response.status_code} - {response.text}")
+            return None, f"OneDrive access failed: {response.status_code}"
         
         # Folder doesn't exist, create it
         create_url = f"{GRAPH_API_ENDPOINT}/me/drive/root/children"
@@ -61,14 +77,16 @@ def create_onedrive_folder_if_not_exists(access_token):
         create_response = requests.post(create_url, headers=headers, json=folder_data)
         
         if create_response.status_code in [200, 201]:
-            return create_response.json()["id"]
+            return create_response.json()["id"], None
         else:
-            logging.error(f"Failed to create folder: {create_response.text}")
-            return None
+            error_msg = f"Failed to create folder: {create_response.status_code}"
+            logging.error(f"{error_msg} - {create_response.text}")
+            return None, error_msg
             
     except Exception as e:
-        logging.error(f"Error creating OneDrive folder: {e}")
-        return None
+        error_msg = f"Error accessing OneDrive: {str(e)}"
+        logging.error(error_msg)
+        return None, error_msg
 
 
 def upload_to_onedrive(file_bytes, filename, access_token):
@@ -90,12 +108,12 @@ def upload_to_onedrive(file_bytes, filename, access_token):
         }
         
         # Ensure folder exists
-        folder_id = create_onedrive_folder_if_not_exists(access_token)
+        folder_id, error_msg = create_onedrive_folder_if_not_exists(access_token)
         
         if not folder_id:
             return {
                 "success": False,
-                "error": "Could not create or access OneDrive folder"
+                "error": error_msg or "Could not create or access OneDrive folder"
             }
         
         # Upload file to folder
