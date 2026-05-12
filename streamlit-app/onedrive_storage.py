@@ -204,8 +204,11 @@ def get_file_id_from_sharing_url(sharing_url, access_token):
     try:
         import base64
         
+        # Clean the URL - remove any fragment or query parameters
+        clean_url = sharing_url.split('?')[0].split('#')[0]
+        
         # Encode the sharing URL as base64 (URL-safe, without padding)
-        encoded_url = base64.urlsafe_b64encode(sharing_url.encode('utf-8')).decode('utf-8').rstrip('=')
+        encoded_url = base64.urlsafe_b64encode(clean_url.encode('utf-8')).decode('utf-8').rstrip('=')
         
         headers = {
             "Authorization": f"Bearer {access_token}"
@@ -216,20 +219,24 @@ def get_file_id_from_sharing_url(sharing_url, access_token):
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:
-            file_id = response.json().get("id")
-            logging.info(f"Successfully resolved sharing URL to file_id: {file_id}")
-            return file_id
+            return response.json().get("id")
+        
+        # Try with u! prefix for encoded URLs
+        encoded_url_with_prefix = f"u!{encoded_url}"
+        url = f"{GRAPH_API_ENDPOINT}/shares/{encoded_url_with_prefix}/driveItem"
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            return response.json().get("id")
         
         # Fallback to /me/drive/shared endpoint
         url = f"{GRAPH_API_ENDPOINT}/me/drive/shared/{encoded_url}/driveitem"
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:
-            file_id = response.json().get("id")
-            logging.info(f"Successfully resolved sharing URL to file_id (fallback): {file_id}")
-            return file_id
+            return response.json().get("id")
         
-        logging.error(f"Failed to resolve sharing URL: {response.status_code} - {response.text}")
+        logging.error(f"Failed to resolve sharing URL: {response.status_code}")
         return None
         
     except Exception as e:
