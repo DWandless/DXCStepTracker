@@ -213,14 +213,12 @@ with tab2:
                         if not validate_claim_code(get_all_challenges(), claim_code):
                             st.error("Please enter a valid claim code.")
                         else:
-<<<<<<< HEAD
+
                             # UI-only behaviour (no backend)
                             st.success("Claim code submitted successfully!")
                             st.caption("Verification will be applied later.")
-=======
                             
                             st.success("✅ Claim code submitted successfully!")
->>>>>>> beaf3e085a92a94d74dbb0766e47a71e0b3fe54e
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
