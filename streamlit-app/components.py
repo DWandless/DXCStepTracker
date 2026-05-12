@@ -287,18 +287,20 @@ def get_all_challenges():
         List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        with open("streamlit-app\\Challenges.json", "r") as f:
+        with open("Challenges.json", "r") as f:
             import json
             return json.load(f)
     except Exception:
         return []
 
-def generate_claim_code(challenges: list[dict], length: int = 8, max_attempts: int = 10_000) -> str:
+
+def generate_claim_code(challenges: list[dict], AlreadyGenerated: set[str], length: int = 8, max_attempts: int = 10_000) -> str:
     """
     Generate a random alphanumeric claim code that is unique across all challenges.
 
     Args:
         challenges: List of challenge dicts containing "Codes" lists
+        AlreadyGenerated: Set of codes that have already been generated
         length: Length of the claim code (default 8)
         max_attempts: Safety cap to prevent infinite loops
 
@@ -317,7 +319,8 @@ def generate_claim_code(challenges: list[dict], length: int = 8, max_attempts: i
 
     for _ in range(max_attempts):
         claim_code = ''.join(random.choice(characters) for _ in range(length))
-        if claim_code not in existing_codes:
+        if claim_code not in existing_codes and claim_code not in AlreadyGenerated:
+            AlreadyGenerated.add(claim_code)
             return claim_code
 
     raise RuntimeError("Unable to generate a unique claim code — increase length or max_attempts.")

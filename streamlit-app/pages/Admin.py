@@ -198,9 +198,13 @@ from components import get_all_challenges, generate_claim_code
 ChallengesDropdown = st.selectbox("Select Challenge", options=[ch["title"] for ch in get_all_challenges()])
 num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
 if st.button("Generate Claim Codes"):
-    generated_codes = [generate_claim_code() for _ in range(num_codes)]
+    if not ChallengesDropdown:
+        st.error("Please select a challenge to generate claim codes for.")
+        st.stop()
 
-    with open("../Challenges.json", "r+") as f:
+    generated_codes = [generate_claim_code(challenges, set()) for _ in range(2)]
+
+    with open("streamlit-app\\Challenges.json", "r+") as f:
         import json
         challenges = json.load(f)
         for challenge in challenges:
