@@ -9,6 +9,7 @@ from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
                         secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout)
+from onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / "assets" / "logo.png"
@@ -55,6 +56,14 @@ user_id = get_user_id(username)
 if not user_id:
     st.error("User not found.")
     st.stop()
+
+# Get user's name for filename generation
+try:
+    user_data = supabase.table("users").select("user_name").eq("user_id", user_id).execute()
+    user_name = user_data.data[0]["user_name"] if user_data.data else username
+    safe_username = secure_filename(user_name.replace(" ", "_"))
+except Exception:
+    safe_username = secure_filename(username.split("@")[0])  # Fallback to email prefix
 
 if render_sidebar_welcome():
     handle_logout()
@@ -111,22 +120,47 @@ with tab1:
             try:
                 img = Image.open(screenshot).convert("RGB")
                 filename = secure_filename(f"{safe_username}_{step_date}_{datetime.now().strftime('%H%M%S')}.jpg")
-                path = os.path.join(UPLOAD_FOLDER, filename)
-                img.save(path, format="JPEG", quality=85, optimize=True)
+                
+                # Convert image to bytes
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format="JPEG", quality=85, optimize=True)
+                img_bytes = img_byte_arr.getvalue()
+                
+                file_url = None
+                
+                # For steps >= 20,000, upload to OneDrive
+                if steps >= 20000:
+                    access_token = get_access_token()
+                    
+                    if access_token:
+                        upload_result = upload_to_onedrive(img_bytes, filename, access_token)
+                        
+                        if upload_result["success"]:
+                            file_url = upload_result["url"]
+                        else:
+                            # Fallback to local storage
+                            path = os.path.join(UPLOAD_FOLDER, filename)
+                            with open(path, 'wb') as f:
+                                f.write(img_bytes)
+                            file_url = filename
+                    else:
+                        # Fallback to local storage
+                        path = os.path.join(UPLOAD_FOLDER, filename)
+                        with open(path, 'wb') as f:
+                            f.write(img_bytes)
+                        file_url = filename
+                else:
+                    # For steps < 20,000, don't save the file (not needed for verification)
+                    file_url = "not_required"
+                
+                # Insert into database
                 supabase.table("forms").insert({
-                    "form_filepath": filename,
+                    "form_filepath": file_url,
                     "form_stepcount": steps,
                     "form_date": str(step_date),
                     "user_id": user_id,
-                    "form_verified": False
+                    "form_verified": False if steps >= 20000 else True  # Auto-verify if < 20k
                 }).execute()
-
-                # Delete the image if steps are under 10,000 (not required for verification)
-                if steps < 20000:
-                    try:
-                        os.remove(path)
-                    except FileNotFoundError:
-                        pass
 
                 # Record new submission time
                 st.session_state.last_submission_time = now
@@ -220,7 +254,14 @@ with tab4:
                 
                 st.subheader("Team Information")
                 st.markdown(f"**Team Name:** {team['team_name']}")
-                st.markdown(f"**Team Leader:** {team['team_leader']}")
+                
+                # Get team leader name from user_id
+                try:
+                    leader_info = supabase.table("users").select("user_name").eq("user_id", team['team_leader_id']).execute()
+                    leader_name = leader_info.data[0]['user_name'] if leader_info.data else "Unknown"
+                except Exception:
+                    leader_name = "Unknown"
+                st.markdown(f"**Team Leader:** {leader_name}")
                 
                 with st.expander(f"View Members ({len(team_members.data)}/4)", expanded=False):
                     for member in team_members.data:
@@ -229,7 +270,7 @@ with tab4:
                 st.markdown("---")
                 
                 # Check if current user is the team leader
-                is_team_leader = (username == team['team_leader'])
+                is_team_leader = (user_id == team['team_leader_id'])
                 
                 if is_team_leader:
                     # Team leader can delete the team
@@ -258,7 +299,7 @@ with tab4:
         # User is not in a team
         # Check if user is already a team leader
         try:
-            is_leader = supabase.table("teams").select("team_id").eq("team_leader", username).execute()
+            is_leader = supabase.table("teams").select("team_id").eq("team_leader_id", user_id).execute()
             user_is_leader = len(is_leader.data) > 0 if is_leader.data else False
         except Exception:
             user_is_leader = False
@@ -288,7 +329,13 @@ with tab4:
                             
                             with col1:
                                 st.markdown(f"### {team['team_name']}")
-                                st.caption(f"Leader: {team['team_leader']}")
+                                # Get leader name
+                                try:
+                                    leader_info = supabase.table("users").select("user_name").eq("user_id", team['team_leader_id']).execute()
+                                    leader_name = leader_info.data[0]['user_name'] if leader_info.data else "Unknown"
+                                except Exception:
+                                    leader_name = "Unknown"
+                                st.caption(f"Leader: {leader_name}")
                             
                             with col2:
                                 st.metric("Members", f"{team['member_count']}/4")
@@ -334,7 +381,13 @@ with tab4:
                                 
                                 with col1:
                                     st.markdown(f"### {team['team_name']}")
-                                    st.caption(f"Leader: {team['team_leader']}")
+                                    # Get leader name
+                                    try:
+                                        leader_info = supabase.table("users").select("user_name").eq("user_id", team['team_leader_id']).execute()
+                                        leader_name = leader_info.data[0]['user_name'] if leader_info.data else "Unknown"
+                                    except Exception:
+                                        leader_name = "Unknown"
+                                    st.caption(f"Leader: {leader_name}")
                                 
                                 with col2:
                                     st.metric("Members", f"{team['member_count']}/4")
@@ -381,7 +434,7 @@ with tab4:
                                 else:
                                     team_response = supabase.table("teams").insert({
                                         "team_name": team_name.strip(),
-                                        "team_leader": username
+                                        "team_leader_id": user_id
                                     }).execute()
                                     
                                     if team_response.data:

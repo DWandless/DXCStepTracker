@@ -14,3 +14,5 @@ httpx
 bcrypt
 authlib
 PyJWT
+msgraph-core
+msal

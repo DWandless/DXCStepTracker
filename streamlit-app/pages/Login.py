@@ -25,15 +25,15 @@ CLIENT_SECRET = azure["client_secret"]
 TENANT_ID = "93f33571-550f-43cf-b09f-cd331338d086"
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
-AUTHORIZE_URL = f"{AUTHORITY}/oauth2/authorize"
-TOKEN_URL = f"{AUTHORITY}/oauth2/token"
+AUTHORIZE_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"  # v2.0 endpoint
+TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"  # v2.0 endpoint
 REDIRECT_URI = "https://dxcsteptracker.streamlit.app/Login"
 
-# Use v1.0 OAuth with standard OpenID scopes (same as WWTW app)
+# Use v2.0 OAuth with OpenID and Files scopes
 oauth = OAuth2Session(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
-    scope=["openid", "profile", "email"],  # Standard scopes that work without admin consent
+    scope=["openid", "profile", "email", "Files.ReadWrite"],  # Files.ReadWrite for OneDrive
     redirect_uri=REDIRECT_URI,
 )
 
@@ -153,11 +153,10 @@ if token:
 
 # ------------------ LOGIN BUTTON (NOT LOGGED IN) ------------------
 else:
-    # Create auth URL with resource parameter for v1.0 endpoint
+    # Create auth URL (same as WWTW app)
     auth_url, _ = oauth.create_authorization_url(
         AUTHORIZE_URL,
         prompt="select_account",
-        resource=CLIENT_ID,  # v1.0 uses resource parameter instead of scope
     )
     
     st.link_button("Sign in with Microsoft", auth_url, type="primary")
