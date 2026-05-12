@@ -69,7 +69,7 @@ if render_sidebar_welcome():
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3 = st.tabs(["✚ Submit Steps", "➜ Daily Progress", "⚑ Teams"])
+tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "AI Challenges",  "➜ Daily Progress", "⚑ Teams"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -170,8 +170,12 @@ with tab1:
                 st.error("Error processing upload.")
                 st.exception(e)
 
-# ------------------ TAB 2: DAILY PROGRESS ------------------
+# ------------------ TAB 2: AI Challenges ------------------
 with tab2:
+    st.header("✚ AI Challenges")
+
+# ------------------ TAB 3: DAILY PROGRESS ------------------
+with tab3:
     st.header("➜ Daily Progress")
     df = fetch_user_forms(user_id)
 
@@ -228,8 +232,8 @@ with tab2:
         )
         st.plotly_chart(fig, use_container_width=True, config={"staticPlot": True})
 
-# ------------------ TAB 3: TEAMS ------------------
-with tab3:
+# ------------------ TAB 4: TEAMS ------------------
+with tab4:
     st.header("⚑ Team Management")
     
     # Get user's current team
