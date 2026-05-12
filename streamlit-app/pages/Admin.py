@@ -174,25 +174,20 @@ if not df.empty:
 else:
     st.info("No step data available.")
 
+st.markdown("---")
+
 # ------------------ 3. EVIDENCE FOLDER ------------------
 st.subheader(
     "Evidence Folder",
-    help="Download all uploaded screenshot evidence as a ZIP file for archival or review purposes."
+    help="Access all uploaded screenshot evidence in OneDrive for archival or review purposes."
 )
-folder_path = os.path.abspath(UPLOAD_FOLDER)
-st.markdown(f"Path: `{folder_path}`")
+st.link_button(
+    "Open Evidence Folder in OneDrive",
+    url="https://dxcportalgbr-my.sharepoint.com/my?id=%2Fpersonal%2Fdrew%5Fwandless%5Fdxc%5Fcom%2FDocuments%2FStepTrackerEvidence",
+    type="secondary"
+)
 
-if os.path.exists(UPLOAD_FOLDER) and os.listdir(UPLOAD_FOLDER):
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w") as zipf:
-        for root, _, files in os.walk(UPLOAD_FOLDER):
-            for file in files:
-                zipf.write(os.path.join(root, file), arcname=file)
-    zip_buffer.seek(0)
-    st.download_button("Download All Evidence as ZIP", zip_buffer, file_name="evidence.zip")
-else:
-    st.info("No evidence files found.")
-
+st.markdown("---")
 
 # ------------------ 4. RESET CHALLENGE DATA ------------------
 st.subheader(
