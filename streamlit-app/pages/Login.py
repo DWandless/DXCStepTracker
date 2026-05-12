@@ -29,11 +29,11 @@ AUTHORIZE_URL = f"{AUTHORITY}/oauth2/authorize"
 TOKEN_URL = f"{AUTHORITY}/oauth2/token"
 REDIRECT_URI = "https://dxcsteptracker.streamlit.app/Login"
 
-# Use v1.0 OAuth with resource parameter (doesn't require Graph API permissions)
+# Use v1.0 OAuth with standard OpenID scopes (same as WWTW app)
 oauth = OAuth2Session(
     client_id=CLIENT_ID,
     client_secret=CLIENT_SECRET,
-    scope=["openid"],  # Minimal scope for v1.0
+    scope=["openid", "profile", "email"],  # Standard scopes that work without admin consent
     redirect_uri=REDIRECT_URI,
 )
 
