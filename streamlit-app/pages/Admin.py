@@ -148,10 +148,18 @@ if not df.empty:
                         # Delete from OneDrive if applicable
                         if is_onedrive:
                             access_token = get_access_token()
-                            if access_token:
+                            if not access_token:
+                                st.warning("Could not get access token - skipping OneDrive deletion")
+                            else:
                                 file_id = get_file_id_from_sharing_url(filepath, access_token)
-                                if file_id:
-                                    delete_from_onedrive(file_id, access_token)
+                                if not file_id:
+                                    st.warning(f"Could not resolve file_id from sharing URL - skipping OneDrive deletion. URL: {filepath[:50]}...")
+                                else:
+                                    deleted = delete_from_onedrive(file_id, access_token)
+                                    if deleted:
+                                        st.info("File deleted from OneDrive")
+                                    else:
+                                        st.warning("Failed to delete from OneDrive - continuing with database deletion")
                             # If token or file_id resolution fails, continue with database deletion
                         
                         # Delete from database
@@ -165,8 +173,8 @@ if not df.empty:
                                 os.remove(file_path)
                         
                         st.success("Submission deleted successfully!")
-                    except Exception:
-                        st.error("Error deleting submission.")
+                    except Exception as e:
+                        st.error(f"Error deleting submission: {str(e)}")
                     st.session_state["pending_delete"] = None
                     st.rerun()
             with colB:

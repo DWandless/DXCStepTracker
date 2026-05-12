@@ -211,12 +211,23 @@ def get_file_id_from_sharing_url(sharing_url, access_token):
             "Authorization": f"Bearer {access_token}"
         }
         
-        # Use the encoded sharing URL to get the drive item
+        # Try the /shares endpoint first
+        url = f"{GRAPH_API_ENDPOINT}/shares/{encoded_url}/driveItem"
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            file_id = response.json().get("id")
+            logging.info(f"Successfully resolved sharing URL to file_id: {file_id}")
+            return file_id
+        
+        # Fallback to /me/drive/shared endpoint
         url = f"{GRAPH_API_ENDPOINT}/me/drive/shared/{encoded_url}/driveitem"
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:
-            return response.json().get("id")
+            file_id = response.json().get("id")
+            logging.info(f"Successfully resolved sharing URL to file_id (fallback): {file_id}")
+            return file_id
         
         logging.error(f"Failed to resolve sharing URL: {response.status_code} - {response.text}")
         return None
