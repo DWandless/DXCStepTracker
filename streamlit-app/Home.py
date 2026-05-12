@@ -57,6 +57,14 @@ if not user_id:
     st.error("User not found.")
     st.stop()
 
+# Get user's name for filename generation
+try:
+    user_data = supabase.table("users").select("user_name").eq("user_id", user_id).execute()
+    user_name = user_data.data[0]["user_name"] if user_data.data else username
+    safe_username = secure_filename(user_name.replace(" ", "_"))
+except Exception:
+    safe_username = secure_filename(username.split("@")[0])  # Fallback to email prefix
+
 if render_sidebar_welcome():
     handle_logout()
 
