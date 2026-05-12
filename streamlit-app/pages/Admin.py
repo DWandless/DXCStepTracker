@@ -45,8 +45,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # replace old confirm state with a simpler pending_delete entry
 if "pending_delete" not in st.session_state:
     st.session_state["pending_delete"] = None
-if "confirm_clear" not in st.session_state:
-    st.session_state["confirm_clear"] = False
 
 # ------------------ FETCH DATA FROM SUPABASE ------------------
 def fetch_all_submissions():
@@ -174,55 +172,6 @@ if not df.empty:
 else:
     st.info("No step data available.")
 
-st.markdown("---")
-
-# ------------------ 3. EVIDENCE FOLDER ------------------
-st.subheader(
-    "Evidence Folder",
-    help="Access all uploaded screenshot evidence in OneDrive for archival or review purposes."
-)
-st.link_button(
-    "Open Evidence Folder in OneDrive",
-    url="https://dxcportalgbr-my.sharepoint.com/my?id=%2Fpersonal%2Fdrew%5Fwandless%5Fdxc%5Fcom%2FDocuments%2FStepTrackerEvidence",
-    type="secondary"
-)
-
-st.markdown("---")
-
-# ------------------ 4. RESET CHALLENGE DATA ------------------
-st.subheader(
-    "Reset Challenge Data",
-    help="Danger Zone: This will permanently delete ALL step submissions and uploaded screenshots from the database. Use this only to reset the challenge or clear test data."
-)
-st.error("⚠ Warning: This action will delete all data and cannot be undone!")
-
-if not st.session_state.get("confirm_clear"):
-    if st.button("Clear All Data"):
-        st.session_state["confirm_clear"] = True
-        st.rerun()
-else:
-    st.warning("This will permanently delete ALL form submissions and uploaded screenshots. This action cannot be undone.")
-    
-    # Confirmation checkbox
-    confirm_checkbox = st.checkbox("⚠ I understand this action is permanent and cannot be undone")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑 Confirm and Delete All Data", type="primary", disabled=not confirm_checkbox):
-            try:
-                supabase.table("forms").delete().neq("form_id", 0).execute()
-                if os.path.exists(UPLOAD_FOLDER):
-                    shutil.rmtree(UPLOAD_FOLDER)
-                    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                st.success("All data cleared successfully!")
-                st.session_state["confirm_clear"] = False
-            except Exception as e:
-                st.error(f"Error clearing data: {str(e)}")
-    
-    with col2:
-        if st.button("Cancel", key="cancel_clear_btn"):
-            st.session_state["confirm_clear"] = False
-            st.rerun()
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()
