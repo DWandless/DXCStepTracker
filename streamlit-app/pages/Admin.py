@@ -1,8 +1,9 @@
 import streamlit as st
 import os
-import pandas as pd
 import shutil
+import zipfile
 import io
+import pandas as pd
 import re
 import unicodedata
 import time
@@ -124,8 +125,7 @@ if not df.empty:
                     "user_name": row["user_name"],
                     "form_date": row["form_date"],
                     "form_stepcount": row["form_stepcount"],
-                    "file": row.get("form_filepath", ""),
-                    "file_id": row.get("form_file_id", "")
+                    "file": row.get("form_filepath", "")
                 }
                 st.rerun()
         
@@ -145,30 +145,10 @@ if not df.empty:
                 if st.button("🗙 Delete Permanently", disabled=not confirm_cb, type="secondary", key=f"confirm_delete_{idx}"):
                     try:
                         supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
-                        
-                        # Delete file from storage (local or OneDrive)
-                        filepath = pd.get("file", "")
-                        file_id = pd.get("file_id", "")
-                        is_onedrive = filepath.startswith("http") or "sharepoint" in filepath.lower() or "onedrive" in filepath.lower()
-                        
-                        if is_onedrive and file_id:
-                            # Delete from OneDrive using file_id
-                            access_token = get_access_token()
-                            if access_token:
-                                deleted = delete_from_onedrive(file_id, access_token)
-                                if deleted:
-                                    st.info("OneDrive file deleted successfully.")
-                                else:
-                                    st.warning("Could not delete OneDrive file. Database record removed.")
-                            else:
-                                st.warning("No access token. Could not delete from OneDrive.")
-                        elif not is_onedrive:
-                            # Delete local file
-                            safe_name = secure_filename(os.path.basename(filepath))
-                            file_path = os.path.join(UPLOAD_FOLDER, safe_name)
-                            if os.path.exists(file_path):
-                                os.remove(file_path)
-                        
+                        safe_name = secure_filename(os.path.basename(str(pd.get("file", ""))))
+                        file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
                         st.success("Submission deleted successfully!")
                     except Exception:
                         st.error("Error deleting submission.")
@@ -193,6 +173,26 @@ if not df.empty:
     st.download_button("Download Step Data CSV", csv_data, file_name="step_data.csv")
 else:
     st.info("No step data available.")
+
+# ------------------ 3. EVIDENCE FOLDER ------------------
+st.subheader(
+    "Evidence Folder",
+    help="Download all uploaded screenshot evidence as a ZIP file for archival or review purposes."
+)
+folder_path = os.path.abspath(UPLOAD_FOLDER)
+st.markdown(f"Path: `{folder_path}`")
+
+if os.path.exists(UPLOAD_FOLDER) and os.listdir(UPLOAD_FOLDER):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zipf:
+        for root, _, files in os.walk(UPLOAD_FOLDER):
+            for file in files:
+                zipf.write(os.path.join(root, file), arcname=file)
+    zip_buffer.seek(0)
+    st.download_button("Download All Evidence as ZIP", zip_buffer, file_name="evidence.zip")
+else:
+    st.info("No evidence files found.")
+
 
 # ------------------ 4. RESET CHALLENGE DATA ------------------
 st.subheader(
