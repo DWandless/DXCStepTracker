@@ -274,7 +274,7 @@ def get_all_existing_codes(challenges: list[dict]) -> set[str]:
     """
     existing = set()
     for ch in challenges:
-        for c in ch.get("Codes", []):
+        for c in challenges[ch]["Codes"]:
             if isinstance(c, str):
                 existing.add(c.strip().upper())
     return existing

@@ -194,24 +194,23 @@ st.subheader(
     help="Create unique claim codes for verified step submissions."
 )
 from components import get_all_challenges, generate_claim_code
-
-ChallengesDropdown = st.selectbox("Select Challenge", options=[ch["title"] for ch in get_all_challenges()])
+Challenges = get_all_challenges()
+ChallengesDropdown = st.selectbox("Select Challenge", options=[Challenges[ch]["title"] for ch in Challenges])
 num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
 if st.button("Generate Claim Codes"):
     if not ChallengesDropdown:
         st.error("Please select a challenge to generate claim codes for.")
         st.stop()
 
-    generated_codes = [generate_claim_code(challenges, set()) for _ in range(2)]
+    generated_codes = [generate_claim_code(Challenges, set()) for _ in range(num_codes)]
 
-    with open("streamlit-app\\Challenges.json", "r+") as f:
+    with open("streamlit-app\\Challenges.json", "r") as f:
         import json
-        challenges = json.load(f)
-        for challenge in challenges:
-            if challenge["title"] == ChallengesDropdown:
-                challenge["Codes"].extend(generated_codes)
+        for challenge in Challenges:
+            if Challenges[challenge]["title"] == ChallengesDropdown:
+                Challenges[challenge]["Codes"].extend(generated_codes)
         f.seek(0)
-        json.dump(challenges, f, indent=4)
+        json.dump(Challenges, f, indent=4)
         f.truncate()
 
     st.success(f"Generated {num_codes} claim codes for challenge: {ChallengesDropdown}")

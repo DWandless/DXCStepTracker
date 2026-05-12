@@ -181,27 +181,28 @@ with tab2:
 
     # ------------------ Challenges List ------------------
     from components import get_all_challenges
-    for ch in get_all_challenges():
+    Challenges = get_all_challenges()  # Load challenges to ensure file is read before code generation
+    for ch in Challenges:
         with st.container(border=True):
             left, right = st.columns([8, 2])
 
             with left:
-                st.subheader(ch["title"])
-                st.write(ch["description"])
+                st.subheader(Challenges[ch]["title"])
+                st.write(Challenges[ch]["description"])
 
             with right:
-                toggle_key = f"show_redeem_{ch['id']}"
+                toggle_key = f"show_redeem_{Challenges[ch]['id']}"
                 if toggle_key not in st.session_state:
                     st.session_state[toggle_key] = False
 
-                if st.button("Redeem", key=f"redeem_btn_{ch['id']}", type="secondary"):
+                if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
                     st.session_state[toggle_key] = not st.session_state[toggle_key]
 
             # ------------------ Redeem UI ------------------
             if st.session_state[toggle_key]:
                 st.markdown("**Redeem your challenge**")
 
-                with st.form(key=f"redeem_form_{ch['id']}", clear_on_submit=True):
+                with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
                     claim_code = st.text_input(
                         "Enter unique claim code",
                         placeholder="e.g. DXC-STEP-ABC123"
@@ -210,7 +211,7 @@ with tab2:
                     submitted = st.form_submit_button("Submit Code", type="primary")
                     from components import validate_claim_code
                     if submitted:
-                        if not validate_claim_code(get_all_challenges(), claim_code):
+                        if not validate_claim_code(Challenges, claim_code):
                             st.error("Please enter a valid claim code.")
                         else:
 
