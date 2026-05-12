@@ -45,6 +45,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # replace old confirm state with a simpler pending_delete entry
 if "pending_delete" not in st.session_state:
     st.session_state["pending_delete"] = None
+if "debug_info" not in st.session_state:
+    st.session_state["debug_info"] = None
 
 # ------------------ FETCH DATA FROM SUPABASE ------------------
 def fetch_all_submissions():
@@ -65,6 +67,13 @@ df = fetch_all_submissions()
 # ------------------ SIDEBAR ------------------
 if render_sidebar_welcome():
     handle_logout()
+
+# ------------------ DISPLAY DEBUG INFO ------------------
+if st.session_state.get("debug_info"):
+    st.info("### Debug Information")
+    for line in st.session_state["debug_info"]:
+        st.write(line)
+    st.session_state["debug_info"] = None  # Clear after displaying
 
 # ------------------ 1. HIGH-STEP SUBMISSIONS (>20,000) ------------------
 st.subheader(
@@ -145,28 +154,31 @@ if not df.empty:
                         filepath = pd.get("file", "")
                         is_onedrive = filepath.startswith("http") or "sharepoint" in filepath.lower() or "onedrive" in filepath.lower()
                         
-                        st.write(f"DEBUG: filepath = {filepath[:100]}...")
-                        st.write(f"DEBUG: is_onedrive = {is_onedrive}")
+                        # Store debug info in session state to display after rerun
+                        debug_messages = []
+                        debug_messages.append(f"DEBUG: filepath = {filepath[:100]}...")
+                        debug_messages.append(f"DEBUG: is_onedrive = {is_onedrive}")
                         
                         # Delete from OneDrive if applicable
                         if is_onedrive:
                             access_token = get_access_token()
-                            st.write(f"DEBUG: access_token exists = {access_token is not None}")
+                            debug_messages.append(f"DEBUG: access_token exists = {access_token is not None}")
                             if not access_token:
-                                st.warning("Could not get access token - skipping OneDrive deletion")
+                                debug_messages.append("WARNING: Could not get access token - skipping OneDrive deletion")
                             else:
                                 file_id = get_file_id_from_sharing_url(filepath, access_token)
-                                st.write(f"DEBUG: file_id = {file_id}")
+                                debug_messages.append(f"DEBUG: file_id = {file_id}")
                                 if not file_id:
-                                    st.warning(f"Could not resolve file_id from sharing URL - skipping OneDrive deletion. URL: {filepath[:50]}...")
+                                    debug_messages.append(f"WARNING: Could not resolve file_id from sharing URL - skipping OneDrive deletion. URL: {filepath[:50]}...")
                                 else:
                                     deleted = delete_from_onedrive(file_id, access_token)
-                                    st.write(f"DEBUG: deleted from OneDrive = {deleted}")
+                                    debug_messages.append(f"DEBUG: deleted from OneDrive = {deleted}")
                                     if deleted:
-                                        st.info("File deleted from OneDrive")
+                                        debug_messages.append("SUCCESS: File deleted from OneDrive")
                                     else:
-                                        st.warning("Failed to delete from OneDrive - continuing with database deletion")
-                            # If token or file_id resolution fails, continue with database deletion
+                                        debug_messages.append("WARNING: Failed to delete from OneDrive - continuing with database deletion")
+                        
+                        st.session_state["debug_info"] = debug_messages
                         
                         # Delete from database
                         supabase.table("forms").delete().eq("form_id", pd["form_id"]).execute()
