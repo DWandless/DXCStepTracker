@@ -20,7 +20,6 @@ def get_access_token():
     """
     token = st.session_state.get("token")
     if token and "access_token" in token:
-        # Debug: Check what scopes are in the token
         try:
             import jwt
             decoded = jwt.decode(token["access_token"], options={"verify_signature": False})
