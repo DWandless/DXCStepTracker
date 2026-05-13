@@ -10,6 +10,7 @@ import re
 import unicodedata
 import base64
 import html
+import pandas as pd
 from pathlib import Path
 from db import supabase
 from streamlit.components.v1 import html as st_html
