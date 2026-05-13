@@ -174,6 +174,21 @@ with tab1:
                     st.error("Error processing upload.")
                     st.exception(e)
 
+    # ------------------ Amazon QuickSight Chat Agent ------------------
+    st.markdown("---")
+    st.subheader("💬 Step Tracker Assistant")
+    st.markdown(
+        """
+        <iframe
+            width="450"
+            height="800"
+            allow="clipboard-read https://us-east-1.quicksight.aws.amazon.com; clipboard-write https://us-east-1.quicksight.aws.amazon.com"
+            src="https://us-east-1.quicksight.aws.amazon.com/sn/account/dxc-quickbeta/embed/share/accounts/442426875626/chatagents/2bac02d3-a333-421e-87c1-28418925556e">
+        </iframe>
+        """,
+        unsafe_allow_html=True
+    )
+
 # ------------------ TAB 2: AI Challenges ------------------
 with tab2:
     st.header("✦ AI Challenges")
