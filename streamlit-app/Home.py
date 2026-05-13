@@ -25,8 +25,8 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
-setup_logo()
-render_header("DXC Step Tracker", "Keep Moving and Track your steps below!")
+setup_logo(Path(__file__).resolve().parent)
+render_header("DXC Step Tracker", "Keep Moving and Track your steps better!")
 
 # ------------------ HELPERS ------------------
 # Utility functions now imported from components
