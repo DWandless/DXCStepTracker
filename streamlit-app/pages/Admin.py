@@ -201,7 +201,7 @@ else:
 
 st.divider()
 
-# ------------------ 3. GENERATE CLAIM CODES ------------------
+# ------------------ 3. GENERATE CLAIM CODES -------------------
 st.subheader(
     "Generate Claim Codes",
     help="Create unique claim codes for verified step submissions."
