@@ -74,69 +74,78 @@ tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "✦ AI Challenges",  "➜
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
     st.header("✚ Submit Your Steps")
-    date_col, step_col = st.columns(2)
-    with date_col: 
-        step_date = st.date_input(
-            "Date",
-            help="Select the date when you recorded these steps. You can submit steps for past dates."
+    
+    with st.form("step_submission_form", clear_on_submit=True):
+        date_col, step_col = st.columns(2)
+        with date_col: 
+            step_date = st.date_input(
+                "Date",
+                help="Select the date when you recorded these steps. You can submit steps for past dates."
+            )
+        with step_col: 
+            steps = st.number_input(
+                "Step Count", 
+                min_value=0, 
+                step=100,
+                help="Enter the total number of steps you walked on this date (1-100,000)."
+            )
+        screenshot = st.file_uploader(
+            "Upload Screenshot (PNG/JPG)", 
+            type=["png", "jpg", "jpeg"],
+            help="Upload a screenshot from your fitness tracker or step counter app as proof of your steps. Required for all submissions."
         )
-    with step_col: 
-        steps = st.number_input(
-            "Step Count", 
-            min_value=0, 
-            step=100,
-            help="Enter the total number of steps you walked on this date (1-100,000)."
-        )
-    screenshot = st.file_uploader(
-        "Upload Screenshot (PNG/JPG)", 
-        type=["png", "jpg", "jpeg"],
-        help="Upload a screenshot from your fitness tracker or step counter app as proof of your steps. Required for all submissions."
-    )
 
-    if screenshot:
-        if screenshot.size > MAX_UPLOAD_SIZE:
-            st.error("File too large. Max 5 MB."); st.stop()
-        try:
-            img = Image.open(screenshot)
-            img.thumbnail((600, 600))
-            st.image(img, caption="Preview", width=300)
-        except UnidentifiedImageError:
-            st.error("Invalid image."); st.stop()
-
-    if st.button("Submit", type="secondary"):
-        now = datetime.now()
-        last_submission = st.session_state.get("last_submission_time") or get_last_submission_time(user_id)
-
-        # --- 1-minute cooldown check ---
-        if last_submission and now - last_submission < timedelta(seconds=60): # Brian wicks wanted this changed :)
-            remaining = timedelta(seconds=60) - (now - last_submission)
-            minutes, seconds = divmod(remaining.total_seconds(), 60)
-            st.warning(f"Please wait {int(seconds)}s before submitting again.")
-        elif steps <= 0 or steps > 100000:
-            st.error("Enter a valid step count (1–100,000).")
-        elif not screenshot:
-            st.error("Please upload a screenshot.")
-        else:
+        if screenshot:
+            if screenshot.size > MAX_UPLOAD_SIZE:
+                st.error("File too large. Max 5 MB."); st.stop()
             try:
-                img = Image.open(screenshot).convert("RGB")
-                filename = secure_filename(f"{safe_username}_{step_date}_{datetime.now().strftime('%H%M%S')}.jpg")
-                
-                # Convert image to bytes
-                img_byte_arr = io.BytesIO()
-                img.save(img_byte_arr, format="JPEG", quality=85, optimize=True)
-                img_bytes = img_byte_arr.getvalue()
-                
-                file_url = None
-                
-                # For steps >= 20,000, upload to OneDrive
-                if steps >= 20000:
-                    access_token = get_access_token()
+                img = Image.open(screenshot)
+                img.thumbnail((600, 600))
+                st.image(img, caption="Preview", width=300)
+            except UnidentifiedImageError:
+                st.error("Invalid image."); st.stop()
+
+        submitted = st.form_submit_button("Submit", type="secondary")
+        if submitted:
+            now = datetime.now()
+            last_submission = st.session_state.get("last_submission_time") or get_last_submission_time(user_id)
+
+            # --- 1-minute cooldown check ---
+            if last_submission and now - last_submission < timedelta(seconds=60): # Brian wicks wanted this changed :)
+                remaining = timedelta(seconds=60) - (now - last_submission)
+                minutes, seconds = divmod(remaining.total_seconds(), 60)
+                st.warning(f"Please wait {int(seconds)}s before submitting again.")
+            elif steps <= 0 or steps > 100000:
+                st.error("Enter a valid step count (1–100,000).")
+            elif not screenshot:
+                st.error("Please upload a screenshot.")
+            else:
+                try:
+                    img = Image.open(screenshot).convert("RGB")
+                    filename = secure_filename(f"{safe_username}_{step_date}_{datetime.now().strftime('%H%M%S')}.jpg")
                     
-                    if access_token:
-                        upload_result = upload_to_onedrive(img_bytes, filename, access_token)
+                    # Convert image to bytes
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format="JPEG", quality=85, optimize=True)
+                    img_bytes = img_byte_arr.getvalue()
+                    
+                    file_url = None
+                    
+                    # For steps >= 20,000, upload to OneDrive
+                    if steps >= 20000:
+                        access_token = get_access_token()
                         
-                        if upload_result["success"]:
-                            file_url = upload_result["url"]
+                        if access_token:
+                            upload_result = upload_to_onedrive(img_bytes, filename, access_token)
+                            
+                            if upload_result["success"]:
+                                file_url = upload_result["url"]
+                            else:
+                                # Fallback to local storage
+                                path = os.path.join(UPLOAD_FOLDER, filename)
+                                with open(path, 'wb') as f:
+                                    f.write(img_bytes)
+                                file_url = filename
                         else:
                             # Fallback to local storage
                             path = os.path.join(UPLOAD_FOLDER, filename)
@@ -144,33 +153,27 @@ with tab1:
                                 f.write(img_bytes)
                             file_url = filename
                     else:
-                        # Fallback to local storage
-                        path = os.path.join(UPLOAD_FOLDER, filename)
-                        with open(path, 'wb') as f:
-                            f.write(img_bytes)
-                        file_url = filename
-                else:
-                    # For steps < 20,000, don't save the file (not needed for verification)
-                    file_url = "not_required"
-                
-                # Insert into database
-                supabase.table("forms").insert({
-                    "form_filepath": file_url,
-                    "form_stepcount": steps,
-                    "form_date": str(step_date),
-                    "user_id": user_id,
-                    "form_verified": False if steps >= 20000 else True  # Auto-verify if < 20k
-                }).execute()
+                        # For steps < 20,000, don't save the file (not needed for verification)
+                        file_url = "not_required"
+                    
+                    # Insert into database
+                    supabase.table("forms").insert({
+                        "form_filepath": file_url,
+                        "form_stepcount": steps,
+                        "form_date": str(step_date),
+                        "user_id": user_id,
+                        "form_verified": False if steps >= 20000 else True  # Auto-verify if < 20k
+                    }).execute()
 
-                # Record new submission time
-                st.session_state.last_submission_time = now
+                    # Record new submission time
+                    st.session_state.last_submission_time = now
 
-                st.success("✔ Step count submitted successfully!")
-                time.sleep(1)
-                st.rerun()
-            except Exception as e:
-                st.error("Error processing upload.")
-                st.exception(e)
+                    st.success("✔ Step count submitted successfully!")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error("Error processing upload.")
+                    st.exception(e)
 
 # ------------------ TAB 2: AI Challenges ------------------
 with tab2:
@@ -202,7 +205,7 @@ with tab2:
                     existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
                     
                     if existing_completion.data:
-                        st.warning("You have already completed this challenge.")
+                        st.success("Challenge Complete")
                     else:
                         if toggle_key not in st.session_state:
                             st.session_state[toggle_key] = False
@@ -249,6 +252,7 @@ with tab2:
                                 }).execute()
                                 
                                 st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
+                                st.session_state[toggle_key] = False
                                 time.sleep(1)
                                 st.rerun()
                             except Exception as e:
