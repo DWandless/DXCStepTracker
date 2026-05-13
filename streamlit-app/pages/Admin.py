@@ -204,51 +204,63 @@ st.subheader(
 from components import get_all_challenges, generate_claim_code, hash_claim_code
 import json
 
+# Initialize session state for generated codes
+if "generated_codes" not in st.session_state:
+    st.session_state.generated_codes = []
+
 Challenges = get_all_challenges()
-ChallengesDropdown = st.selectbox("Select Challenge", options=[Challenges[ch]["title"] for ch in Challenges])
-num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
 
-if st.button("Generate Claim Codes"):
-    if not ChallengesDropdown:
-        st.error("Please select a challenge to generate claim codes for.")
-        st.stop()
+col_left, col_right = st.columns([1, 1])
 
-    # Generate codes with proper duplicate tracking
-    generated_codes = []
-    existing_codes = set()
-    for challenge in Challenges:
-        existing_codes.update(Challenges[challenge]["Codes"])
+with col_left:
+    ChallengesDropdown = st.selectbox("Select Challenge", options=[Challenges[ch]["title"] for ch in Challenges])
+    num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
     
-    for _ in range(num_codes):
-        code = generate_claim_code(Challenges, existing_codes)
-        generated_codes.append(code)
-        existing_codes.add(hash_claim_code(code))  # Add hash to avoid duplicates
+    if st.button("Generate Claim Codes"):
+        if not ChallengesDropdown:
+            st.error("Please select a challenge to generate claim codes for.")
+            st.stop()
 
-    # Hash codes for storage
-    hashed_codes = [hash_claim_code(code) for code in generated_codes]
+        # Generate codes with proper duplicate tracking
+        generated_codes = []
+        existing_codes = set()
+        for challenge in Challenges:
+            existing_codes.update(Challenges[challenge]["Codes"])
+        
+        for _ in range(num_codes):
+            code = generate_claim_code(Challenges, existing_codes)
+            generated_codes.append(code)
+            existing_codes.add(hash_claim_code(code))  # Add hash to avoid duplicates
 
-    # Read and update Challenges.json with proper path
-    challenges_path = Path(__file__).resolve().parents[1] / "assets" / "Challenges.json"
-    try:
-        with open(challenges_path, "r") as f:
-            challenges_data = json.load(f)
-        
-        # Add hashed codes to the selected challenge
-        for challenge_key in challenges_data:
-            if challenges_data[challenge_key]["title"] == ChallengesDropdown:
-                challenges_data[challenge_key]["Codes"].extend(hashed_codes)
-                break
-        
-        # Write back to file
-        with open(challenges_path, "w") as f:
-            json.dump(challenges_data, f, indent=4)
+        # Hash codes for storage
+        hashed_codes = [hash_claim_code(code) for code in generated_codes]
 
-        st.success(f"Generated {num_codes} claim codes for challenge: {ChallengesDropdown}")
-        
-        # Display codes with download option
+        # Read and update Challenges.json with proper path
+        challenges_path = Path(__file__).resolve().parents[1] / "assets" / "Challenges.json"
+        try:
+            with open(challenges_path, "r") as f:
+                challenges_data = json.load(f)
+            
+            # Add hashed codes to the selected challenge
+            for challenge_key in challenges_data:
+                if challenges_data[challenge_key]["title"] == ChallengesDropdown:
+                    challenges_data[challenge_key]["Codes"].extend(hashed_codes)
+                    break
+            
+            # Write back to file
+            with open(challenges_path, "w") as f:
+                json.dump(challenges_data, f, indent=4)
+
+            st.session_state.generated_codes = generated_codes
+            st.success(f"Generated {num_codes} claim codes for challenge: {ChallengesDropdown}")
+        except Exception as e:
+            st.error(f"Error generating codes: {str(e)}")
+
+with col_right:
+    if st.session_state.generated_codes:
         st.markdown("**Generated Codes (Plain Text):**")
-        codes_text = "\n".join(generated_codes)
-        st.text_area("Codes", codes_text, height=150, key="generated_codes_display")
+        codes_text = "\n".join(st.session_state.generated_codes)
+        st.text_area("Codes", codes_text, height=200, key="generated_codes_display")
         
         # Download option
         st.download_button(
@@ -257,8 +269,8 @@ if st.button("Generate Claim Codes"):
             file_name=f"claim_codes_{ChallengesDropdown.replace(' ', '_').lower()}.txt",
             mime="text/plain"
         )
-    except Exception as e:
-        st.error(f"Error generating codes: {str(e)}")
+    else:
+        st.info("Generate codes to see them here.")
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()
