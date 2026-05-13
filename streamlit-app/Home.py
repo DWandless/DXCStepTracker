@@ -219,7 +219,7 @@ with tab2:
                             try:
                                 # Check if user has already completed this challenge
                                 challenge_id = Challenges[ch]['id']
-                                expected_filepath = f"{safe_username}_challenge_{challenge_id}_complete"
+                                expected_filepath = f"{user_id}_challenge_{challenge_id}_complete"
                                 
                                 existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
                                 
