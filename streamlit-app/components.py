@@ -367,7 +367,9 @@ def get_all_challenges():
         List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        challenges_path = Path(__file__).parent / ".streamlit" / "static" / "assets" / "Challenges.json"
+        # Use resolve to get absolute path
+        challenges_path = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "Challenges.json"
+        logging.info(f"Looking for challenges at: {challenges_path}")
         if not challenges_path.exists():
             logging.error(f"Challenges.json not found at: {challenges_path}")
             return []
