@@ -7,6 +7,7 @@ import pandas as pd
 import re
 import unicodedata
 import time
+import json
 from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
@@ -202,7 +203,6 @@ st.subheader(
     help="Create unique claim codes for verified step submissions."
 )
 from components import get_all_challenges, generate_claim_code, hash_claim_code
-import json
 
 # Initialize session state for generated codes
 if "generated_codes" not in st.session_state:

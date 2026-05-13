@@ -9,6 +9,7 @@ import re, unicodedata, random, io, os
 import logging
 import string
 import hashlib
+import json
 from pathlib import Path
 from streamlit.components.v1 import html as st_html
 from db import supabase
@@ -289,7 +290,6 @@ def get_all_challenges():
     try:
         challenges_path = Path(__file__).parent / "assets" / "Challenges.json"
         with open(challenges_path, "r") as f:
-            import json
             return json.load(f)
     except Exception:
         return []
