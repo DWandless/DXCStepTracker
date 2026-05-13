@@ -403,8 +403,6 @@ if not df.empty:
 else:
     st.info("No high-step unverified submissions found.")
 
-st.divider()
-
 # ------------------ 2. DOWNLOAD COMPREHENSIVE DATA ------------------
 st.subheader(
     "Download Comprehensive Data",

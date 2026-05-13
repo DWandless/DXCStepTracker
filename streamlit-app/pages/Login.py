@@ -112,7 +112,12 @@ if "code" in query_params and st.session_state["token"] is None:
         st.query_params.clear()
         st.rerun()
     except Exception as e:
-        st.error(f"Authentication failed: {e}")
+        error_str = str(e)
+        # Check for expired authorization code error
+        if "AADSTS70008" in error_str or "expired" in error_str.lower():
+            st.error("Session timed out. Please log in again.")
+        else:
+            st.error("Authentication failed. Please try again.")
         logging.error(f"OAuth token fetch error: {e}")
 
 # ------------------ LOGGED-IN FLOW ------------------
