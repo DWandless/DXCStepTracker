@@ -367,18 +367,40 @@ def get_all_challenges():
         List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        # Use resolve to get absolute path
-        challenges_path = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "Challenges.json"
-        logging.info(f"Looking for challenges at: {challenges_path}")
+        # Try multiple possible paths
+        base_dir = Path(__file__).resolve().parent
+        
+        # Path 1: .streamlit/static/assets/Challenges.json
+        challenges_path = base_dir / ".streamlit" / "static" / "assets" / "Challenges.json"
+        
+        # Path 2: static/assets/Challenges.json (for Streamlit Cloud)
         if not challenges_path.exists():
-            logging.error(f"Challenges.json not found at: {challenges_path}")
+            challenges_path = base_dir / "static" / "assets" / "Challenges.json"
+        
+        # Path 3: assets/Challenges.json
+        if not challenges_path.exists():
+            challenges_path = base_dir / "assets" / "Challenges.json"
+        
+        print(f"Looking for challenges at: {challenges_path}")
+        
+        if not challenges_path.exists():
+            error_msg = f"Challenges.json not found at: {challenges_path}"
+            logging.error(error_msg)
+            print(f"ERROR: {error_msg}")
+            print(f"Base directory: {base_dir}")
+            print(f"Directory contents: {list(base_dir.iterdir())}")
             return []
+        
         with open(challenges_path, "r") as f:
             challenges = json.load(f)
-            logging.info(f"Loaded {len(challenges)} challenges")
+            print(f"SUCCESS: Loaded {len(challenges)} challenges")
             return challenges
     except Exception as e:
-        logging.error(f"Error loading challenges: {e}")
+        error_msg = f"Error loading challenges: {e}"
+        logging.error(error_msg)
+        print(f"ERROR: {error_msg}")
+        import traceback
+        traceback.print_exc()
         return []
 
 
