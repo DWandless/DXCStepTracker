@@ -106,7 +106,7 @@ with tab1:
     if leaderboard.empty:
         st.info("No data available to display.")
     else:
-        st.dataframe(leaderboard, use_container_width=True)
+        st.dataframe(leaderboard, width='stretch')
 
         # Highlight top performer (only for All or Top 10 views)
         if view_option != "Bottom 10" and not leaderboard.empty:
@@ -209,7 +209,7 @@ with tab2:
         if team_leaderboard.empty:
             st.info("No data available to display.")
         else:
-            st.dataframe(team_leaderboard, use_container_width=True)
+            st.dataframe(team_leaderboard, width='stretch')
             
             # Highlight top team (only for All or Top 10 views)
             if team_view_option != "Bottom 10" and not team_leaderboard.empty:

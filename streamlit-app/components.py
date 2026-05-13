@@ -11,6 +11,7 @@ import unicodedata
 import base64
 import html
 import pandas as pd
+from datetime import datetime
 from pathlib import Path
 from db import supabase
 from streamlit.components.v1 import html as st_html
@@ -212,7 +213,7 @@ def render_sidebar_welcome(display_name=None):
 
 def hide_streamlit_branding():
     """Hide Streamlit's default branding elements."""
-    st_html(
+    st.components.v1.html(
         """
         <script>
         window.addEventListener('load', () => {
