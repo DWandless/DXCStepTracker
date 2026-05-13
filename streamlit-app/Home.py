@@ -166,7 +166,7 @@ with tab1:
                 st.session_state.last_submission_time = now
 
                 st.success("✔ Step count submitted successfully!")
-                time.sleep(2)
+                time.sleep(1)
                 st.rerun()
             except Exception as e:
                 st.error("Error processing upload.")
@@ -193,15 +193,6 @@ with tab2:
                 st.write(Challenges[ch]["description"])
 
             with right:
-                toggle_key = f"show_redeem_{Challenges[ch]['id']}"
-                if toggle_key not in st.session_state:
-                    st.session_state[toggle_key] = False
-
-                if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
-                    st.session_state[toggle_key] = not st.session_state[toggle_key]
-
-            # ------------------ Redeem UI ------------------
-            if st.session_state[toggle_key]:
                 # Check if user has already completed this challenge
                 challenge_id = Challenges[ch]['id']
                 expected_filepath = f"challenge_{challenge_id}_complete"
@@ -212,75 +203,58 @@ with tab2:
                     if existing_completion.data:
                         st.warning("You have already completed this challenge.")
                     else:
-                        st.markdown("**Redeem your challenge**")
+                        toggle_key = f"show_redeem_{Challenges[ch]['id']}"
+                        if toggle_key not in st.session_state:
+                            st.session_state[toggle_key] = False
 
-                        with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
-                            claim_code = st.text_input(
-                                "Enter unique claim code",
-                                placeholder="e.g. DXC-STEP-ABC123"
-                            )
-
-                            submitted = st.form_submit_button("Submit Code", type="primary")
-                            from components import validate_claim_code
-                            if submitted:
-                                if not validate_claim_code(Challenges, claim_code):
-                                    st.error("Please enter a valid claim code.")
-                                else:
-                                    try:
-                                        # Insert challenge completion into forms table
-                                        challenge_reward = Challenges[ch]['Reward']
-                                        form_filepath = expected_filepath
-                                        current_date = datetime.now().date()
-                                        current_timestamp = datetime.now().isoformat()
-                                        
-                                        supabase.table("forms").insert({
-                                            "form_filepath": form_filepath,
-                                            "form_stepcount": challenge_reward,
-                                            "form_date": str(current_date),
-                                            "user_id": user_id,
-                                            "form_created_at": current_timestamp,
-                                            "form_verified": True
-                                        }).execute()
-                                        
-                                        st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
-                                    except Exception as e:
-                                        st.error("Error processing challenge completion.")
-                                        st.exception(e)
+                        if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
+                            st.session_state[toggle_key] = not st.session_state[toggle_key]
                 except Exception:
-                    st.markdown("**Redeem your challenge**")
+                    toggle_key = f"show_redeem_{Challenges[ch]['id']}"
+                    if toggle_key not in st.session_state:
+                        st.session_state[toggle_key] = False
 
-                    with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
-                        claim_code = st.text_input(
-                            "Enter unique claim code",
-                            placeholder="e.g. DXC-STEP-ABC123"
-                        )
+                    if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
+                        st.session_state[toggle_key] = not st.session_state[toggle_key]
 
-                        submitted = st.form_submit_button("Submit Code", type="primary")
-                        from components import validate_claim_code
-                        if submitted:
-                            if not validate_claim_code(Challenges, claim_code):
-                                st.error("Please enter a valid claim code.")
-                            else:
-                                try:
-                                    # Insert challenge completion into forms table
-                                    challenge_reward = Challenges[ch]['Reward']
-                                    form_filepath = expected_filepath
-                                    current_date = datetime.now().date()
-                                    current_timestamp = datetime.now().isoformat()
-                                    
-                                    supabase.table("forms").insert({
-                                        "form_filepath": form_filepath,
-                                        "form_stepcount": challenge_reward,
-                                        "form_date": str(current_date),
-                                        "user_id": user_id,
-                                        "form_created_at": current_timestamp,
-                                        "form_verified": True
-                                    }).execute()
-                                    
-                                    st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
-                                except Exception as e:
-                                    st.error("Error processing challenge completion.")
-                                    st.exception(e)
+            # ------------------ Redeem UI ------------------
+            if st.session_state.get(toggle_key, False):
+                st.markdown("**Redeem your challenge**")
+
+                with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
+                    claim_code = st.text_input(
+                        "Enter unique claim code",
+                        placeholder="e.g. DXC-STEP-ABC123"
+                    )
+
+                    submitted = st.form_submit_button("Submit Code", type="primary")
+                    from components import validate_claim_code
+                    if submitted:
+                        if not validate_claim_code(Challenges, claim_code):
+                            st.error("Please enter a valid claim code.")
+                        else:
+                            try:
+                                # Insert challenge completion into forms table
+                                challenge_reward = Challenges[ch]['Reward']
+                                form_filepath = expected_filepath
+                                current_date = datetime.now().date()
+                                current_timestamp = datetime.now().isoformat()
+                                
+                                supabase.table("forms").insert({
+                                    "form_filepath": form_filepath,
+                                    "form_stepcount": challenge_reward,
+                                    "form_date": str(current_date),
+                                    "user_id": user_id,
+                                    "form_created_at": current_timestamp,
+                                    "form_verified": True
+                                }).execute()
+                                
+                                st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
+                                time.sleep(1)
+                                st.rerun()
+                            except Exception as e:
+                                st.error("Error processing challenge completion.")
+                                st.exception(e)
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
