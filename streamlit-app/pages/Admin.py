@@ -97,22 +97,30 @@ if not df.empty:
         with col2:
             if st.button("Verify", key=f"verify_{idx}"):
                 try:
-                    supabase.table("forms") \
-                        .update({"form_verified": True}) \
-                        .eq("form_id", row["form_id"]) \
-                        .execute()
-
-                    # Delete the image after verification
+                    # Delete from OneDrive if applicable
+                    if is_onedrive:
+                        access_token = get_access_token()
+                        if access_token:
+                            file_id = get_file_id_from_sharing_url(filepath, access_token)
+                            if file_id:
+                                delete_from_onedrive(file_id, access_token)
+                    
+                    # Delete local file if applicable
                     if not is_onedrive:
-                        # Local file - delete from uploads folder
                         try:
                             safe_name = secure_filename(os.path.basename(str(filepath)))
                             file_path = os.path.join(UPLOAD_FOLDER, safe_name)
                             os.remove(file_path)
                         except FileNotFoundError:
                             pass
-                    # Note: OneDrive files are kept for records
 
+                    # Update database to set form_verified to True
+                    supabase.table("forms") \
+                        .update({"form_verified": True}) \
+                        .eq("form_id", row["form_id"]) \
+                        .execute()
+
+                    st.success("Submission verified successfully!")
                 except Exception as e:
                     st.error(f"Error verifying form, please try again later.")
                 st.rerun()
