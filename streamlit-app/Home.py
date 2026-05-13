@@ -229,7 +229,7 @@ with tab2:
                     )
 
                     submitted = st.form_submit_button("Submit Code", type="primary")
-                    from components import validate_claim_code
+                    from components import validate_claim_code, remove_used_code
                     if submitted:
                         if not validate_claim_code(Challenges, claim_code, challenge_id):
                             st.error("Please enter a valid claim code.")
@@ -249,6 +249,9 @@ with tab2:
                                     "form_created_at": current_timestamp,
                                     "form_verified": True
                                 }).execute()
+                                
+                                # Remove the used code from Challenges.json to prevent reuse
+                                remove_used_code(challenge_id, claim_code)
                                 
                                 st.session_state[toggle_key] = False
                                 st.rerun()

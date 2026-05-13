@@ -359,6 +359,40 @@ def validate_claim_code(challenges: list[dict], code: str, challenge_id: str) ->
             return False
     return False
 
+
+def remove_used_code(challenge_id: str, code: str) -> bool:
+    """
+    Remove a used code from Challenges.json to prevent reuse.
+    
+    Args:
+        challenge_id: The ID of the challenge
+        code: The plain text code that was used
+    
+    Returns:
+        True if removal was successful, False otherwise
+    """
+    code_hash = hash_claim_code(code)
+    challenges_path = Path(__file__).parent / "assets" / "Challenges.json"
+    
+    try:
+        with open(challenges_path, "r") as f:
+            challenges_data = json.load(f)
+        
+        # Remove the code hash from the challenge's Codes list
+        for challenge_key in challenges_data:
+            if challenges_data[challenge_key]["id"] == challenge_id:
+                if code_hash in challenges_data[challenge_key]["Codes"]:
+                    challenges_data[challenge_key]["Codes"].remove(code_hash)
+                break
+        
+        # Write back to file
+        with open(challenges_path, "w") as f:
+            json.dump(challenges_data, f, indent=4)
+        
+        return True
+    except Exception:
+        return False
+
 # ==================== DATABASE FUNCTIONS ====================
 
 def get_user_id(username: str):
