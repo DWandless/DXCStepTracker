@@ -189,33 +189,6 @@ def delete_from_onedrive(file_id, access_token):
         return False
 
 
-def delete_onedrive_folder(folder_path, access_token):
-    """
-    Delete a folder from OneDrive using its path.
-    
-    Args:
-        folder_path: Path to the folder (e.g., "StepTrackerEvidence")
-        access_token: Microsoft Graph access token
-        
-    Returns:
-        bool: True if successful, False otherwise
-    """
-    try:
-        headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
-        
-        # Use the path-based URL to delete the folder
-        delete_url = f"{GRAPH_API_ENDPOINT}/me/drive/root:/{folder_path}"
-        response = requests.delete(delete_url, headers=headers)
-        
-        return response.status_code == 204
-        
-    except Exception as e:
-        logging.error(f"Error deleting folder from OneDrive: {e}")
-        return False
-
-
 def get_file_id_from_sharing_url(sharing_url, access_token):
     """
     Resolve a sharing URL to get the OneDrive file_id.
