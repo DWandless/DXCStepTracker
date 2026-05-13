@@ -62,7 +62,7 @@ if not user_id:
 try:
     user_data = supabase.table("users").select("user_name").eq("user_id", user_id).execute()
     user_name = user_data.data[0]["user_name"] if user_data.data else username
-    safe_username = secure_filename(user_name.replace(" ", "_"))
+    safe_username = secure_filename(user_name)
 except Exception:
     safe_username = secure_filename(username.split("@")[0])  # Fallback to email prefix
 
@@ -75,6 +75,8 @@ tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "✦ AI Challenges",  "➜
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
     st.header("✚ Submit Your Steps")
+    st.caption("Log your daily step count with screenshot proof.")
+    st.divider()
     
     with st.form("step_submission_form", clear_on_submit=True):
         date_col, step_col = st.columns(2)
@@ -174,29 +176,13 @@ with tab1:
                     st.error("Error processing upload.")
                     st.exception(e)
 
-    # ------------------ Amazon QuickSight Chat Agent ------------------
-    st.markdown("---")
-    st.subheader("💬 Step Tracker Assistant")
-    st.markdown(
-        """
-        <iframe
-            width="450"
-            height="800"
-            allow="clipboard-read https://us-east-1.quicksight.aws.amazon.com; clipboard-write https://us-east-1.quicksight.aws.amazon.com"
-            src="https://us-east-1.quicksight.aws.amazon.com/sn/account/dxc-quickbeta/embed/share/accounts/442426875626/chatagents/2bac02d3-a333-421e-87c1-28418925556e">
-        </iframe>
-        """,
-        unsafe_allow_html=True
-    )
-
 # ------------------ TAB 2: AI Challenges ------------------
 with tab2:
     st.header("✦ AI Challenges")
     st.caption("Complete challenges and redeem your unique claim codes.")
+    st.divider()
 
     # ------------------ Mock Challenge Data (UI only) ------------------
-
-    st.divider()
 
     # ------------------ Challenges List ------------------
     from components import get_all_challenges
@@ -282,6 +268,8 @@ with tab2:
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
+    st.caption("Track your step history, streaks, and statistics.")
+    st.divider()
     df = fetch_user_forms(user_id)
 
     if df.empty:
@@ -332,14 +320,16 @@ with tab3:
         )
         fig.update_xaxes(tickformat="%Y-%m-%d")
         fig.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
+            xaxis_title="Date",
+            yaxis_title="Step Count"
         )
-        st.plotly_chart(fig, use_container_width=True, config={"staticPlot": True})
+        st.plotly_chart(fig, use_container_width=True)
 
-# ------------------ TAB 4: TEAMS ------------------
+# ------------------ TAB 4: TEAM MANAGEMENT ------------------
 with tab4:
     st.header("⚑ Team Management")
+    st.caption("Join or create teams to compete together.")
+    st.divider()
     
     # Get user's current team
     try:
