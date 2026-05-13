@@ -192,6 +192,7 @@ with tab2:
             with left:
                 st.subheader(Challenges[ch]["title"])
                 st.write(Challenges[ch]["description"])
+                st.caption(f"Reward: {Challenges[ch]['Reward']:,} steps")
 
             with right:
                 # Check if user has already completed this challenge
@@ -203,7 +204,7 @@ with tab2:
                     existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
                     
                     if existing_completion.data:
-                        st.success("Challenge Complete")
+                        st.success("Challenge Complete ✔")
                     else:
                         if toggle_key not in st.session_state:
                             st.session_state[toggle_key] = False
@@ -249,9 +250,7 @@ with tab2:
                                     "form_verified": True
                                 }).execute()
                                 
-                                st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
                                 st.session_state[toggle_key] = False
-                                time.sleep(1)
                                 st.rerun()
                             except Exception as e:
                                 st.error("Error processing challenge completion.")
