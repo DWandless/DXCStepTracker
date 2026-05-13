@@ -368,9 +368,15 @@ def get_all_challenges():
     """
     try:
         challenges_path = Path(__file__).parent / ".streamlit" / "static" / "assets" / "Challenges.json"
+        if not challenges_path.exists():
+            logging.error(f"Challenges.json not found at: {challenges_path}")
+            return []
         with open(challenges_path, "r") as f:
-            return json.load(f)
-    except Exception:
+            challenges = json.load(f)
+            logging.info(f"Loaded {len(challenges)} challenges")
+            return challenges
+    except Exception as e:
+        logging.error(f"Error loading challenges: {e}")
         return []
 
 
