@@ -251,7 +251,8 @@ with tab2:
                                 }).execute()
                                 
                                 # Remove the used code from Challenges.json to prevent reuse
-                                remove_used_code(challenge_id, claim_code)
+                                if not remove_used_code(challenge_id, claim_code):
+                                    st.error("Code was redeemed but failed to remove from storage. Please contact admin.")
                                 
                                 st.session_state[toggle_key] = False
                                 st.rerun()
