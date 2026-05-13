@@ -108,7 +108,6 @@ if "code" in query_params and st.session_state["token"] is None:
             code=query_params["code"],
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
-            redirect_uri=REDIRECT_URI,
         )
         st.session_state["token"] = token
         st.query_params.clear()
