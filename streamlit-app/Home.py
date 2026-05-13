@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError
-import re, unicodedata, random, io
+import re, unicodedata, random, io, time
 from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
@@ -166,6 +166,8 @@ with tab1:
                 st.session_state.last_submission_time = now
 
                 st.success("✔ Step count submitted successfully!")
+                time.sleep(2)
+                st.rerun()
             except Exception as e:
                 st.error("Error processing upload.")
                 st.exception(e)
@@ -215,23 +217,31 @@ with tab2:
                             st.error("Please enter a valid claim code.")
                         else:
                             try:
-                                # Insert challenge completion into forms table
+                                # Check if user has already completed this challenge
                                 challenge_id = Challenges[ch]['id']
-                                challenge_reward = Challenges[ch]['Reward']
-                                form_filepath = f"{safe_username}_challenge_{challenge_id}_complete"
-                                current_date = datetime.now().date()
-                                current_timestamp = datetime.now().isoformat()
+                                expected_filepath = f"{safe_username}_challenge_{challenge_id}_complete"
                                 
-                                supabase.table("forms").insert({
-                                    "form_filepath": form_filepath,
-                                    "form_stepcount": challenge_reward,
-                                    "form_date": str(current_date),
-                                    "user_id": user_id,
-                                    "form_created_at": current_timestamp,
-                                    "form_verified": True
-                                }).execute()
+                                existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
                                 
-                                st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
+                                if existing_completion.data:
+                                    st.error("You have already completed this challenge.")
+                                else:
+                                    # Insert challenge completion into forms table
+                                    challenge_reward = Challenges[ch]['Reward']
+                                    form_filepath = expected_filepath
+                                    current_date = datetime.now().date()
+                                    current_timestamp = datetime.now().isoformat()
+                                    
+                                    supabase.table("forms").insert({
+                                        "form_filepath": form_filepath,
+                                        "form_stepcount": challenge_reward,
+                                        "form_date": str(current_date),
+                                        "user_id": user_id,
+                                        "form_created_at": current_timestamp,
+                                        "form_verified": True
+                                    }).execute()
+                                    
+                                    st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
                             except Exception as e:
                                 st.error("Error processing challenge completion.")
                                 st.exception(e)
