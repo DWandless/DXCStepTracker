@@ -22,7 +22,7 @@ setup_logging()
 azure = st.secrets["azure"]
 CLIENT_ID = azure["client_id"]
 CLIENT_SECRET = azure["client_secret"]
-TENANT_ID = "93f33571-550f-43cf-b09f-cd331338d086"
+TENANT_ID = azure.get("tenant_id", "93f33571-550f-43cf-b09f-cd331338d086")
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 AUTHORIZE_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"  # v2.0 endpoint
@@ -57,6 +57,20 @@ def standardize_name(name):
         return f"{parts[1].strip()} {parts[0].strip()}"
     return name
 
+
+def is_token_expired(token):
+    """Check if JWT token is expired."""
+    try:
+        import jwt
+        decoded = jwt.decode(token, options={"verify_signature": False})
+        exp = decoded.get("exp")
+        if exp:
+            import time
+            return time.time() >= exp
+        return False
+    except Exception:
+        return True  # Treat errors as expired
+
 def get_or_create_user(email, display_name):
     """Get existing user or create new user in database, return formatted name."""
     try:
@@ -75,7 +89,7 @@ def get_or_create_user(email, display_name):
                 "user_name": standardized_name,
             }).execute()
             
-            logging.info(f"New user created: {email} ({standardized_name})")
+            logging.info(f"New user created: {email[:3]}***@*** ({standardized_name})")
             return standardized_name
     except Exception as e:
         logging.error(f"Database error in get_or_create_user: {e}")
@@ -105,6 +119,14 @@ if "code" in query_params and st.session_state["token"] is None:
 token = st.session_state["token"]
 
 if token:
+    # Check if token is expired
+    token_to_check = token.get("id_token") or token.get("access_token")
+    if token_to_check and is_token_expired(token_to_check):
+        st.error("Session expired. Please log in again.")
+        if st.button("Log In Again"):
+            st.session_state.clear()
+            st.rerun()
+    
     # Get user info from token
     try:
         import jwt
@@ -136,7 +158,8 @@ if token:
                 st.session_state.username = user_email  # Store email for database lookups
                 st.session_state.display_name = username  # Store formatted name for display
                 st.session_state.user_email = user_email  # Also store email explicitly
-                logging.info(f"User logged in: {username} ({user_email})")
+                st.session_state.login_time = datetime.now().timestamp()  # Track login time for session timeout
+                logging.info(f"User logged in: {username} ({user_email[:3]}***@***)")
             
             st.page_link("Home.py", label="🏠︎ Click here to go to Home")
             

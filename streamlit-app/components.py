@@ -2,18 +2,17 @@
 Shared components and styling for the DXC Step Tracker application.
 This module contains reusable functions for consistent theming across all pages.
 """
+
 import streamlit as st
-import pandas as pd
-import bcrypt
-import re, unicodedata, random, io, os
 import logging
-import string
-import hashlib
-import json
+import os
+import re
+import unicodedata
 import base64
+import html
 from pathlib import Path
-from streamlit.components.v1 import html as st_html
 from db import supabase
+from streamlit.components.v1 import html as st_html
 
 # -------------------------------------------------------------------
 # Paths + Static Assets
@@ -153,22 +152,29 @@ def setup_logo():
         st.warning(f"Logo not found at: {LOGO_PATH}")
 
 
-def render_header(title, subtitle):
+def render_header(title: str, subtitle: str):
     """
-    Render a styled header with title and subtitle.
+    Render the DXC Technology header with blue gradient background.
     
     Args:
         title: Main header title
         subtitle: Subtitle text
     """
-    st.markdown(f"""
-    <div class="header-container">
-        <div>
-            <div class="header-title">{title}</div>
-            <div class="header-subtitle">{subtitle}</div>
+    # Escape user-generated content to prevent XSS
+    safe_title = html.escape(title)
+    safe_subtitle = html.escape(subtitle)
+    
+    st.markdown(
+        f"""
+        <div class="header-container">
+            <div>
+                <div class="header-title">{safe_title}</div>
+                <div class="header-subtitle">{safe_subtitle}</div>
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
 
 
 def render_footer():
@@ -193,8 +199,11 @@ def render_sidebar_welcome(display_name=None):
     if display_name is None:
         display_name = st.session_state.get("display_name", st.session_state.get("username", "User"))
     
+    # Escape user-generated content to prevent XSS
+    safe_display_name = html.escape(display_name)
+    
     st.sidebar.markdown(
-        f"<h3 style='color:#7BA4DB;'>Welcome, {display_name}!</h3>",
+        f"<h3 style='color:#7BA4DB;'>Welcome, {safe_display_name}!</h3>",
         unsafe_allow_html=True
     )
     return st.sidebar.button("Logout", type="secondary")
@@ -226,6 +235,15 @@ def check_login_required():
         st.warning("Please log in first.")
         st.stop()
     
+    # Check session timeout (8 hours)
+    login_time = st.session_state.get("login_time")
+    if login_time:
+        session_timeout = 8 * 3600  # 8 hours in seconds
+        if datetime.now().timestamp() - login_time > session_timeout:
+            st.warning("Session expired. Please log in again.")
+            handle_logout()
+            st.stop()
+    
     return st.session_state.get("username", "Guest")
 
 
@@ -244,6 +262,28 @@ def setup_logging():
         level=logging.ERROR,
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
+
+
+def log_audit_event(event_type, user_email, details=None):
+    """
+    Log audit events for sensitive operations.
+    
+    Args:
+        event_type: Type of event (e.g., "VERIFICATION", "CODE_GENERATION", "ADMIN_ACCESS")
+        user_email: Email of the user performing the action
+        details: Additional details about the event (optional)
+    """
+    try:
+        # Sanitize email for logging
+        safe_email = user_email[:3] + "***@***" if user_email else "unknown"
+        
+        log_message = f"AUDIT: {event_type} - User: {safe_email}"
+        if details:
+            log_message += f" - Details: {details}"
+        
+        logging.info(log_message)
+    except Exception as e:
+        logging.error(f"Failed to log audit event: {e}")
 
 
 def secure_filename(filename: str, max_length: int = 255) -> str:

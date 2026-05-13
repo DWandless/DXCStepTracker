@@ -1,9 +1,11 @@
 streamlit
-pandas
-numpy
-matplotlib
-seaborn
+supabase
+requests
+oauthlib
+requests-oauthlib
+Pillow
 plotly
+openpyxl
 scikit-learn
 requests
 streamlit-lottie

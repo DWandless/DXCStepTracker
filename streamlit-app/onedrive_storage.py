@@ -11,6 +11,7 @@ import logging
 # Microsoft Graph API endpoints
 GRAPH_API_ENDPOINT = "https://graph.microsoft.com/v1.0"
 ONEDRIVE_FOLDER = "StepTrackerEvidence"  # Folder name in OneDrive root
+SHAREPOINT_SITE_ID = None  # Will be set if using SharePoint
 
 
 def get_access_token():
@@ -96,7 +97,7 @@ def upload_to_onedrive(file_bytes, filename, access_token, admin_emails=None):
         file_bytes: File content as bytes
         filename: Name for the file
         access_token: Microsoft Graph access token
-        admin_emails: List of admin email addresses to share with (optional)
+        admin_emails: List of admin email addresses to share with (optional, not used currently)
         
     Returns:
         dict with 'success' (bool), 'url' (str), 'error' (str)
@@ -124,22 +125,12 @@ def upload_to_onedrive(file_bytes, filename, access_token, admin_emails=None):
         if response.status_code in [200, 201]:
             file_data = response.json()
             
-            # If admin emails provided, share with specific people
-            if admin_emails:
-                share_url = f"{GRAPH_API_ENDPOINT}/me/drive/items/{file_data['id']}/invite"
-                share_data = {
-                    "requireSignIn": True,
-                    "sendInvitation": False,
-                    "roles": ["view"],
-                    "recipients": [{"email": email} for email in admin_emails]
-                }
-            else:
-                # Create organization-wide sharing link as fallback
-                share_url = f"{GRAPH_API_ENDPOINT}/me/drive/items/{file_data['id']}/createLink"
-                share_data = {
-                    "type": "view",
-                    "scope": "organization"
-                }
+            # Create organization-wide sharing link (only option without SharePoint)
+            share_url = f"{GRAPH_API_ENDPOINT}/me/drive/items/{file_data['id']}/createLink"
+            share_data = {
+                "type": "view",
+                "scope": "organization"
+            }
             
             share_headers = {
                 "Authorization": f"Bearer {access_token}",
@@ -149,11 +140,7 @@ def upload_to_onedrive(file_bytes, filename, access_token, admin_emails=None):
             share_response = requests.post(share_url, headers=share_headers, json=share_data)
             
             if share_response.status_code in [200, 201]:
-                if admin_emails:
-                    # For invite, get the webUrl from the response
-                    web_url = share_response.json().get("sharingLink", {}).get("webUrl", file_data.get("webUrl", ""))
-                else:
-                    web_url = share_response.json()["link"]["webUrl"]
+                web_url = share_response.json()["link"]["webUrl"]
             else:
                 # Fallback to direct web URL
                 web_url = file_data.get("webUrl", "")

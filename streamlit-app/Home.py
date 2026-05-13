@@ -8,8 +8,8 @@ import re, unicodedata, random, io, time
 import hashlib
 from pathlib import Path
 from db import supabase
-from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
-                        secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout)
+from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
+                        hide_streamlit_branding, secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout, log_audit_event)
 from onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
@@ -120,6 +120,29 @@ with tab1:
             elif not screenshot:
                 st.error("Please upload a screenshot.")
             else:
+                # --- Daily submission limit check (10 per day) ---
+                try:
+                    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                    daily_submissions = supabase.table("forms") \
+                        .select("form_id") \
+                        .eq("user_id", user_id) \
+                        .gte("form_created_at", today_start.isoformat()) \
+                        .execute()
+                    
+                    submission_count = len(daily_submissions.data) if daily_submissions.data else 0
+                    
+                    if submission_count >= 10:
+                        st.error("Daily submission limit reached (10 per day). Please try again tomorrow.")
+                        log_audit_event("RATE_LIMIT_EXCEEDED", user_email, f"Daily limit: {submission_count}/10")
+                        st.stop()
+                    else:
+                        # Proceed with submission
+                        remaining_submissions = 10 - submission_count
+                        st.info(f"Daily submissions remaining: {remaining_submissions}")
+                except Exception as e:
+                    logging.error(f"Error checking daily submission limit: {e}")
+                    # Proceed with submission if check fails
+                
                 try:
                     img = Image.open(screenshot).convert("RGB")
                     filename = secure_filename(f"{safe_username}_{step_date}_{datetime.now().strftime('%H%M%S')}.jpg")
@@ -134,10 +157,9 @@ with tab1:
                     # For steps >= 20,000, upload to OneDrive
                     if steps >= 20000:
                         access_token = get_access_token()
-                        admin_emails = st.secrets.get("ADMIN_EMAILS", [])
                         
                         if access_token:
-                            upload_result = upload_to_onedrive(img_bytes, filename, access_token, admin_emails)
+                            upload_result = upload_to_onedrive(img_bytes, filename, access_token)
                             
                             if upload_result["success"]:
                                 file_url = upload_result["url"]
@@ -259,11 +281,11 @@ with tab2:
                                         "challenge_code": code_hash
                                     }).execute()
                                     
+                                    log_audit_event("CHALLENGE_REDEMPTION", user_email, f"Challenge ID: {challenge_id}, Code used")
                                     st.session_state[toggle_key] = False
                                     st.rerun()
                             except Exception as e:
                                 st.error("Error processing challenge completion.")
-                                st.exception(e)
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
@@ -511,7 +533,7 @@ with tab4:
                     team_name = st.text_input(
                         "Team Name",
                         max_chars=50,
-                        help="Choose a unique name for your team (max 50 characters)"
+                        help="Choose a unique name for your team (3-50 characters)"
                     )
                     
                     submitted = st.form_submit_button("Create Team", type="secondary")
@@ -519,6 +541,8 @@ with tab4:
                     if submitted:
                         if not team_name or len(team_name.strip()) < 3:
                             st.error("Team name must be at least 3 characters long.")
+                        elif len(team_name.strip()) > 50:
+                            st.error("Team name must be less than 50 characters.")
                         else:
                             try:
                                 existing = supabase.table("teams").select("team_name").eq("team_name", team_name.strip()).execute()
