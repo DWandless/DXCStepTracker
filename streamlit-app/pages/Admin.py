@@ -12,7 +12,7 @@ from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
                         hide_streamlit_branding, check_login_required, handle_logout, secure_filename)
-from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
+from onedrive_storage import get_file_download_url, delete_from_onedrive, delete_onedrive_folder, get_access_token, get_file_id_from_sharing_url
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "logo.png"
@@ -102,9 +102,16 @@ if not df.empty:
                     if is_onedrive:
                         access_token = get_access_token()
                         if access_token:
-                            file_id = get_file_id_from_sharing_url(filepath, access_token)
-                            if file_id:
-                                delete_from_onedrive(file_id, access_token)
+                            # Check if it's a folder URL (contains StepTrackerEvidence)
+                            if "StepTrackerEvidence" in filepath:
+                                # Extract folder path and delete folder
+                                folder_path = "StepTrackerEvidence"
+                                delete_onedrive_folder(folder_path, access_token)
+                            else:
+                                # It's a file, delete using file ID
+                                file_id = get_file_id_from_sharing_url(filepath, access_token)
+                                if file_id:
+                                    delete_from_onedrive(file_id, access_token)
                     
                     # Delete local file if applicable
                     if not is_onedrive:
