@@ -288,7 +288,8 @@ def get_all_challenges():
         List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        with open("streamlit-app\\Challenges.json", "r") as f:
+        challenges_path = Path(__file__).parent / "Challenges.json"
+        with open(challenges_path, "r") as f:
             import json
             return json.load(f)
     except Exception:

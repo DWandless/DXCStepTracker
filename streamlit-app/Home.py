@@ -214,12 +214,26 @@ with tab2:
                         if not validate_claim_code(Challenges, claim_code):
                             st.error("Please enter a valid claim code.")
                         else:
-
-                            # UI-only behaviour (no backend)
-                            st.success("Claim code submitted successfully!")
-                            st.caption("Verification will be applied later.")
-                            
-                            st.success("✅ Claim code submitted successfully!")
+                            try:
+                                # Insert challenge completion into forms table
+                                challenge_id = Challenges[ch]['id']
+                                form_filepath = f"{safe_username}_challenge_{challenge_id}_complete"
+                                current_date = datetime.now().date()
+                                current_timestamp = datetime.now().isoformat()
+                                
+                                supabase.table("forms").insert({
+                                    "form_filepath": form_filepath,
+                                    "form_stepcount": 15000,
+                                    "form_date": str(current_date),
+                                    "user_id": user_id,
+                                    "form_created_at": current_timestamp,
+                                    "form_verified": True
+                                }).execute()
+                                
+                                st.success("✔ Challenge completed! 15,000 steps added to your total.")
+                            except Exception as e:
+                                st.error("Error processing challenge completion.")
+                                st.exception(e)
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
