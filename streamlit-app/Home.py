@@ -196,6 +196,7 @@ with tab2:
                 # Check if user has already completed this challenge
                 challenge_id = Challenges[ch]['id']
                 expected_filepath = f"challenge_{challenge_id}_complete"
+                toggle_key = f"show_redeem_{Challenges[ch]['id']}"
                 
                 try:
                     existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
@@ -203,14 +204,12 @@ with tab2:
                     if existing_completion.data:
                         st.warning("You have already completed this challenge.")
                     else:
-                        toggle_key = f"show_redeem_{Challenges[ch]['id']}"
                         if toggle_key not in st.session_state:
                             st.session_state[toggle_key] = False
 
                         if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
                             st.session_state[toggle_key] = not st.session_state[toggle_key]
                 except Exception:
-                    toggle_key = f"show_redeem_{Challenges[ch]['id']}"
                     if toggle_key not in st.session_state:
                         st.session_state[toggle_key] = False
 
