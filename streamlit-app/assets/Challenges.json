@@ -4,7 +4,7 @@
             "title": "10k Steps Day",
             "description": "Walk 10,000 steps in a single day and upload proof.",
             "Reward": 15000,
-            "Codes": []
+            "Codes": ["TEST-CODE"]
         },
         "Challenge2": {
             "id": "Challenge2",
