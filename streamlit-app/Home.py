@@ -13,7 +13,7 @@ from components import (apply_dxc_theme, setup_logo, render_header, render_foote
 from onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
-logo_path2 = Path(__file__).resolve().parent / "assets" / "logo.png"
+logo_path2 = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "logo.png"
 st.set_page_config(page_title="DXC Step Tracker", layout="wide", page_icon=logo_path2)
 
 # Hide branding early

@@ -5,7 +5,7 @@ from pathlib import Path
 from components import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, check_login_required, handle_logout
 
 # ------------------ PAGE CONFIG ------------------
-logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
+logo_path2 = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "logo.png"
 st.set_page_config(page_title="Leaderboard", layout="wide", page_icon=logo_path2)
 
 # Hide branding early

@@ -7,7 +7,7 @@ from components import (apply_dxc_theme, setup_logo, render_header, render_foote
                         hide_streamlit_branding, setup_logging)
 
 # ------------------ CONFIG ------------------
-logo_path2 = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
+logo_path2 = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "logo.png"
 st.set_page_config(page_title="Login", layout="wide", page_icon=logo_path2)
 
 # ------------------ APPLY THEME & LOGO ------------------

@@ -15,7 +15,7 @@ from components import (apply_dxc_theme, setup_logo, render_header, render_foote
 from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
 
 # ------------------ PAGE CONFIG ------------------
-logo_path = Path(__file__).resolve().parents[1] / "assets" / "logo.png"
+logo_path = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "logo.png"
 st.set_page_config(page_title="Admin Dashboard", layout="wide", page_icon=logo_path)
 
 # Hide branding early
@@ -240,7 +240,7 @@ with col_left:
         hashed_codes = [hash_claim_code(code) for code in generated_codes]
 
         # Read and update Challenges.json with proper path
-        challenges_path = Path(__file__).resolve().parents[1] / "assets" / "Challenges.json"
+        challenges_path = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "Challenges.json"
         try:
             with open(challenges_path, "r") as f:
                 challenges_data = json.load(f)

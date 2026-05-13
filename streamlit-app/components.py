@@ -21,7 +21,7 @@ def apply_dxc_theme():
     <style>
         @font-face {
             font-family: 'GT-Standard';
-            src: url('assets/GT-Standard-L-Extended-Medium.otf') format('opentype');
+            src: url('app/static/assets/GT-Standard-L-Extended-Medium.otf') format('opentype');
         }
         
         /* White to Blue to Orange Gradient Background */
@@ -102,18 +102,14 @@ def apply_dxc_theme():
     """, unsafe_allow_html=True)
 
 
-def setup_logo(base_path=None):
+def setup_logo(base_path: Path):
     """
-    Set up the DXC logo in the sidebar.
+    Setup the logo in the sidebar.
     
     Args:
         base_path: Path object pointing to the directory containing assets folder.
-                  If None, assumes current file's parent directory.
     """
-    if base_path is None:
-        base_path = Path(__file__).parent
-    
-    logo_path = base_path / "assets" / "logo.png"
+    logo_path = base_path / ".streamlit" / "static" / "assets" / "logo.png"
     
     if logo_path.exists():
         st.logo(str(logo_path), icon_image=str(logo_path), size="large")
@@ -293,7 +289,7 @@ def get_all_challenges():
         List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        challenges_path = Path(__file__).parent / "assets" / "Challenges.json"
+        challenges_path = Path(__file__).parent / ".streamlit" / "static" / "assets" / "Challenges.json"
         with open(challenges_path, "r") as f:
             return json.load(f)
     except Exception:
