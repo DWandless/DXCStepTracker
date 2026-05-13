@@ -201,28 +201,64 @@ st.subheader(
     "Generate Claim Codes",
     help="Create unique claim codes for verified step submissions."
 )
-from components import get_all_challenges, generate_claim_code
+from components import get_all_challenges, generate_claim_code, hash_claim_code
+import json
+
 Challenges = get_all_challenges()
 ChallengesDropdown = st.selectbox("Select Challenge", options=[Challenges[ch]["title"] for ch in Challenges])
 num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
+
 if st.button("Generate Claim Codes"):
     if not ChallengesDropdown:
         st.error("Please select a challenge to generate claim codes for.")
         st.stop()
 
-    generated_codes = [generate_claim_code(Challenges, set()) for _ in range(num_codes)]
+    # Generate codes with proper duplicate tracking
+    generated_codes = []
+    existing_codes = set()
+    for challenge in Challenges:
+        existing_codes.update(Challenges[challenge]["Codes"])
+    
+    for _ in range(num_codes):
+        code = generate_claim_code(Challenges, existing_codes)
+        generated_codes.append(code)
+        existing_codes.add(hash_claim_code(code))  # Add hash to avoid duplicates
 
-    with open("streamlit-app\\Challenges.json", "r") as f:
-        import json
-        for challenge in Challenges:
-            if Challenges[challenge]["title"] == ChallengesDropdown:
-                Challenges[challenge]["Codes"].extend(generated_codes)
-        f.seek(0)
-        json.dump(Challenges, f, indent=4)
-        f.truncate()
+    # Hash codes for storage
+    hashed_codes = [hash_claim_code(code) for code in generated_codes]
 
-    st.success(f"Generated {num_codes} claim codes for challenge: {ChallengesDropdown}")
-    st.write(generated_codes)
+    # Read and update Challenges.json with proper path
+    challenges_path = Path(__file__).resolve().parents[1] / "assets" / "Challenges.json"
+    try:
+        with open(challenges_path, "r") as f:
+            challenges_data = json.load(f)
+        
+        # Add hashed codes to the selected challenge
+        for challenge_key in challenges_data:
+            if challenges_data[challenge_key]["title"] == ChallengesDropdown:
+                challenges_data[challenge_key]["Codes"].extend(hashed_codes)
+                break
+        
+        # Write back to file
+        with open(challenges_path, "w") as f:
+            json.dump(challenges_data, f, indent=4)
+
+        st.success(f"Generated {num_codes} claim codes for challenge: {ChallengesDropdown}")
+        
+        # Display codes with download option
+        st.markdown("**Generated Codes (Plain Text):**")
+        codes_text = "\n".join(generated_codes)
+        st.text_area("Codes", codes_text, height=150, key="generated_codes_display")
+        
+        # Download option
+        st.download_button(
+            label="Download Codes (Plain Text)",
+            data=codes_text,
+            file_name=f"claim_codes_{ChallengesDropdown.replace(' ', '_').lower()}.txt",
+            mime="text/plain"
+        )
+    except Exception as e:
+        st.error(f"Error generating codes: {str(e)}")
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()

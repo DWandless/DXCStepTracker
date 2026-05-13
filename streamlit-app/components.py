@@ -5,14 +5,13 @@ This module contains reusable functions for consistent theming across all pages.
 import streamlit as st
 import pandas as pd
 import bcrypt
-import re
-import os
-import unicodedata
+import re, unicodedata, random, io, os
 import logging
+import string
+import hashlib
 from pathlib import Path
 from streamlit.components.v1 import html as st_html
 from db import supabase
-import string, random
 
 
 def apply_dxc_theme():
@@ -327,9 +326,22 @@ def generate_claim_code(challenges: list[dict], AlreadyGenerated: set[str], leng
 
     raise RuntimeError("Unable to generate a unique claim code — increase length or max_attempts.")
 
+def hash_claim_code(code: str) -> str:
+    """
+    Hash a claim code using SHA256 for secure storage.
+    
+    Args:
+        code: The plain text claim code to hash
+    
+    Returns:
+        The SHA256 hash of the code as a hexadecimal string
+    """
+    return hashlib.sha256(code.encode()).hexdigest()
+
+
 def validate_claim_code(challenges: list[dict], code: str, challenge_id: str) -> bool:
     """
-    Validate a claim code against a specific challenge.
+    Validate a claim code against a specific challenge by comparing hashes.
     
     Args:
         challenges: List of challenge dicts, each containing a "Codes" list
@@ -339,9 +351,10 @@ def validate_claim_code(challenges: list[dict], code: str, challenge_id: str) ->
     Returns:
         True if the code is valid for the specific challenge, False otherwise
     """
+    code_hash = hash_claim_code(code)
     for challenge in challenges:
         if challenges[challenge]["id"] == challenge_id:
-            if code in challenges[challenge]["Codes"]:
+            if code_hash in challenges[challenge]["Codes"]:
                 return True
             return False
     return False
