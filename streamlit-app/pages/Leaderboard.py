@@ -13,7 +13,7 @@ hide_streamlit_branding()
 
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
-setup_logo(Path(__file__).resolve().parents[1])
+setup_logo()
 render_header("DXC Step Leaderboard", "Keep a Track of Leaders & Your Friends!")
 
 # ------------------ SECURITY: LOGIN CHECK ------------------

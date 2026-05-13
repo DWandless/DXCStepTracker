@@ -23,7 +23,7 @@ hide_streamlit_branding()
 
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
-setup_logo(Path(__file__).resolve().parents[1])
+setup_logo()
 render_header("Admin Dashboard", "Manage submissions and verify evidence.")
 
 # ------------------ LOGIN & ROLE CHECK ------------------

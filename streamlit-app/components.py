@@ -10,20 +10,63 @@ import logging
 import string
 import hashlib
 import json
+import base64
 from pathlib import Path
 from streamlit.components.v1 import html as st_html
 from db import supabase
 
+# -------------------------------------------------------------------
+# Paths + Static Assets
+# -------------------------------------------------------------------
+BASE_DIR = Path(__file__).resolve().parent
+ASSETS_DIR = BASE_DIR / ".streamlit" / "static" / "assets"
+
+LOGO_PATH = ASSETS_DIR / "logo.png"
+HEADER_FONT_PATH = ASSETS_DIR / "GT-Standard-L-Extended-Medium.otf"
+
+
+def apply_header_font():
+    """Apply the GT-Standard font to headers using base64 encoding."""
+    if not HEADER_FONT_PATH.exists():
+        return
+
+    try:
+        font_b64 = base64.b64encode(HEADER_FONT_PATH.read_bytes()).decode("utf-8")
+    except Exception:
+        return
+
+    st.markdown(
+        f"""
+        <style>
+        @font-face {{
+            font-family: 'GTStandardHeader';
+            src: url(data:font/otf;base64,{font_b64}) format('opentype');
+            font-weight: 500;
+            font-style: normal;
+        }}
+
+        h1, h2, h3, h4, h5, h6,
+        [data-testid="stMarkdownContainer"] h1,
+        [data-testid="stMarkdownContainer"] h2,
+        [data-testid="stMarkdownContainer"] h3,
+        [data-testid="stMarkdownContainer"] h4,
+        [data-testid="stMarkdownContainer"] h5,
+        [data-testid="stMarkdownContainer"] h6,
+        .header-title, .header-subtitle {{
+            font-family: 'GTStandardHeader', sans-serif !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 def apply_dxc_theme():
     """Apply the DXC gradient theme and styling to the page."""
+    apply_header_font()
+    
     st.markdown("""
     <style>
-        @font-face {
-            font-family: 'GT-Standard';
-            src: url('/app/static/assets/GT-Standard-L-Extended-Medium.otf') format('opentype');
-        }
-        
         /* White to Blue to Orange Gradient Background */
         .stApp {
             background: linear-gradient(135deg, 
@@ -53,8 +96,8 @@ def apply_dxc_theme():
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        .header-title { font-size: 42px; font-weight: bold; font-family: 'GT-Standard', sans-serif; }
-        .header-subtitle { font-size: 18px; margin-top: 5px; font-family: 'GT-Standard', sans-serif; }
+        .header-title { font-size: 42px; font-weight: bold; }
+        .header-subtitle { font-size: 18px; margin-top: 5px; }
         
         /* Custom gradient buttons - exclude Logout and Submit */
         .stButton>button:not([kind="secondary"]) {
@@ -102,19 +145,12 @@ def apply_dxc_theme():
     """, unsafe_allow_html=True)
 
 
-def setup_logo(base_path: Path):
-    """
-    Setup the logo in the sidebar.
-    
-    Args:
-        base_path: Path object pointing to the directory containing assets folder.
-    """
-    logo_path = base_path / ".streamlit" / "static" / "assets" / "logo.png"
-    
-    if logo_path.exists():
-        st.logo(str(logo_path), icon_image=str(logo_path), size="large")
+def setup_logo():
+    """Setup the logo in the sidebar."""
+    if LOGO_PATH.exists():
+        st.logo(str(LOGO_PATH), icon_image=str(LOGO_PATH), size="large")
     else:
-        st.warning(f"⚠️ Logo not found at: {logo_path}")
+        st.warning(f"Logo not found at: {LOGO_PATH}")
 
 
 def render_header(title, subtitle):

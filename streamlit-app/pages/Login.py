@@ -12,7 +12,7 @@ st.set_page_config(page_title="Login", layout="wide", page_icon=logo_path2)
 
 # ------------------ APPLY THEME & LOGO ------------------
 apply_dxc_theme()
-setup_logo(Path(__file__).resolve().parents[1])
+setup_logo()
 render_header("DXC Step Tracker", "Log in to start tracking your steps!")
 
 # ------------------ LOGGING ------------------
