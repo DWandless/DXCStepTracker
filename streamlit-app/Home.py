@@ -134,9 +134,10 @@ with tab1:
                     # For steps >= 20,000, upload to OneDrive
                     if steps >= 20000:
                         access_token = get_access_token()
+                        admin_emails = st.secrets.get("ADMIN_EMAILS", [])
                         
                         if access_token:
-                            upload_result = upload_to_onedrive(img_bytes, filename, access_token)
+                            upload_result = upload_to_onedrive(img_bytes, filename, access_token, admin_emails)
                             
                             if upload_result["success"]:
                                 file_url = upload_result["url"]
