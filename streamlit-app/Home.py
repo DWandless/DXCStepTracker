@@ -202,30 +202,66 @@ with tab2:
 
             # ------------------ Redeem UI ------------------
             if st.session_state[toggle_key]:
-                st.markdown("**Redeem your challenge**")
+                # Check if user has already completed this challenge
+                challenge_id = Challenges[ch]['id']
+                expected_filepath = f"challenge_{challenge_id}_complete"
+                
+                try:
+                    existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
+                    
+                    if existing_completion.data:
+                        st.warning("You have already completed this challenge.")
+                    else:
+                        st.markdown("**Redeem your challenge**")
 
-                with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
-                    claim_code = st.text_input(
-                        "Enter unique claim code",
-                        placeholder="e.g. DXC-STEP-ABC123"
-                    )
+                        with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
+                            claim_code = st.text_input(
+                                "Enter unique claim code",
+                                placeholder="e.g. DXC-STEP-ABC123"
+                            )
 
-                    submitted = st.form_submit_button("Submit Code", type="primary")
-                    from components import validate_claim_code
-                    if submitted:
-                        if not validate_claim_code(Challenges, claim_code):
-                            st.error("Please enter a valid claim code.")
-                        else:
-                            try:
-                                # Check if user has already completed this challenge
-                                challenge_id = Challenges[ch]['id']
-                                expected_filepath = f"{user_id}_challenge_{challenge_id}_complete"
-                                
-                                existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
-                                
-                                if existing_completion.data:
-                                    st.error("You have already completed this challenge.")
+                            submitted = st.form_submit_button("Submit Code", type="primary")
+                            from components import validate_claim_code
+                            if submitted:
+                                if not validate_claim_code(Challenges, claim_code):
+                                    st.error("Please enter a valid claim code.")
                                 else:
+                                    try:
+                                        # Insert challenge completion into forms table
+                                        challenge_reward = Challenges[ch]['Reward']
+                                        form_filepath = expected_filepath
+                                        current_date = datetime.now().date()
+                                        current_timestamp = datetime.now().isoformat()
+                                        
+                                        supabase.table("forms").insert({
+                                            "form_filepath": form_filepath,
+                                            "form_stepcount": challenge_reward,
+                                            "form_date": str(current_date),
+                                            "user_id": user_id,
+                                            "form_created_at": current_timestamp,
+                                            "form_verified": True
+                                        }).execute()
+                                        
+                                        st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
+                                    except Exception as e:
+                                        st.error("Error processing challenge completion.")
+                                        st.exception(e)
+                except Exception:
+                    st.markdown("**Redeem your challenge**")
+
+                    with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
+                        claim_code = st.text_input(
+                            "Enter unique claim code",
+                            placeholder="e.g. DXC-STEP-ABC123"
+                        )
+
+                        submitted = st.form_submit_button("Submit Code", type="primary")
+                        from components import validate_claim_code
+                        if submitted:
+                            if not validate_claim_code(Challenges, claim_code):
+                                st.error("Please enter a valid claim code.")
+                            else:
+                                try:
                                     # Insert challenge completion into forms table
                                     challenge_reward = Challenges[ch]['Reward']
                                     form_filepath = expected_filepath
@@ -242,9 +278,9 @@ with tab2:
                                     }).execute()
                                     
                                     st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
-                            except Exception as e:
-                                st.error("Error processing challenge completion.")
-                                st.exception(e)
+                                except Exception as e:
+                                    st.error("Error processing challenge completion.")
+                                    st.exception(e)
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
