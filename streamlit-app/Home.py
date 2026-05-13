@@ -100,8 +100,6 @@ with tab1:
                 st.error("File too large. Max 5 MB."); st.stop()
             try:
                 img = Image.open(screenshot)
-                img.thumbnail((600, 600))
-                st.image(img, caption="Preview", width=300)
             except UnidentifiedImageError:
                 st.error("Invalid image."); st.stop()
 
@@ -232,7 +230,7 @@ with tab2:
                     submitted = st.form_submit_button("Submit Code", type="primary")
                     from components import validate_claim_code
                     if submitted:
-                        if not validate_claim_code(Challenges, claim_code):
+                        if not validate_claim_code(Challenges, claim_code, challenge_id):
                             st.error("Please enter a valid claim code.")
                         else:
                             try:

@@ -327,20 +327,23 @@ def generate_claim_code(challenges: list[dict], AlreadyGenerated: set[str], leng
 
     raise RuntimeError("Unable to generate a unique claim code — increase length or max_attempts.")
 
-def validate_claim_code(challenges: list[dict], code: str) -> bool:
+def validate_claim_code(challenges: list[dict], code: str, challenge_id: str) -> bool:
     """
-    Validate a claim code against the list of challenges.
+    Validate a claim code against a specific challenge.
     
     Args:
         challenges: List of challenge dicts, each containing a "Codes" list
         code: The claim code to validate
+        challenge_id: The ID of the specific challenge to validate against
     
     Returns:
-        True if the code is valid (exists in any challenge's "Codes" list), False otherwise
+        True if the code is valid for the specific challenge, False otherwise
     """
     for challenge in challenges:
-        if code in challenges[challenge]["Codes"]:
-            return True
+        if challenges[challenge]["id"] == challenge_id:
+            if code in challenges[challenge]["Codes"]:
+                return True
+            return False
     return False
 
 # ==================== DATABASE FUNCTIONS ====================
