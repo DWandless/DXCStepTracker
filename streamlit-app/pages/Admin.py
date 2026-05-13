@@ -252,13 +252,11 @@ with col_left:
                 json.dump(challenges_data, f, indent=4)
 
             st.session_state.generated_codes = generated_codes
-            st.success(f"Generated {num_codes} claim codes for challenge: {ChallengesDropdown}")
         except Exception as e:
             st.error(f"Error generating codes: {str(e)}")
 
 with col_right:
     if st.session_state.generated_codes:
-        st.markdown("**Generated Codes (Plain Text):**")
         codes_text = "\n".join(st.session_state.generated_codes)
         st.text_area("Codes", codes_text, height=200, key="generated_codes_display")
         
@@ -269,8 +267,6 @@ with col_right:
             file_name=f"claim_codes_{ChallengesDropdown.replace(' ', '_').lower()}.txt",
             mime="text/plain"
         )
-    else:
-        st.info("Generate codes to see them here.")
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()

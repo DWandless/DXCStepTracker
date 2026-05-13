@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError
 import re, unicodedata, random, io, time
+import hashlib
 from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, hide_streamlit_branding,
@@ -229,33 +230,37 @@ with tab2:
                     )
 
                     submitted = st.form_submit_button("Submit Code", type="primary")
-                    from components import validate_claim_code, remove_used_code
+                    from components import validate_claim_code
                     if submitted:
                         if not validate_claim_code(Challenges, claim_code, challenge_id):
                             st.error("Please enter a valid claim code.")
                         else:
                             try:
-                                # Insert challenge completion into forms table
-                                challenge_reward = Challenges[ch]['Reward']
-                                form_filepath = expected_filepath
-                                current_date = datetime.now().date()
-                                current_timestamp = datetime.now().isoformat()
+                                # Check if code has already been used by any user
+                                code_hash = hashlib.sha256(claim_code.encode()).hexdigest()
+                                existing_code_check = supabase.table("forms").select("*").eq("challenge_code", code_hash).execute()
                                 
-                                supabase.table("forms").insert({
-                                    "form_filepath": form_filepath,
-                                    "form_stepcount": challenge_reward,
-                                    "form_date": str(current_date),
-                                    "user_id": user_id,
-                                    "form_created_at": current_timestamp,
-                                    "form_verified": True
-                                }).execute()
-                                
-                                # Remove the used code from Challenges.json to prevent reuse
-                                if not remove_used_code(challenge_id, claim_code):
-                                    st.error("Code was redeemed but failed to remove from storage. Please contact admin.")
-                                
-                                st.session_state[toggle_key] = False
-                                st.rerun()
+                                if existing_code_check.data:
+                                    st.error("This code has already been used.")
+                                else:
+                                    # Insert challenge completion into forms table
+                                    challenge_reward = Challenges[ch]['Reward']
+                                    form_filepath = expected_filepath
+                                    current_date = datetime.now().date()
+                                    current_timestamp = datetime.now().isoformat()
+                                    
+                                    supabase.table("forms").insert({
+                                        "form_filepath": form_filepath,
+                                        "form_stepcount": challenge_reward,
+                                        "form_date": str(current_date),
+                                        "user_id": user_id,
+                                        "form_created_at": current_timestamp,
+                                        "form_verified": True,
+                                        "challenge_code": code_hash
+                                    }).execute()
+                                    
+                                    st.session_state[toggle_key] = False
+                                    st.rerun()
                             except Exception as e:
                                 st.error("Error processing challenge completion.")
                                 st.exception(e)

@@ -352,57 +352,12 @@ def validate_claim_code(challenges: list[dict], code: str, challenge_id: str) ->
         True if the code is valid for the specific challenge, False otherwise
     """
     code_hash = hash_claim_code(code)
-    print(f"Validating code: {code}, hash: {code_hash}, challenge_id: {challenge_id}")
     for challenge in challenges:
-        print(f"Checking challenge: {challenge}, id: {challenges[challenge]['id']}, codes: {challenges[challenge]['Codes']}")
         if str(challenges[challenge]["id"]) == str(challenge_id):
             if code_hash in challenges[challenge]["Codes"]:
-                print("Code found in Codes list - VALID")
                 return True
-            print(f"Code hash {code_hash} not found in Codes list - INVALID")
             return False
-    print(f"Challenge ID {challenge_id} not found - INVALID")
     return False
-
-
-def remove_used_code(challenge_id: str, code: str) -> bool:
-    """
-    Remove a used code from Challenges.json to prevent reuse.
-    
-    Args:
-        challenge_id: The ID of the challenge
-        code: The plain text code that was used
-    
-    Returns:
-        True if removal was successful, False otherwise
-    """
-    code_hash = hash_claim_code(code)
-    challenges_path = Path(__file__).parent / "assets" / "Challenges.json"
-    
-    try:
-        with open(challenges_path, "r") as f:
-            challenges_data = json.load(f)
-        
-        # Remove the code hash from the challenge's Codes list
-        removed = False
-        for challenge_key in challenges_data:
-            if str(challenges_data[challenge_key]["id"]) == str(challenge_id):
-                if code_hash in challenges_data[challenge_key]["Codes"]:
-                    challenges_data[challenge_key]["Codes"].remove(code_hash)
-                    removed = True
-                break
-        
-        if not removed:
-            return False
-        
-        # Write back to file
-        with open(challenges_path, "w") as f:
-            json.dump(challenges_data, f, indent=4)
-        
-        return True
-    except Exception as e:
-        print(f"Error removing code: {e}")
-        return False
 
 # ==================== DATABASE FUNCTIONS ====================
 
