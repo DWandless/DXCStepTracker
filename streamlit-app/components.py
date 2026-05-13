@@ -21,7 +21,7 @@ def apply_dxc_theme():
     <style>
         @font-face {
             font-family: 'GT-Standard';
-            src: url('app/static/assets/GT-Standard-L-Extended-Medium.otf') format('opentype');
+            src: url('/app/static/assets/GT-Standard-L-Extended-Medium.otf') format('opentype');
         }
         
         /* White to Blue to Orange Gradient Background */
