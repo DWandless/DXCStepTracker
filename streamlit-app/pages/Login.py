@@ -104,7 +104,6 @@ if "code" in query_params and st.session_state["token"] is None:
     try:
         token = oauth.fetch_token(
             token_url=TOKEN_URL,
-            grant_type="authorization_code",
             code=query_params["code"],
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
