@@ -217,20 +217,21 @@ with tab2:
                             try:
                                 # Insert challenge completion into forms table
                                 challenge_id = Challenges[ch]['id']
+                                challenge_reward = Challenges[ch]['Reward']
                                 form_filepath = f"{safe_username}_challenge_{challenge_id}_complete"
                                 current_date = datetime.now().date()
                                 current_timestamp = datetime.now().isoformat()
                                 
                                 supabase.table("forms").insert({
                                     "form_filepath": form_filepath,
-                                    "form_stepcount": 15000,
+                                    "form_stepcount": challenge_reward,
                                     "form_date": str(current_date),
                                     "user_id": user_id,
                                     "form_created_at": current_timestamp,
                                     "form_verified": True
                                 }).execute()
                                 
-                                st.success("✔ Challenge completed! 15,000 steps added to your total.")
+                                st.success(f"✔ Challenge completed! {challenge_reward:,} steps added to your total.")
                             except Exception as e:
                                 st.error("Error processing challenge completion.")
                                 st.exception(e)
