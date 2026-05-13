@@ -179,7 +179,7 @@ if token:
 # ------------------ LOGIN BUTTON (NOT LOGGED IN) ------------------
 else:
     # Create auth URL (same as WWTW app)
-    auth_url, _ = oauth.create_authorization_url(
+    auth_url, _ = oauth.authorization_url(
         AUTHORIZE_URL,
         prompt="select_account",
     )
