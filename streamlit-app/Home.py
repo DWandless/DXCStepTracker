@@ -76,7 +76,6 @@ tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "✦ AI Challenges",  "➜
 with tab1:
     st.header("✚ Submit Your Steps")
     st.caption("Log your daily step count with screenshot proof.")
-    st.divider()
     
     with st.form("step_submission_form", clear_on_submit=True):
         date_col, step_col = st.columns(2)
@@ -180,7 +179,6 @@ with tab1:
 with tab2:
     st.header("✦ AI Challenges")
     st.caption("Complete challenges and redeem your unique claim codes.")
-    st.divider()
 
     # ------------------ Mock Challenge Data (UI only) ------------------
 
@@ -269,7 +267,6 @@ with tab2:
 with tab3:
     st.header("➜ Daily Progress")
     st.caption("Track your step history, streaks, and statistics.")
-    st.divider()
     df = fetch_user_forms(user_id)
 
     if df.empty:
@@ -313,7 +310,7 @@ with tab3:
             daily_steps,
             x="form_date",
             y="form_stepcount",
-            title=f"{safe_username}'s Steps per Day",
+            title=f"Steps per Day",
             color_discrete_sequence=["#7BA4DB"],
             labels={"form_date": "Date", "form_stepcount": "Step Count"},
             template="plotly_white"
@@ -321,7 +318,9 @@ with tab3:
         fig.update_xaxes(tickformat="%Y-%m-%d")
         fig.update_layout(
             xaxis_title="Date",
-            yaxis_title="Step Count"
+            yaxis_title="Step Count",
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -329,7 +328,6 @@ with tab3:
 with tab4:
     st.header("⚑ Team Management")
     st.caption("Join or create teams to compete together.")
-    st.divider()
     
     # Get user's current team
     try:
