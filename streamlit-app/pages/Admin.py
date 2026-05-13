@@ -186,6 +186,8 @@ if not df.empty:
 else:
     st.info("No high-step unverified submissions found.")
 
+st.divider()
+
 # ------------------ 2. DOWNLOAD STEP DATA ------------------
 st.subheader(
     "Download Step Data",
@@ -196,6 +198,8 @@ if not df.empty:
     st.download_button("Download Step Data CSV", csv_data, file_name="step_data.csv")
 else:
     st.info("No step data available.")
+
+st.divider()
 
 # ------------------ 3. GENERATE CLAIM CODES ------------------
 st.subheader(

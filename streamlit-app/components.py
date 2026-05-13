@@ -19,6 +19,11 @@ def apply_dxc_theme():
     """Apply the DXC gradient theme and styling to the page."""
     st.markdown("""
     <style>
+        @font-face {
+            font-family: 'GT-Standard';
+            src: url('assets/GT-Standard-L-Extended-Medium.otf') format('opentype');
+        }
+        
         /* White to Blue to Orange Gradient Background */
         .stApp {
             background: linear-gradient(135deg, 
@@ -48,8 +53,8 @@ def apply_dxc_theme():
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        .header-title { font-size: 42px; font-weight: bold; }
-        .header-subtitle { font-size: 18px; margin-top: 5px; }
+        .header-title { font-size: 42px; font-weight: bold; font-family: 'GT-Standard', sans-serif; }
+        .header-subtitle { font-size: 18px; margin-top: 5px; font-family: 'GT-Standard', sans-serif; }
         
         /* Custom gradient buttons - exclude Logout and Submit */
         .stButton>button:not([kind="secondary"]) {
