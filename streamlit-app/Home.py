@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import logging
 import pandas as pd
 from datetime import datetime, timedelta
 import plotly.express as px
@@ -53,6 +54,7 @@ if not st.session_state.get("logged_in"):
     st.stop()
 
 username = st.session_state.get("username")  # This is the email
+user_email = username  # For audit logging
 user_id = get_user_id(username)
 if not user_id:
     st.error("User not found.")
