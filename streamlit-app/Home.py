@@ -77,6 +77,12 @@ with tab1:
     st.header("✚ Submit Your Steps")
     st.caption("Log your daily step count with screenshot proof.")
     
+    st.link_button(
+        "Didn't do a step-based activity? - Convert your activity to steps here",
+        "https://teams.microsoft.com/l/app/?titleId=T_6a6c4d51-8b71-4883-827a-cb941f371364",
+        type="secondary"
+    )
+    
     with st.form("step_submission_form", clear_on_submit=True):
         date_col, step_col = st.columns(2)
         with date_col: 
