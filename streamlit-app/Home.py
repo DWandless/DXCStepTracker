@@ -102,7 +102,7 @@ with tab1:
         screenshot = st.file_uploader(
             "Upload Screenshot (PNG/JPG)", 
             type=["png", "jpg", "jpeg"],
-            help="Upload a screenshot from your fitness tracker or step counter app as proof of your steps. Required for all submissions."
+            help="Upload a screenshot from your fitness tracker or step counter app as proof. By uploading, you agree to share this data within the organization."
         )
 
         if screenshot:
