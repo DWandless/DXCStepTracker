@@ -72,7 +72,7 @@ if render_sidebar_welcome():
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "✦ AI Challenges",  "➜ Daily Progress", "⚑ Teams"])
+tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "✦ AI & Wellbeing Challenges",  "➜ Daily Progress", "⚑ Teams"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -143,10 +143,6 @@ with tab1:
                         st.error("Daily submission limit reached (10 per day). Please try again tomorrow.")
                         log_audit_event("RATE_LIMIT_EXCEEDED", user_email, f"Daily limit: {submission_count}/10")
                         st.stop()
-                    else:
-                        # Proceed with submission
-                        remaining_submissions = 10 - submission_count
-                        st.info(f"Daily submissions remaining: {remaining_submissions}")
                 except Exception as e:
                     logging.error(f"Error checking daily submission limit: {e}")
                     # Proceed with submission if check fails
@@ -208,7 +204,7 @@ with tab1:
 
 # ------------------ TAB 2: AI Challenges ------------------
 with tab2:
-    st.header("✦ AI Challenges")
+    st.header("✦ AI & Wellbeing Challenges")
     st.caption("Complete challenges and redeem your unique claim codes.")
 
     # ------------------ Mock Challenge Data (UI only) ------------------

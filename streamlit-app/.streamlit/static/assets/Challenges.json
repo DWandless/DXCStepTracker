@@ -1,8 +1,16 @@
 {
         "Challenge1": {
             "id": "1",
-            "title": "Explore the DXC Enterprise Prompt Library and submit your best prompt",
+            "title": "AI Challange 1: Explore the DXC Enterprise Prompt Library and submit your best prompt",
             "description": "Go to the DXC Enterprise Prompt Library (https://prompts.dxc.ai/) and explore the available prompts. Use the filters to narrow down your search, including by function, industry, and model. Once you have explored the library, submit a new prompt that your colleagues could use. Note: the prompt should be useful to your team, department or function. Comment with a screenshot of your submitted prompt on Viva Engage.",
+            "Reward": 15000,
+            "Codes": []
+        },
+
+        "Challenge2": {
+            "id": "2",
+            "title": "Wellbeing Challange 1: Rainbow Walks",
+            "description": "Office leads will be advertising for on site walks during lunch Between 18th-22nd May. The Rainbow Walk is a simple, inclusive wellbeing activity designed to encourage movement, social connection, and mindfulness. Participants take a short walk and capture photos that match a set of colours building a “rainbow” while taking time away from their desks.",
             "Reward": 15000,
             "Codes": []
         }
