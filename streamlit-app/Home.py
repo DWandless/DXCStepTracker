@@ -228,12 +228,14 @@ with tab2:
                 challenge_id = Challenges[ch]['id']
                 expected_filepath = f"challenge_{challenge_id}_complete"
                 toggle_key = f"show_redeem_{Challenges[ch]['id']}"
+                challenge_completed = False
                 
                 try:
                     existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
                     
                     if existing_completion.data:
                         st.success("Challenge Complete ✔")
+                        challenge_completed = True
                     else:
                         if toggle_key not in st.session_state:
                             st.session_state[toggle_key] = False
@@ -248,7 +250,7 @@ with tab2:
                         st.session_state[toggle_key] = not st.session_state[toggle_key]
 
             # ------------------ Redeem UI ------------------
-            if st.session_state.get(toggle_key, False):
+            if st.session_state.get(toggle_key, False) and not challenge_completed:
                 st.markdown("**Redeem your challenge**")
 
                 with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
@@ -291,7 +293,8 @@ with tab2:
                                     st.session_state[toggle_key] = False
                                     st.rerun()
                             except Exception as e:
-                                st.error("Error processing challenge completion.")
+                                st.error(f"Error processing challenge completion: {str(e)}")
+                                logging.error(f"Challenge completion error: {e}")
 # ------------------ TAB 3: DAILY PROGRESS ------------------
 with tab3:
     st.header("➜ Daily Progress")
