@@ -87,43 +87,75 @@ with tab1:
     # )
     
     with st.expander("Convert non-walking activities to steps"):
-        st.caption("Use AI to convert activities like cycling, swimming, or gym workouts into equivalent steps.")
+        st.caption("Instant conversion based on MET (Metabolic Equivalent) values.")
+        
+        # MET values for common activities (steps per minute approximation)
+        met_values = {
+            "Cycling (moderate)": 150,
+            "Cycling (vigorous)": 200,
+            "Swimming (moderate)": 120,
+            "Swimming (vigorous)": 180,
+            "Running (slow)": 200,
+            "Running (fast)": 300,
+            "Gym workout (light)": 80,
+            "Gym workout (vigorous)": 150,
+            "Yoga": 60,
+            "Pilates": 70,
+            "Dancing": 120,
+            "Hiking": 180,
+            "Rowing": 140,
+            "Elliptical": 130,
+            "Stair climbing": 200,
+            "Basketball": 180,
+            "Tennis": 160,
+            "Soccer": 170,
+            "Football": 150,
+            "Rugby": 160,
+            "Golf (walking)": 120,
+            "Golf (cart)": 60,
+            "Badminton": 140,
+            "Volleyball": 130,
+            "Boxing": 180,
+            "Martial arts": 160,
+            "CrossFit": 200,
+            "Spin class": 180,
+            "Aerobics (low impact)": 100,
+            "Aerobics (high impact)": 150,
+            "Zumba": 140,
+            "Kickboxing": 170,
+            "Rock climbing": 200,
+            "Kayaking": 100,
+            "Canoeing": 80,
+            "Surfing": 120,
+            "Skateboarding": 100,
+            "Rollerblading": 140,
+            "Ice skating": 120,
+            "Skiing (downhill)": 150,
+            "Skiing (cross-country)": 200,
+            "Snowboarding": 140,
+            "Gardening": 80,
+            "House cleaning": 70,
+            "DIY work": 90,
+            "Moving furniture": 120
+        }
         
         activity_col, time_col = st.columns(2)
         with activity_col:
-            activities = [
-                "Cycling", "Swimming", "Running", "Gym workout", "Yoga", "Pilates",
-                "Dancing", "Hiking", "Rowing", "Elliptical", "Stair climbing",
-                "Basketball", "Tennis", "Soccer", "Football", "Rugby",
-                "Golf", "Badminton", "Volleyball", "Boxing", "Martial arts",
-                "CrossFit", "Spin class", "Aerobics", "Zumba", "Kickboxing",
-                "Rock climbing", "Kayaking", "Canoeing", "Surfing", "Skateboarding",
-                "Rollerblading", "Ice skating", "Skiing", "Snowboarding",
-                "Gardening", "House Work"
-            ]
-            selected_activity = st.selectbox("Select Activity", activities)
+            selected_activity = st.selectbox("Select Activity", list(met_values.keys()))
         
         with time_col:
-            time_input = st.text_input("Time Frame", placeholder="e.g., 30 minutes, 1 hour")
+            duration_minutes = st.number_input("Duration (minutes)", min_value=1, max_value=480, value=30, step=5)
         
-        # Generate the prompt
-        prompt_template = f"""You are a personal trainer helping me through a step tracking challenge. Your role is to convert non-walking based activities into an approximate amount of steps. For example, if I cycled for 30 minutes, you would convert that to the equivalent amount of steps. Answer with only the final number of steps, no explanation. I have just {selected_activity} for {time_input}, how many steps would that be?"""
+        # Calculate steps
+        steps_per_minute = met_values[selected_activity]
+        calculated_steps = int(steps_per_minute * duration_minutes)
         
-        st.text_area("Generated Prompt", prompt_template, height=120)
+        st.success(f"Estimated steps: **{calculated_steps:,}**")
+        st.caption(f"Based on {steps_per_minute} steps per minute for {selected_activity}")
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🗎 Copy to Clipboard", key="copy_prompt"):
-                st.toast("Prompt copied to clipboard!", icon="✔")
-                st.code(prompt_template, language=None)
-        
-        with col2:
-            st.link_button(
-                "Open Copilot",
-                "https://copilot.microsoft.com/",
-                type="primary"
-            )
-        st.caption("Copy the prompt above, then click 'Open Copilot' and paste it to get your step conversion.")
+        if st.button("Use this step count", type="primary"):
+            st.session_state.auto_fill_steps = calculated_steps
+            st.rerun()
     
     with st.form("step_submission_form", clear_on_submit=True):
         date_col, step_col = st.columns(2)
@@ -133,10 +165,12 @@ with tab1:
                 help="Select the date when you recorded these steps. You can submit steps for past dates."
             )
         with step_col: 
+            default_steps = st.session_state.pop("auto_fill_steps", 0) if "auto_fill_steps" in st.session_state else 0
             steps = st.number_input(
                 "Step Count", 
                 min_value=0, 
                 step=100,
+                value=default_steps,
                 help="Enter the total number of steps you walked on this date (1-100,000)."
             )
         screenshot = st.file_uploader(
