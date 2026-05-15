@@ -217,7 +217,7 @@ def render_sidebar_welcome(display_name=None):
 
 def hide_streamlit_branding():
     """Hide Streamlit's default branding elements."""
-    st.components.v1.html(
+    st.html(
         """
         <script>
         window.addEventListener('load', () => {

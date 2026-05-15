@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import logging
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError
 import re, unicodedata, random, io, time
