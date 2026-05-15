@@ -100,9 +100,9 @@ with tab1:
                 help="Enter the total number of steps you walked on this date (1-100,000)."
             )
         screenshot = st.file_uploader(
-            "Upload Screenshot (PNG/JPG)", 
+            "Upload Screenshot (PNG/JPG) - Required for 20,000+ steps", 
             type=["png", "jpg", "jpeg"],
-            help="Upload a screenshot from your fitness tracker or step counter app as proof. By uploading, you agree to share this data within the organization."
+            help="Upload a screenshot from your fitness tracker or step counter app as proof. Required for submissions 20,000+ steps. By uploading, you agree to share this data within the organization."
         )
 
         if screenshot:
@@ -118,15 +118,15 @@ with tab1:
             now = datetime.now()
             last_submission = st.session_state.get("last_submission_time") or get_last_submission_time(user_id)
 
-            # --- 1-minute cooldown check ---
-            if last_submission and now - last_submission < timedelta(seconds=60): # Brian wicks wanted this changed :)
-                remaining = timedelta(seconds=60) - (now - last_submission)
+            # --- 30-second cooldown check ---
+            if last_submission and now - last_submission < timedelta(seconds=30):
+                remaining = timedelta(seconds=30) - (now - last_submission)
                 minutes, seconds = divmod(remaining.total_seconds(), 60)
                 st.warning(f"Please wait {int(seconds)}s before submitting again.")
             elif steps <= 0 or steps > 100000:
                 st.error("Enter a valid step count (1–100,000).")
-            elif not screenshot:
-                st.error("Please upload a screenshot.")
+            elif steps >= 20000 and not screenshot:
+                st.error("Screenshot required for submissions 20,000+ steps.")
             else:
                 # --- Daily submission limit check (10 per day) ---
                 try:
@@ -148,25 +148,33 @@ with tab1:
                     # Proceed with submission if check fails
                 
                 try:
-                    img = Image.open(screenshot).convert("RGB")
-                    filename = secure_filename(f"{safe_username}_{step_date}_{datetime.now().strftime('%H%M%S')}.jpg")
-                    
-                    # Convert image to bytes
-                    img_byte_arr = io.BytesIO()
-                    img.save(img_byte_arr, format="JPEG", quality=85, optimize=True)
-                    img_bytes = img_byte_arr.getvalue()
-                    
                     file_url = None
                     
-                    # For steps >= 20,000, upload to OneDrive
-                    if steps >= 20000:
-                        access_token = get_access_token()
+                    # Only process image if screenshot was provided
+                    if screenshot:
+                        img = Image.open(screenshot).convert("RGB")
+                        filename = secure_filename(f"{safe_username}_{step_date}_{datetime.now().strftime('%H%M%S')}.jpg")
                         
-                        if access_token:
-                            upload_result = upload_to_onedrive(img_bytes, filename, access_token)
+                        # Convert image to bytes
+                        img_byte_arr = io.BytesIO()
+                        img.save(img_byte_arr, format="JPEG", quality=85, optimize=True)
+                        img_bytes = img_byte_arr.getvalue()
+                        
+                        # For steps >= 20,000, upload to OneDrive
+                        if steps >= 20000:
+                            access_token = get_access_token()
                             
-                            if upload_result["success"]:
-                                file_url = upload_result["url"]
+                            if access_token:
+                                upload_result = upload_to_onedrive(img_bytes, filename, access_token)
+                                
+                                if upload_result["success"]:
+                                    file_url = upload_result["url"]
+                                else:
+                                    # Fallback to local storage
+                                    path = os.path.join(UPLOAD_FOLDER, filename)
+                                    with open(path, 'wb') as f:
+                                        f.write(img_bytes)
+                                    file_url = filename
                             else:
                                 # Fallback to local storage
                                 path = os.path.join(UPLOAD_FOLDER, filename)
@@ -174,13 +182,10 @@ with tab1:
                                     f.write(img_bytes)
                                 file_url = filename
                         else:
-                            # Fallback to local storage
-                            path = os.path.join(UPLOAD_FOLDER, filename)
-                            with open(path, 'wb') as f:
-                                f.write(img_bytes)
-                            file_url = filename
+                            # For steps < 20,000 with screenshot, don't save the file
+                            file_url = "not_required"
                     else:
-                        # For steps < 20,000, don't save the file (not needed for verification)
+                        # No screenshot provided (only allowed for steps < 20,000)
                         file_url = "not_required"
                     
                     # Insert into database
