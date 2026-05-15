@@ -10,7 +10,8 @@ import logging
 
 # Microsoft Graph API endpoints
 GRAPH_API_ENDPOINT = "https://graph.microsoft.com/v1.0"
-ONEDRIVE_FOLDER = "StepTrackerEvidence"  # Folder name in OneDrive root
+ONEDRIVE_FOLDER = "StepTrackerEvidence"  # Folder name in app-specific OneDrive folder
+APP_ROOT_PATH = "/me/drive/special/approot"  # App-specific folder path for Files.ReadWrite.AppFolder
 SHAREPOINT_SITE_ID = None  # Will be set if using SharePoint
 
 
@@ -48,15 +49,15 @@ def create_onedrive_folder_if_not_exists(access_token):
         "Content-Type": "application/json"
     }
     
-    # Check if folder exists
+    # Check if folder exists in app-specific folder
     try:
-        search_url = f"{GRAPH_API_ENDPOINT}/me/drive/root/children"
+        search_url = f"{GRAPH_API_ENDPOINT}{APP_ROOT_PATH}/children"
         response = requests.get(search_url, headers=headers)
         
         if response.status_code == 401:
-            return None, "Authentication failed - token may not have Files.ReadWrite permission"
+            return None, "Authentication failed - token may not have Files.ReadWrite.AppFolder permission"
         elif response.status_code == 403:
-            return None, "Access denied - check Azure app permissions"
+            return None, "Access denied - check Azure app permissions for Files.ReadWrite.AppFolder"
         elif response.status_code == 200:
             items = response.json().get("value", [])
             for item in items:
@@ -66,8 +67,8 @@ def create_onedrive_folder_if_not_exists(access_token):
             logging.error(f"Failed to list OneDrive: {response.status_code} - {response.text}")
             return None, f"OneDrive access failed: {response.status_code}"
         
-        # Folder doesn't exist, create it
-        create_url = f"{GRAPH_API_ENDPOINT}/me/drive/root/children"
+        # Folder doesn't exist, create it in app-specific folder
+        create_url = f"{GRAPH_API_ENDPOINT}{APP_ROOT_PATH}/children"
         folder_data = {
             "name": ONEDRIVE_FOLDER,
             "folder": {},
@@ -117,16 +118,16 @@ def upload_to_onedrive(file_bytes, filename, access_token, admin_emails=None):
                 "error": error_msg or "Could not create or access OneDrive folder"
             }
         
-        # Upload file to folder
-        upload_url = f"{GRAPH_API_ENDPOINT}/me/drive/items/{folder_id}:/{filename}:/content"
+        # Upload file to folder in app-specific path
+        upload_url = f"{GRAPH_API_ENDPOINT}{APP_ROOT_PATH}:/{ONEDRIVE_FOLDER}/{filename}:/content"
         
         response = requests.put(upload_url, headers=headers, data=file_bytes)
         
         if response.status_code in [200, 201]:
             file_data = response.json()
             
-            # Create organization-wide sharing link (only option without SharePoint)
-            share_url = f"{GRAPH_API_ENDPOINT}/me/drive/items/{file_data['id']}/createLink"
+            # Create organization-wide sharing link
+            share_url = f"{GRAPH_API_ENDPOINT}{APP_ROOT_PATH}:/{ONEDRIVE_FOLDER}/{file_data['name']}/createLink"
             share_data = {
                 "type": "view",
                 "scope": "organization"
@@ -181,7 +182,7 @@ def delete_from_onedrive(file_id, access_token):
             "Authorization": f"Bearer {access_token}"
         }
         
-        delete_url = f"{GRAPH_API_ENDPOINT}/me/drive/items/{file_id}"
+        delete_url = f"{GRAPH_API_ENDPOINT}{APP_ROOT_PATH}:/{ONEDRIVE_FOLDER}/{file_id}"
         response = requests.delete(delete_url, headers=headers)
         
         return response.status_code == 204
@@ -261,7 +262,7 @@ def get_file_download_url(file_id, access_token):
             "Authorization": f"Bearer {access_token}"
         }
         
-        url = f"{GRAPH_API_ENDPOINT}/me/drive/items/{file_id}"
+        url = f"{GRAPH_API_ENDPOINT}{APP_ROOT_PATH}:/{ONEDRIVE_FOLDER}/{file_id}"
         response = requests.get(url, headers=headers)
         
         if response.status_code == 200:
