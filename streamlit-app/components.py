@@ -225,8 +225,7 @@ def hide_streamlit_branding():
                 .forEach(e => e.style.display = 'none');
         });
         </script>
-        """,
-        height=0,
+        """
     )
 
 
