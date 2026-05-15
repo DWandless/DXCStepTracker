@@ -35,7 +35,7 @@ REDIRECT_URI = "https://dxcsteptracker.streamlit.app/Login"
 # Use v2.0 OAuth with OpenID and Files scopes
 oauth = OAuth2Session(
     client_id=CLIENT_ID,
-    scope=["openid", "profile", "email", "User.Read", "Files.ReadWrite.AppFolder"],  # Files.ReadWrite.AppFolder for OneDrive (app-only access)
+    scope=["openid", "profile", "email", "User.Read", "Files.ReadWrite"],  # Files.ReadWrite for OneDrive
     redirect_uri=REDIRECT_URI,
 )
 
