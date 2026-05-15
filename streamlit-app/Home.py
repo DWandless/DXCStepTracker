@@ -79,11 +79,44 @@ with tab1:
     st.header("✚ Submit Your Steps")
     st.caption("Log your daily step count with screenshot proof.")
     
-    st.link_button(
-        "Didn't do a step-based activity? - Convert your activity to steps here",
-        "https://teams.microsoft.com/l/app/?titleId=T_6a6c4d51-8b71-4883-827a-cb941f371364",
-        type="secondary"
-    )
+    with st.expander("Convert non-walking activities to steps"):
+        st.caption("Use AI to convert activities like cycling, swimming, or gym workouts into equivalent steps.")
+        
+        activity_col, time_col = st.columns(2)
+        with activity_col:
+            activities = [
+                "Cycling", "Swimming", "Running", "Gym workout", "Yoga", "Pilates",
+                "Dancing", "Hiking", "Rowing", "Elliptical", "Stair climbing",
+                "Basketball", "Tennis", "Soccer", "Football", "Rugby",
+                "Golf", "Badminton", "Volleyball", "Boxing", "Martial arts",
+                "CrossFit", "Spin class", "Aerobics", "Zumba", "Kickboxing",
+                "Rock climbing", "Kayaking", "Canoeing", "Surfing", "Skateboarding",
+                "Rollerblading", "Ice skating", "Skiing", "Snowboarding",
+                "Gardening", "House Work"
+            ]
+            selected_activity = st.selectbox("Select Activity", activities)
+        
+        with time_col:
+            time_input = st.text_input("Time Frame", placeholder="e.g., 30 minutes, 1 hour")
+        
+        # Generate the prompt
+        prompt_template = f"""You are a personal trainer helping me through a step tracking challenge. Your role is to convert non-walking based activities into an approximate amount of steps. For example, if I cycled for 30 minutes, you would convert that to the equivalent amount of steps. Answer with only the final number of steps, no explanation. I have just {selected_activity} for {time_input}, how many steps would that be?"""
+        
+        st.text_area("Generated Prompt", prompt_template, height=120, key="activity_prompt")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🗎 Copy to Clipboard", key="copy_prompt"):
+                st.toast("Prompt copied to clipboard!", icon="✔")
+                st.code(prompt_template, language=None)
+        
+        with col2:
+            st.link_button(
+                "⊞ Open Copilot",
+                "https://copilot.microsoft.com/",
+                type="primary"
+            )
+        st.caption("Copy the prompt above, then click 'Open Copilot' and paste it to get your step conversion.")
     
     with st.form("step_submission_form", clear_on_submit=True):
         date_col, step_col = st.columns(2)
