@@ -162,7 +162,10 @@ with tab1:
         with date_col: 
             step_date = st.date_input(
                 "Date",
-                help="Select the date when you recorded these steps. You can submit steps for past dates."
+                min_value=date(2026, 5, 14),
+                max_value=date(2026, 6, 11),
+                value=date.today(),
+                help="Select the date when you recorded these steps. Valid dates: 14/05/26 to 11/06/26."
             )
         with step_col: 
             default_steps = st.session_state.pop("auto_fill_steps", 0) if "auto_fill_steps" in st.session_state else 0
