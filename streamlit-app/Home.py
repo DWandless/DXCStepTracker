@@ -119,7 +119,7 @@ with tab1:
         
         with col2:
             st.link_button(
-                "⊞ Open Copilot",
+                "Open Copilot",
                 "https://copilot.microsoft.com/",
                 type="primary"
             )
