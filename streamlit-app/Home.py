@@ -79,6 +79,13 @@ with tab1:
     st.header("✚ Submit Your Steps")
     st.caption("Log your daily step count with screenshot proof.")
     
+    # Previous button - commented out
+    # st.link_button(
+    #     "Didn't do a step-based activity? - Convert your activity to steps here",
+    #     "https://teams.microsoft.com/l/app/?titleId=T_6a6c4d51-8b71-4883-827a-cb941f371364",
+    #     type="secondary"
+    # )
+    
     with st.expander("Convert non-walking activities to steps"):
         st.caption("Use AI to convert activities like cycling, swimming, or gym workouts into equivalent steps.")
         
@@ -102,7 +109,7 @@ with tab1:
         # Generate the prompt
         prompt_template = f"""You are a personal trainer helping me through a step tracking challenge. Your role is to convert non-walking based activities into an approximate amount of steps. For example, if I cycled for 30 minutes, you would convert that to the equivalent amount of steps. Answer with only the final number of steps, no explanation. I have just {selected_activity} for {time_input}, how many steps would that be?"""
         
-        st.text_area("Generated Prompt", prompt_template, height=120, key="activity_prompt")
+        st.text_area("Generated Prompt", prompt_template, height=120)
         
         col1, col2 = st.columns(2)
         with col1:
