@@ -153,7 +153,7 @@ with tab1:
         st.success(f"Estimated steps: **{calculated_steps:,}**")
         st.caption(f"Based on {steps_per_minute} steps per minute for {selected_activity}")
         
-        if st.button("Use this step count", type="primary"):
+        if st.button("Use this step count", type="secondary"):
             st.session_state.auto_fill_steps = calculated_steps
             st.rerun()
     
