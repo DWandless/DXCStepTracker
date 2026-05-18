@@ -10,7 +10,7 @@ import hashlib
 from pathlib import Path
 from db import supabase
 from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
-                        hide_streamlit_branding, secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout, log_audit_event)
+                        hide_streamlit_branding, secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout, log_audit_event, get_met_values)
 from onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
@@ -89,71 +89,11 @@ with tab1:
     with st.expander("Convert non-walking activities to steps"):
         st.caption("Instant conversion based on MET (Metabolic Equivalent) values.")
         
-        # MET values for common activities (steps per minute approximation)
-        met_values = {
-            "Cycling (moderate)": 150,
-            "Cycling (vigorous)": 200,
-            "Swimming (moderate)": 120,
-            "Swimming (vigorous)": 180,
-            "Aqua aerobics": 110,
-            "Running (slow)": 200,
-            "Running (fast)": 300,
-            "Gym workout (light)": 80,
-            "Gym workout (vigorous)": 150,
-            "Yoga": 60,
-            "Pilates": 70,
-            "Dancing": 120,
-            "Hiking": 180,
-            "Rowing": 140,
-            "Elliptical": 130,
-            "Stair climbing": 200,
-            "Basketball": 180,
-            "Tennis": 160,
-            "Football": 170,
-            "American Football": 150,
-            "Rugby": 160,
-            "Golf (walking)": 120,
-            "Golf (cart)": 60,
-            "Badminton": 140,
-            "Volleyball": 130,
-            "Boxing": 180,
-            "Martial arts": 160,
-            "CrossFit": 200,
-            "Spin class": 180,
-            "Aerobics (low impact)": 100,
-            "Aerobics (high impact)": 150,
-            "Zumba": 140,
-            "Kickboxing": 170,
-            "Rock climbing": 200,
-            "Kayaking": 100,
-            "Canoeing": 80,
-            "Surfing": 120,
-            "Skateboarding": 100,
-            "Rollerblading": 140,
-            "Ice skating": 120,
-            "Skiing (downhill)": 150,
-            "Skiing (cross-country)": 200,
-            "Snowboarding": 140,
-            "Gardening": 80,
-            "House cleaning": 70,
-            "DIY work": 90,
-            "Moving furniture": 120,
-            "Wheelchair basketball": 160,
-            "Wheelchair tennis": 150,
-            "Wheelchair racing": 180,
-            "Hand cycling": 140,
-            "Adaptive swimming": 110,
-            "Seated exercises": 70,
-            "Chair yoga": 50,
-            "Wheelchair aerobics": 100,
-            "Para-cycling": 130,
-            "Adaptive rowing": 130,
-            "Adaptive skiing": 140,
-            "Wheelchair fencing": 150,
-            "Adaptive climbing": 160,
-            "Adaptive martial arts": 140,
-            "Adaptive golf": 100,
-        }
+        # Load MET values from JSON file
+        met_values = get_met_values()
+        
+        if not met_values:
+            st.error("Unable to load activity data. Please try again later.")
         
         activity_col, time_col = st.columns(2)
         with activity_col:

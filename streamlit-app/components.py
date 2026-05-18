@@ -407,6 +407,49 @@ def get_all_challenges():
         return []
 
 
+def get_met_values():
+    """
+    Fetch MET values from the MetValues.json file.
+    
+    Returns:
+        Dict of activity names to MET step values, or empty dict if file not found or invalid
+    """
+    try:
+        # Try multiple possible paths
+        base_dir = Path(__file__).resolve().parent
+        
+        # Path 1: .streamlit/static/assets/MetValues.json
+        met_path = base_dir / ".streamlit" / "static" / "assets" / "MetValues.json"
+        
+        # Path 2: static/assets/MetValues.json (for Streamlit Cloud)
+        if not met_path.exists():
+            met_path = base_dir / "static" / "assets" / "MetValues.json"
+        
+        # Path 3: assets/MetValues.json
+        if not met_path.exists():
+            met_path = base_dir / "assets" / "MetValues.json"
+        
+        print(f"Looking for MET values at: {met_path}")
+        
+        if not met_path.exists():
+            error_msg = f"MetValues.json not found at: {met_path}"
+            logging.error(error_msg)
+            print(f"ERROR: {error_msg}")
+            return {}
+        
+        with open(met_path, "r") as f:
+            met_values = json.load(f)
+            print(f"SUCCESS: Loaded {len(met_values)} MET activities")
+            return met_values
+    except Exception as e:
+        error_msg = f"Error loading MET values: {e}"
+        logging.error(error_msg)
+        print(f"ERROR: {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return {}
+
+
 def generate_claim_code(challenges: list[dict], AlreadyGenerated: set[str], length: int = 8, max_attempts: int = 10_000) -> str:
     """
     Generate a random alphanumeric claim code that is unique across all challenges.
