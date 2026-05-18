@@ -137,12 +137,27 @@ with tab1:
             "Gardening": 80,
             "House cleaning": 70,
             "DIY work": 90,
-            "Moving furniture": 120
+            "Moving furniture": 120,
+            "Wheelchair basketball": 160,
+            "Wheelchair tennis": 150,
+            "Wheelchair racing": 180,
+            "Hand cycling": 140,
+            "Adaptive swimming": 110,
+            "Seated exercises": 70,
+            "Chair yoga": 50,
+            "Wheelchair aerobics": 100,
+            "Para-cycling": 130,
+            "Adaptive rowing": 130,
+            "Adaptive skiing": 140,
+            "Wheelchair fencing": 150,
+            "Adaptive climbing": 160,
+            "Adaptive martial arts": 140,
+            "Adaptive golf": 100,
         }
         
         activity_col, time_col = st.columns(2)
         with activity_col:
-            selected_activity = st.selectbox("Select Activity", list(met_values.keys()))
+            selected_activity = st.selectbox("Select Activity", sorted(met_values.keys()))
         
         with time_col:
             duration_minutes = st.number_input("Duration (minutes)", min_value=1, max_value=480, value=30, step=5)
