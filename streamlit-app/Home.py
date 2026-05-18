@@ -168,7 +168,7 @@ with tab1:
                 help="Select the date when you recorded these steps. Valid dates: 14/05/26 to 11/06/26."
             )
         with step_col: 
-            default_steps = st.session_state.pop("auto_fill_steps", 0) if "auto_fill_steps" in st.session_state else 0
+            default_steps = st.session_state.get("auto_fill_steps", 0)
             steps = st.number_input(
                 "Step Count", 
                 min_value=0, 
@@ -276,6 +276,10 @@ with tab1:
 
                     # Record new submission time
                     st.session_state.last_submission_time = now
+
+                    # Clear auto-fill value after successful submission
+                    if "auto_fill_steps" in st.session_state:
+                        del st.session_state.auto_fill_steps
 
                     st.success("✔ Step count submitted successfully!")
                     time.sleep(1)

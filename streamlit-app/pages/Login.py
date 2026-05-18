@@ -102,23 +102,26 @@ query_params = st.query_params
 
 if "code" in query_params and st.session_state["token"] is None:
     try:
+        logging.info(f"Attempting to fetch token with code: {query_params['code'][:50]}...")
         token = oauth.fetch_token(
             token_url=TOKEN_URL,
             code=query_params["code"],
             client_id=CLIENT_ID,
             client_secret=CLIENT_SECRET,
         )
+        logging.info("Token fetched successfully")
         st.session_state["token"] = token
         st.query_params.clear()
         st.rerun()
     except Exception as e:
         error_str = str(e)
+        logging.error(f"OAuth token fetch error: {error_str}")
         # Check for expired authorization code error
         if "AADSTS70008" in error_str or "expired" in error_str.lower():
             st.error("Session timed out. Please log in again.")
         else:
-            st.error("Authentication failed. Please try again.")
-        logging.error(f"OAuth token fetch error: {e}")
+            st.error(f"Authentication failed: {error_str[:200]}")
+        logging.error(f"Full OAuth error details: {e}", exc_info=True)
 
 # ------------------ LOGGED-IN FLOW ------------------
 token = st.session_state["token"]
