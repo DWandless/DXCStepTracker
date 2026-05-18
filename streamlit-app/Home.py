@@ -95,6 +95,7 @@ with tab1:
             "Cycling (vigorous)": 200,
             "Swimming (moderate)": 120,
             "Swimming (vigorous)": 180,
+            "Aqua aerobics": 110,
             "Running (slow)": 200,
             "Running (fast)": 300,
             "Gym workout (light)": 80,
