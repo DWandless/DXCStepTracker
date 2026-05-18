@@ -428,9 +428,78 @@ with tab4:
                     leader_name = "Unknown"
                 st.markdown(f"**Team Leader:** {leader_name}")
                 
-                with st.expander(f"View Members ({len(team_members.data)}/4)", expanded=False):
-                    for member in team_members.data:
-                        st.markdown(f"• {member['user_name']}")
+                # Team member performance table
+                st.subheader("Team Member Performance")
+                
+                # Get performance data for each team member
+                member_data = []
+                for member in team_members.data:
+                    member_user_id = member['user_id']
+                    member_name = member['user_name']
+                    
+                    # Get all forms for this member
+                    try:
+                        member_forms = supabase.table("forms").select("*").eq("user_id", member_user_id).execute()
+                        
+                        if member_forms.data:
+                            total_steps = sum(f['form_stepcount'] for f in member_forms.data)
+                            submission_count = len(member_forms.data)
+                            
+                            # Calculate average daily steps
+                            if submission_count > 0:
+                                avg_daily_steps = total_steps / submission_count
+                            else:
+                                avg_daily_steps = 0
+                            
+                            # Get last submission date
+                            sorted_forms = sorted(member_forms.data, key=lambda x: x['form_created_at'], reverse=True)
+                            last_submission = sorted_forms[0]['form_created_at'] if sorted_forms else "Never"
+                            
+                            # Calculate days since last submission
+                            if last_submission != "Never":
+                                try:
+                                    last_date = datetime.fromisoformat(last_submission)
+                                    days_since = (datetime.now() - last_date).days
+                                    last_submission_display = f"{last_date.strftime('%Y-%m-%d')} ({days_since} days ago)"
+                                except:
+                                    last_submission_display = last_submission
+                            else:
+                                last_submission_display = "Never"
+                        else:
+                            total_steps = 0
+                            avg_daily_steps = 0
+                            last_submission_display = "Never"
+                            submission_count = 0
+                        
+                        member_data.append({
+                            "Team Member Name": member_name,
+                            "Total Steps": total_steps,
+                            "Average Daily Steps": round(avg_daily_steps),
+                            "Total Submissions": submission_count,
+                            "Last Submission": last_submission_display
+                        })
+                    except Exception as e:
+                        logging.error(f"Error fetching data for member {member_name}: {e}")
+                        member_data.append({
+                            "Team Member Name": member_name,
+                            "Total Steps": 0,
+                            "Average Daily Steps": 0,
+                            "Total Submissions": 0,
+                            "Last Submission": "Error loading data"
+                        })
+                
+                # Sort by total steps (descending)
+                member_data.sort(key=lambda x: x["Total Steps"], reverse=True)
+                
+                # Display as non-interactive table
+                if member_data:
+                    st.dataframe(
+                        pd.DataFrame(member_data),
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                else:
+                    st.info("No team member data available.")
                 
                 st.markdown("---")
                 
