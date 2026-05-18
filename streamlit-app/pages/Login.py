@@ -103,6 +103,10 @@ query_params = st.query_params
 if "code" in query_params and st.session_state["token"] is None:
     try:
         logging.info(f"Attempting to fetch token with code: {query_params['code'][:50]}...")
+        logging.info(f"Token URL: {TOKEN_URL}")
+        logging.info(f"Client ID: {CLIENT_ID}")
+        logging.info(f"Redirect URI: {REDIRECT_URI}")
+        
         token = oauth.fetch_token(
             token_url=TOKEN_URL,
             code=query_params["code"],
@@ -110,18 +114,20 @@ if "code" in query_params and st.session_state["token"] is None:
             client_secret=CLIENT_SECRET,
         )
         logging.info("Token fetched successfully")
+        logging.info(f"Token keys: {token.keys() if token else 'None'}")
         st.session_state["token"] = token
         st.query_params.clear()
         st.rerun()
     except Exception as e:
         error_str = str(e)
         logging.error(f"OAuth token fetch error: {error_str}")
+        logging.error(f"Full error details: {e}", exc_info=True)
         # Check for expired authorization code error
         if "AADSTS70008" in error_str or "expired" in error_str.lower():
             st.error("Session timed out. Please log in again.")
         else:
             st.error(f"Authentication failed: {error_str[:200]}")
-        logging.error(f"Full OAuth error details: {e}", exc_info=True)
+            logging.error(f"OAuth error type: {type(e).__name__}")
 
 # ------------------ LOGGED-IN FLOW ------------------
 token = st.session_state["token"]
@@ -168,8 +174,8 @@ if token:
                 st.session_state.user_email = user_email  # Also store email explicitly
                 st.session_state.login_time = datetime.now().timestamp()  # Track login time for session timeout
                 logging.info(f"User logged in: {username} ({user_email[:3]}***@***)")
-            
-            st.page_link("Home.py", label="🏠︎ Click here to go to Home")
+                # Automatically redirect to Home after successful login
+                st.switch_page("Home.py")
             
             if st.button("Log out"):
                 st.session_state.clear()
