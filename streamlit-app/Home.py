@@ -412,7 +412,7 @@ with tab4:
         # User is in a team - show team info
         try:
             team_info = supabase.table("teams").select("*").eq("team_id", current_team_id).execute()
-            team_members = supabase.table("users").select("user_name").eq("team_id", current_team_id).execute()
+            team_members = supabase.table("users").select("user_id, user_name").eq("team_id", current_team_id).execute()
             
             if team_info.data:
                 team = team_info.data[0]
@@ -424,7 +424,8 @@ with tab4:
                 try:
                     leader_info = supabase.table("users").select("user_name").eq("user_id", team['team_leader_id']).execute()
                     leader_name = leader_info.data[0]['user_name'] if leader_info.data else "Unknown"
-                except Exception:
+                except Exception as e:
+                    logging.error(f"Error fetching leader info: {e}")
                     leader_name = "Unknown"
                 st.markdown(f"**Team Leader:** {leader_name}")
                 
@@ -516,7 +517,8 @@ with tab4:
                             supabase.table("teams").delete().eq("team_id", current_team_id).execute()
                             st.success("Team deleted successfully. All members have been unassigned.")
                             st.rerun()
-                        except Exception:
+                        except Exception as e:
+                            logging.error(f"Error deleting team: {e}")
                             st.error("Error deleting team. Please try again.")
                 else:
                     # Regular members can leave the team
@@ -525,10 +527,12 @@ with tab4:
                             supabase.table("users").update({"team_id": None}).eq("user_id", user_id).execute()
                             st.success("You have left the team.")
                             st.rerun()
-                        except Exception:
+                        except Exception as e:
+                            logging.error(f"Error leaving team: {e}")
                             st.error("Error leaving team. Please try again.")
-        except Exception:
-            st.error("Error loading team information.")
+        except Exception as e:
+            logging.error(f"Error loading team information: {e}")
+            st.error(f"Error loading team information: {str(e)}")
     else:
         # User is not in a team
         # Check if user is already a team leader
