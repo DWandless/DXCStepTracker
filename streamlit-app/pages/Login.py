@@ -40,6 +40,9 @@ oauth = OAuth2Session(
 )
 
 # ------------------ SESSION DEFAULTS ------------------
+# Force clear all session state to fix scope mismatch
+st.session_state.clear()
+
 if "token" not in st.session_state:
     st.session_state["token"] = None
 if "logged_in" not in st.session_state:
