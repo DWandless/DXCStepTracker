@@ -51,6 +51,11 @@ if "display_name" not in st.session_state:
 if "user_email" not in st.session_state:
     st.session_state["user_email"] = ""
 
+# Force clear session if scope mismatch detected
+if st.button("Clear Session (Fix Scope Error)", type="secondary"):
+    st.session_state.clear()
+    st.rerun()
+
 # ------------------ UTILITIES ------------------
 def standardize_name(name):
     """Convert name from 'last, first' format to 'first last' format."""
