@@ -395,6 +395,53 @@ with tab3:
             paper_bgcolor='rgba(0,0,0,0)'
         )
         st.plotly_chart(fig, width='stretch')
+        
+        # ------------------ SUBMISSION HISTORY & DELETE ------------------
+        st.markdown("---")
+        st.subheader("Your Submission History")
+        st.caption("View and manage your step submissions.")
+        
+        # Get all user submissions
+        user_submissions = supabase.table("forms").select("*").eq("user_id", user_id).order("form_created_at", desc=True).execute()
+        
+        if user_submissions.data:
+            # Prepare data for display
+            submission_data = []
+            for submission in user_submissions.data:
+                submission_data.append({
+                    "Date": submission['form_date'],
+                    "Steps": submission['form_stepcount'],
+                    "Submitted": submission['form_created_at'].split('T')[0] if 'T' in submission['form_created_at'] else submission['form_created_at'],
+                    "Status": "Verified" if submission.get('form_verified') else "Pending",
+                    "ID": submission['form_id']
+                })
+            
+            # Display as table
+            st.dataframe(
+                pd.DataFrame(submission_data)[["Date", "Steps", "Submitted", "Status"]],
+                use_container_width=True,
+                hide_index=True
+            )
+            
+            # Delete submission section
+            st.markdown("### Delete Submission")
+            with st.expander("Delete a submission", expanded=False):
+                st.warning("This action cannot be undone.")
+                submission_ids = [s['form_id'] for s in user_submissions.data]
+                submission_options = {f"{s['form_date']} - {s['form_stepcount']} steps": s['form_id'] for s in user_submissions.data}
+                
+                selected_submission = st.selectbox("Select submission to delete", list(submission_options.keys()))
+                
+                if st.button("Delete Selected Submission", type="secondary"):
+                    submission_id = submission_options[selected_submission]
+                    try:
+                        supabase.table("forms").delete().eq("form_id", submission_id).eq("user_id", user_id).execute()
+                        st.success("Submission deleted successfully.")
+                        st.rerun()
+                    except Exception:
+                        st.error("Error deleting submission. Please try again.")
+        else:
+            st.info("No submissions found.")
 
 # ------------------ TAB 4: TEAM MANAGEMENT ------------------
 with tab4:
