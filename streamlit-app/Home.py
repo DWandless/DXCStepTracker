@@ -260,10 +260,10 @@ with tab1:
                                 file_url = filename
                         else:
                             # For steps < 20,000 with screenshot, don't save the file
-                            file_url = "not_required"
+                            file_url = None
                     else:
                         # No screenshot provided (only allowed for steps < 20,000)
-                        file_url = "not_required"
+                        file_url = None
                     
                     # Insert into database
                     supabase.table("forms").insert({
