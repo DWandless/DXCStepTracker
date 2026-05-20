@@ -13,5 +13,13 @@
             "description": "Office leads will be advertising for on site walks during lunch Between 18th-22nd May. The Rainbow Walk is a simple, inclusive wellbeing activity designed to encourage movement, social connection, and mindfulness. Participants take a short walk and capture photos that match a set of colours building a “rainbow” while taking time away from their desks.",
             "Reward": 15000,
             "Codes": []
+        },
+
+        "Challenge3": {
+            "id": "3",
+            "title": "AI Challenge 2: Use Copilot Premium in an M365 app of your choice to complete a task",
+            "description": "Copilot Premium is now rolling out across DXC, bringing powerful new capabilities directly into the Microsoft 365 apps you already use, including Word, Excel, PowerPoint, Outlook, Teams, and OneNote. Using the app of your choice, complete a task with Copilot and explore how it can enhance the way you work. For example, you can turn notes into structured updates or documents in Word, analyse data and surface insights quickly in Excel, build a PowerPoint presentation from an outline or document, summarise long email threads and draft clear responses in Outlook, or catch up on actions and decisions from recorded meetings in Teams. To take part, comment with a screenshot of the Copilot prompt you used in one of the Microsoft 365 apps and explain what it helped you achieve. Please ensure your screenshot does not contain any sensitive information — if needed, you can redact details using the Windows Snipping Tool.",
+            "Reward": 15000,
+            "Codes": []
         }
 }
