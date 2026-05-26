@@ -174,7 +174,7 @@ if token:
                 st.session_state.user_email = user_email  # Also store email explicitly
                 st.session_state.login_time = datetime.now().timestamp()  # Track login time for session timeout
                 logging.info(f"User logged in: {username} ({user_email[:3]}***@***)")
-                # Automatically redirect to Home after successful login
+                # Redirect to Home after successful login
                 st.switch_page("Home.py")
             
             if st.button("Log out"):
