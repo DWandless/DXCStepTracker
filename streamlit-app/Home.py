@@ -41,7 +41,7 @@ TENANT_ID = azure.get("tenant_id", "93f33571-550f-43cf-b09f-cd331338d086")
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 AUTHORIZE_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
 TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
-REDIRECT_URI = "https://dxcsteptracker.streamlit.app/Login"
+REDIRECT_URI = "https://dxcsteptracker.streamlit.app/"
 
 oauth = OAuth2Session(
     client_id=CLIENT_ID,
