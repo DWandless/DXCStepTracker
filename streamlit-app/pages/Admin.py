@@ -343,6 +343,7 @@ def generate_comprehensive_export():
         return output.getvalue()
     except Exception as e:
         logging.error(f"Error generating comprehensive export: {e}")
+        st.error(f"Error generating report: {str(e)}")
         return None
 
 # ------------------ SIDEBAR ------------------
