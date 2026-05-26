@@ -87,6 +87,7 @@ def generate_comprehensive_export():
         ws_users = wb.active
         ws_users.title = "Users"
         ws_teams = wb.create_sheet("Teams")
+        ws_stats = wb.create_sheet("Statistics")
         
         # Define DXC blue color
         dxc_blue = "7BA4DB"
@@ -249,6 +250,89 @@ def generate_comprehensive_export():
                 if cell_value:
                     max_length = max(max_length, len(str(cell_value)))
             ws_teams.column_dimensions[get_column_letter(col_num)].width = min(max_length + 2, 50)
+        
+        # ==================== STATISTICS SHEET ====================
+        stats_headers = ["Metric", "Value"]
+        
+        # Write headers
+        for col_num, header in enumerate(stats_headers, 1):
+            cell = ws_stats.cell(row=1, column=col_num)
+            cell.value = header
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border_style
+        
+        # Calculate general statistics
+        total_submissions = len(forms)
+        unique_steppers = len(set(f["user_id"] for f in forms))
+        total_steps = sum(f["form_stepcount"] for f in forms)
+        avg_steps_per_submission = total_steps / total_submissions if total_submissions > 0 else 0
+        
+        # Find most steps in a single day
+        daily_steps = {}
+        for f in forms:
+            date = f.get("form_date", "Unknown")
+            if date not in daily_steps:
+                daily_steps[date] = 0
+            daily_steps[date] += f["form_stepcount"]
+        
+        max_daily_steps = max(daily_steps.values()) if daily_steps else 0
+        max_day = max(daily_steps, key=daily_steps.get) if daily_steps else "N/A"
+        
+        # Date range
+        dates = [f.get("form_date") for f in forms if f.get("form_date")]
+        first_submission_date = min(dates) if dates else "N/A"
+        last_submission_date = max(dates) if dates else "N/A"
+        
+        # Verification status
+        verified_count = sum(1 for f in forms if f.get("form_verified", False))
+        unverified_count = total_submissions - verified_count
+        
+        # Challenge completions
+        challenge_completions = sum(1 for f in forms if f.get("form_filepath", "").startswith("challenge_"))
+        
+        # High step submissions (>20,000)
+        high_step_count = sum(1 for f in forms if f.get("form_stepcount", 0) > 20000)
+        
+        # Build statistics data
+        statistics = [
+            {"Metric": "Total Submissions", "Value": total_submissions},
+            {"Metric": "Number of Steppers (Unique Users)", "Value": unique_steppers},
+            {"Metric": "Total Steps", "Value": total_steps},
+            {"Metric": "Average Steps per Submission", "Value": round(avg_steps_per_submission, 2)},
+            {"Metric": "Most Steps in a Single Day", "Value": max_daily_steps},
+            {"Metric": "Date of Most Steps", "Value": max_day},
+            {"Metric": "First Submission Date", "Value": first_submission_date},
+            {"Metric": "Last Submission Date", "Value": last_submission_date},
+            {"Metric": "Verified Submissions", "Value": verified_count},
+            {"Metric": "Unverified Submissions", "Value": unverified_count},
+            {"Metric": "Challenge Completions", "Value": challenge_completions},
+            {"Metric": "High Step Submissions (>20,000)", "Value": high_step_count},
+            {"Metric": "Total Teams", "Value": len(teams)},
+            {"Metric": "Total Users Registered", "Value": len(users)}
+        ]
+        
+        # Write statistics data
+        for row_num, stat in enumerate(statistics, 2):
+            cell = ws_stats.cell(row=row_num, column=1)
+            cell.value = stat["Metric"]
+            cell.border = border_style
+            cell.alignment = Alignment(horizontal='left', vertical='center')
+            
+            cell = ws_stats.cell(row=row_num, column=2)
+            cell.value = stat["Value"]
+            cell.border = border_style
+            cell.alignment = Alignment(horizontal='left', vertical='center')
+        
+        # Auto-adjust column widths
+        for col_num, header in enumerate(stats_headers, 1):
+            max_length = len(header)
+            for row_num in range(2, len(statistics) + 2):
+                cell_value = ws_stats.cell(row=row_num, column=col_num).value
+                if cell_value:
+                    max_length = max(max_length, len(str(cell_value)))
+            ws_stats.column_dimensions[get_column_letter(col_num)].width = min(max_length + 2, 50)
         
         # Save to bytes
         output = io.BytesIO()
@@ -417,7 +501,7 @@ if excel_data:
         file_name=f"step_tracker_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    st.caption("Includes user statistics, team statistics, and challenge completion data.")
+    st.caption("Includes user statistics, team statistics, general statistics, and challenge completion data.")
 else:
     st.info("Unable to generate report. Please check the data and try again.")
 
