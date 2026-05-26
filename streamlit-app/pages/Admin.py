@@ -291,7 +291,7 @@ def generate_comprehensive_export():
         unverified_count = total_submissions - verified_count
         
         # Challenge completions
-        challenge_completions = sum(1 for f in forms if f.get("form_filepath", "").startswith("challenge_"))
+        challenge_completions = sum(1 for f in forms if f.get("form_filepath") and f.get("form_filepath").startswith("challenge_"))
         
         # High step submissions (>20,000)
         high_step_count = sum(1 for f in forms if f.get("form_stepcount", 0) > 20000)
