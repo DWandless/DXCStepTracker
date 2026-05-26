@@ -175,17 +175,21 @@ with tab2:
         # Merge with team names
         team_leaderboard = pd.merge(team_steps, teams_df, on="team_id", how="inner")
         
-        # Get member count for each team
-        member_counts = users_teams_df[users_teams_df["team_id"].notna()].groupby("team_id").size().reset_index(name="member_count")
-        team_leaderboard = pd.merge(team_leaderboard, member_counts, on="team_id", how="left")
-        team_leaderboard["member_count"] = team_leaderboard["member_count"].fillna(0).astype(int)
+        # Get member names for each team
+        users_with_names = supabase.table("users").select("user_id, user_name, team_id").execute().data
+        users_names_df = pd.DataFrame(users_with_names)
+        
+        # Group by team_id and join member names
+        member_names = users_names_df[users_names_df["team_id"].notna()].groupby("team_id")["user_name"].apply(lambda x: ", ".join(sorted(x))).reset_index(name="member_names")
+        team_leaderboard = pd.merge(team_leaderboard, member_names, on="team_id", how="left")
+        team_leaderboard["member_names"] = team_leaderboard["member_names"].fillna("No members")
         
         # Select and rename columns
-        team_leaderboard = team_leaderboard[["team_name", "total_steps", "member_count"]]
+        team_leaderboard = team_leaderboard[["team_name", "total_steps", "member_names"]]
         team_leaderboard.rename(columns={
             "team_name": "Team Name",
             "total_steps": "Total Steps",
-            "member_count": "Members"
+            "member_names": "Members"
         }, inplace=True)
         
         # ------------------ SORTING OPTIONS ------------------
