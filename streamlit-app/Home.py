@@ -14,7 +14,7 @@ from modules.components import (apply_dxc_theme, setup_logo, render_header, rend
                         log_audit_event, get_met_values, setup_logging)
 from modules.auth import init_session_state, handle_oauth_redirect, process_token
 from modules.data_services import fetch_all_forms
-from modules.challenges import get_all_challenges
+from modules.challenges import get_all_challenges, validate_claim_code
 from modules.onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
