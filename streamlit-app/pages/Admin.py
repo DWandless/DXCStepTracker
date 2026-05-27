@@ -271,7 +271,8 @@ with col_left:
             st.session_state.generated_codes = generated_codes
             log_audit_event("CODE_GENERATION", user_email, f"Challenge: {ChallengesDropdown}, Count: {num_codes}")
         except Exception as e:
-            st.error(f"Error generating codes. Please try again.")
+            st.error(f"Error generating codes: {str(e)}")
+            logging.error(f"Code generation error: {e}")
 
 with col_right:
     if st.session_state.generated_codes:
