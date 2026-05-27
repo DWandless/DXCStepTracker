@@ -7,7 +7,7 @@ import streamlit as st
 import logging
 from datetime import datetime
 from requests_oauthlib import OAuth2Session
-from db import supabase
+from .db import supabase
 
 # ------------------ AZURE OAUTH CONFIG ------------------
 azure = st.secrets["azure"]

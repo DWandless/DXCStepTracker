@@ -17,11 +17,11 @@ import re
 import unicodedata
 
 # Re-export from specialized modules for backward compatibility
-from theme import apply_dxc_theme, setup_logo, hide_streamlit_branding
-from ui_components import render_header, render_footer, render_sidebar_welcome
-from auth import check_login_required, handle_logout, is_admin
-from data_services import get_user_id, fetch_user_forms
-from challenges import get_all_challenges, get_met_values, generate_claim_code, hash_claim_code, validate_claim_code
+from .theme import apply_dxc_theme, setup_logo, hide_streamlit_branding
+from .ui_components import render_header, render_footer, render_sidebar_welcome
+from .auth import check_login_required, handle_logout, is_admin
+from .data_services import get_user_id, fetch_user_forms
+from .challenges import get_all_challenges, get_met_values, generate_claim_code, hash_claim_code, validate_claim_code
 
 # ==================== CORE UTILITY FUNCTIONS ====================
 

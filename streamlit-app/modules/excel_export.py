@@ -11,7 +11,7 @@ from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from db import supabase
+from .db import supabase
 
 
 def generate_comprehensive_export():

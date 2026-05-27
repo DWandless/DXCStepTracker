@@ -4,7 +4,7 @@ Contains functions for database operations and data fetching.
 """
 
 import pandas as pd
-from db import supabase
+from .db import supabase
 
 
 def get_user_id(username: str):
