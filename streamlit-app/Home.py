@@ -271,7 +271,6 @@ with tab2:
     # ------------------ Mock Challenge Data (UI only) ------------------
 
     # ------------------ Challenges List ------------------
-    from components import get_all_challenges
     Challenges = get_all_challenges()  # Load challenges to ensure file is read before code generation
     for ch in Challenges:
         with st.container(border=True):
