@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import logging
 import pandas as pd
+import time
 from datetime import datetime, timedelta, date
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError
@@ -256,7 +257,7 @@ with tab1:
                         del st.session_state.auto_fill_steps
 
                     st.success("✔ Step count submitted successfully!")
-                    time.sleep(1)
+                    time.sleep(0.5)
                     st.rerun()
                 except Exception as e:
                     st.error("Error processing upload.")
