@@ -34,7 +34,7 @@ def get_all_challenges():
         List of challenge dicts, or empty list if file not found or invalid
     """
     try:
-        base_dir = Path(__file__).resolve().parent
+        base_dir = Path(__file__).resolve().parent.parent  # Go up to streamlit-app root
         
         # Try multiple possible paths
         challenges_path = base_dir / ".streamlit" / "static" / "assets" / "Challenges.json"
@@ -76,7 +76,7 @@ def get_met_values():
         Dict of activity names to MET step values, or empty dict if file not found or invalid
     """
     try:
-        base_dir = Path(__file__).resolve().parent
+        base_dir = Path(__file__).resolve().parent.parent  # Go up to streamlit-app root
         
         met_path = base_dir / ".streamlit" / "static" / "assets" / "MetValues.json"
         

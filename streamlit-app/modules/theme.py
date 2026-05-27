@@ -8,7 +8,7 @@ import base64
 from pathlib import Path
 
 # ------------------ PATHS + STATIC ASSETS ------------------
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # Go up to streamlit-app root
 ASSETS_DIR = BASE_DIR / ".streamlit" / "static" / "assets"
 LOGO_PATH = ASSETS_DIR / "logo.png"
 HEADER_FONT_PATH = ASSETS_DIR / "GT-Standard-L-Extended-Medium.otf"

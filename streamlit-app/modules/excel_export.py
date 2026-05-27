@@ -23,7 +23,7 @@ def generate_comprehensive_export():
         teams = supabase.table("teams").select("*").execute().data
         
         # Load challenges data
-        challenges_path = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "Challenges.json"
+        challenges_path = Path(__file__).resolve().parent.parent / ".streamlit" / "static" / "assets" / "Challenges.json"
         with open(challenges_path, "r") as f:
             challenges_data = json.load(f)
         
