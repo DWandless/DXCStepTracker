@@ -5,22 +5,15 @@ import pandas as pd
 from datetime import datetime, timedelta, date
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError
-import io
+import re, unicodedata, random, io, time
 import hashlib
 from pathlib import Path
-
-# Import from new modular structure
-from core import initialize_session_state, handle_oauth_redirect, process_login, get_login_url, supabase
-from ui import apply_dxc_theme, hide_streamlit_branding, setup_logo, render_header, render_footer, render_sidebar_welcome, handle_logout, check_login_required
-from utils import secure_filename, log_audit_event, get_met_values, setup_logging, upload_to_onedrive, get_access_token
-from services import (
-    get_user_id, fetch_user_forms,
-    validate_step_submission, check_submission_cooldown, check_daily_submission_limit,
-    process_screenshot_upload, submit_step_form, get_last_submission_time,
-    get_user_team_id, get_team_info, get_team_members, get_team_leader_name,
-    get_member_performance, get_available_teams, join_team, leave_team, create_team, is_user_team_leader,
-    get_all_challenges, validate_claim_code
-)
+from authlib.integrations.base_client.errors import OAuthError
+from requests_oauthlib import OAuth2Session
+from db import supabase
+from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
+                        hide_streamlit_branding, secure_filename, get_user_id, fetch_user_forms, render_sidebar_welcome, handle_logout, log_audit_event, get_met_values, setup_logging)
+from onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "logo.png"
@@ -39,10 +32,141 @@ setup_logging()
 setup_logo()
 render_header("DXC Step Tracker", "Keep Moving and Track your steps better!")
 
-# ------------------ AUTHENTICATION ------------------
-initialize_session_state()
-handle_oauth_redirect()
-process_login()
+# ------------------ AZURE OAUTH CONFIG ------------------
+azure = st.secrets["azure"]
+CLIENT_ID = azure["client_id"]
+CLIENT_SECRET = azure["client_secret"]
+TENANT_ID = azure.get("tenant_id", "93f33571-550f-43cf-b09f-cd331338d086")
+
+AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+AUTHORIZE_URL = f"{AUTHORITY}/oauth2/v2.0/authorize"
+TOKEN_URL = f"{AUTHORITY}/oauth2/v2.0/token"
+REDIRECT_URI = "https://dxcsteptracker.streamlit.app/"
+
+oauth = OAuth2Session(
+    client_id=CLIENT_ID,
+    scope=["openid", "profile", "email", "User.Read", "Files.ReadWrite", "Files.ReadWrite.AppFolder"],
+    redirect_uri=REDIRECT_URI,
+)
+
+# ------------------ SESSION DEFAULTS ------------------
+if "token" not in st.session_state:
+    st.session_state["token"] = None
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
+if "display_name" not in st.session_state:
+    st.session_state["display_name"] = ""
+if "user_email" not in st.session_state:
+    st.session_state["user_email"] = ""
+
+# ------------------ LOGIN UTILITIES ------------------
+def standardize_name(name):
+    """Convert name from 'last, first' format to 'first last' format."""
+    if "," in name:
+        parts = name.split(",", 1)
+        return f"{parts[1].strip()} {parts[0].strip()}"
+    return name
+
+def is_token_expired(token):
+    """Check if JWT token is expired."""
+    try:
+        import jwt
+        decoded = jwt.decode(token, options={"verify_signature": False})
+        exp = decoded.get("exp")
+        if exp:
+            import time
+            return time.time() >= exp
+        return False
+    except Exception:
+        return True
+
+def get_or_create_user(email, display_name):
+    """Get existing user or create new user in database, return formatted name."""
+    try:
+        result = supabase.table("users").select("user_id, user_name").eq("user_email", email).execute()
+        
+        if result.data:
+            return result.data[0]["user_name"]
+        else:
+            standardized_name = standardize_name(display_name)
+            supabase.table("users").insert({
+                "user_email": email,
+                "user_name": standardized_name,
+            }).execute()
+            logging.info(f"New user created: {email[:3]}***@*** ({standardized_name})")
+            return standardized_name
+    except Exception as e:
+        logging.error(f"Database error in get_or_create_user: {e}")
+        return standardize_name(display_name)
+
+# ------------------ HANDLE OAUTH REDIRECT ------------------
+query_params = st.query_params
+
+if "code" in query_params and st.session_state["token"] is None:
+    try:
+        token = oauth.fetch_token(
+            token_url=TOKEN_URL,
+            code=query_params["code"],
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+        )
+        st.session_state["token"] = token
+        st.query_params.clear()
+        st.rerun()
+    except Exception as e:
+        error_str = str(e)
+        if "AADSTS70008" in error_str or "expired" in error_str.lower():
+            st.error("Session timed out. Please log in again.")
+        else:
+            st.error(f"Authentication failed: {error_str[:200]}")
+
+# ------------------ LOGIN FLOW ------------------
+token = st.session_state["token"]
+
+if token:
+    token_to_check = token.get("id_token") or token.get("access_token")
+    if token_to_check and is_token_expired(token_to_check):
+        st.error("Session expired. Please log in again.")
+        if st.button("Log In Again"):
+            st.session_state.clear()
+            st.rerun()
+    
+    try:
+        import jwt
+        token_to_decode = token.get("id_token") or token.get("access_token")
+        
+        if not token_to_decode:
+            st.error("Authentication failed. Please try again.")
+            if st.button("Try Again"):
+                st.session_state.clear()
+                st.rerun()
+        else:
+            decoded = jwt.decode(token_to_decode, options={"verify_signature": False})
+            user_email = decoded.get("preferred_username") or decoded.get("email") or decoded.get("upn") or decoded.get("unique_name") or ""
+            user_name_raw = decoded.get("name", "Unknown User")
+            
+            if "," in user_name_raw:
+                last, first = [x.strip() for x in user_name_raw.split(",", 1)]
+                user_name = f"{first} {last}"
+            else:
+                user_name = user_name_raw.strip()
+            
+            if not st.session_state.logged_in:
+                username = get_or_create_user(user_email, user_name)
+                st.session_state.logged_in = True
+                st.session_state.username = user_email
+                st.session_state.display_name = username
+                st.session_state.user_email = user_email
+                st.session_state.login_time = datetime.now().timestamp()
+                logging.info(f"User logged in: {username} ({user_email[:3]}***@***)")
+                st.rerun()
+    except Exception as e:
+        st.error(f"Error processing authentication: {e}")
+        if st.button("Try Again"):
+            st.session_state.clear()
+            st.rerun()
 
 # ------------------ SHOW LOGIN UI IF NOT LOGGED IN ------------------
 if not st.session_state.logged_in:
@@ -50,11 +174,34 @@ if not st.session_state.logged_in:
     st.subheader("Sign In")
     st.caption("Log in with your Microsoft account to track your steps and participate in challenges.")
     
-    auth_url = get_login_url()
+    auth_url, _ = oauth.authorization_url(
+        AUTHORIZE_URL,
+        prompt="select_account",
+    )
+    
     st.link_button("Sign in with Microsoft", auth_url, type="primary", use_container_width=True)
     
     render_footer()
     st.stop()
+
+# ------------------ HELPERS ------------------
+# Utility functions now imported from components
+
+def get_last_submission_time(user_id):
+    try:
+        response = (
+            supabase.table("forms")
+            .select("form_created_at")
+            .eq("user_id", user_id)
+            .order("form_created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if response.data and len(response.data) == 1:
+            return datetime.fromisoformat(response.data[0]["form_created_at"])
+    except Exception:
+        pass
+    return None
 
 # ------------------ USER SETUP (LOGGED IN) ------------------
 username = st.session_state.get("username")  # This is the email
