@@ -4,7 +4,7 @@ Handles team creation, joining, leaving, and member performance tracking.
 """
 
 import logging
-from db import supabase
+from core.db import supabase
 
 
 def get_user_team_id(user_id):

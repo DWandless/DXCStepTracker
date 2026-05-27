@@ -7,7 +7,10 @@ import streamlit as st
 import logging
 from datetime import datetime
 from requests_oauthlib import OAuth2Session
-from db import supabase
+try:
+    from .db import supabase
+except ImportError:
+    from core.db import supabase
 
 
 # ------------------ OAUTH CONFIGURATION ------------------

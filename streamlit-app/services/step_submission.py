@@ -8,8 +8,8 @@ import io
 import logging
 from datetime import datetime, timedelta
 from PIL import Image, UnidentifiedImageError
-from db import supabase
-from onedrive_storage import upload_to_onedrive, get_access_token
+from core.db import supabase
+from utils.onedrive_storage import upload_to_onedrive, get_access_token
 
 
 def validate_step_submission(steps, screenshot, max_size=5 * 1024 * 1024):

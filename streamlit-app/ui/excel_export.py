@@ -11,7 +11,7 @@ from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from data_services import fetch_all_users, fetch_all_forms, fetch_all_teams
+from services.data_services import fetch_all_users, fetch_all_forms, fetch_all_teams
 
 
 def generate_comprehensive_export():
@@ -23,7 +23,7 @@ def generate_comprehensive_export():
         teams = fetch_all_teams()
         
         # Load challenges data
-        challenges_path = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "Challenges.json"
+        challenges_path = Path(__file__).resolve().parent.parent / ".streamlit" / "static" / "assets" / "Challenges.json"
         with open(challenges_path, "r") as f:
             challenges_data = json.load(f)
         

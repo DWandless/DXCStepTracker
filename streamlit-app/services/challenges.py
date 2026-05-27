@@ -19,7 +19,7 @@ def get_all_challenges():
         Dictionary of challenge data, or empty dict if file not found or invalid
     """
     try:
-        base_dir = Path(__file__).resolve().parent
+        base_dir = Path(__file__).resolve().parent.parent
         challenges_path = base_dir / ".streamlit" / "static" / "assets" / "Challenges.json"
         
         if not challenges_path.exists():
@@ -128,7 +128,7 @@ def save_claim_codes_to_file(challenge_title: str, hashed_codes: list[str]):
         hashed_codes: List of hashed claim codes to add
     """
     try:
-        base_dir = Path(__file__).resolve().parent
+        base_dir = Path(__file__).resolve().parent.parent
         challenges_path = base_dir / ".streamlit" / "static" / "assets" / "Challenges.json"
         
         with open(challenges_path, "r") as f:

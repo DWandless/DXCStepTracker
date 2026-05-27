@@ -10,7 +10,7 @@ from pathlib import Path
 # -------------------------------------------------------------------
 # Paths + Static Assets
 # -------------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 ASSETS_DIR = BASE_DIR / ".streamlit" / "static" / "assets"
 LOGO_PATH = ASSETS_DIR / "logo.png"
 HEADER_FONT_PATH = ASSETS_DIR / "GT-Standard-L-Extended-Medium.otf"

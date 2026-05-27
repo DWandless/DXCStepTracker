@@ -73,7 +73,7 @@ def get_met_values():
         Dict of activity names to MET step values, or empty dict if file not found or invalid
     """
     try:
-        base_dir = Path(__file__).resolve().parent
+        base_dir = Path(__file__).resolve().parent.parent
         met_path = base_dir / ".streamlit" / "static" / "assets" / "MetValues.json"
         
         if not met_path.exists():
@@ -97,8 +97,8 @@ def get_met_values():
 
 # ==================== BACKWARD COMPATIBILITY IMPORTS ====================
 # Re-export functions from new modules for backward compatibility
-from theme import apply_dxc_theme, hide_streamlit_branding
-from ui_components import render_header, render_footer, render_sidebar_welcome, setup_logo, handle_logout, check_login_required
-from data_services import get_user_id, fetch_user_forms
-from auth import is_admin
-from challenges import get_all_challenges, generate_claim_code, hash_claim_code, validate_claim_code
+from ui.theme import apply_dxc_theme, hide_streamlit_branding
+from ui.ui_components import render_header, render_footer, render_sidebar_welcome, setup_logo, handle_logout, check_login_required
+from services.data_services import get_user_id, fetch_user_forms
+from core.auth import is_admin
+from services.challenges import get_all_challenges, generate_claim_code, hash_claim_code, validate_claim_code

@@ -7,7 +7,7 @@ import streamlit as st
 import html
 from datetime import datetime
 from pathlib import Path
-from theme import LOGO_PATH
+from .theme import LOGO_PATH
 
 
 def setup_logo():
