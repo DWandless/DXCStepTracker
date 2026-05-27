@@ -3,6 +3,7 @@ import os
 import logging
 import pandas as pd
 import time
+import hashlib
 from datetime import datetime, timedelta, date
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError

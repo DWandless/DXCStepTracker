@@ -279,14 +279,6 @@ with col_right:
     if st.session_state.generated_codes:
         codes_text = "\n".join(st.session_state.generated_codes)
         st.text_area("Codes", codes_text, height=200, key="generated_codes_display")
-        
-        # Download option
-        st.download_button(
-            label="Download Codes (Plain Text)",
-            data=codes_text,
-            file_name=f"claim_codes_{ChallengesDropdown.replace(' ', '_').lower()}.txt",
-            mime="text/plain"
-        )
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()
