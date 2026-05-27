@@ -10,13 +10,13 @@ import time
 import logging
 from datetime import datetime
 from pathlib import Path
-from db import supabase
-from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
+from modules.db import supabase
+from modules.components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
                         hide_streamlit_branding, check_login_required, handle_logout, secure_filename, log_audit_event)
-from auth import is_admin
-from data_services import fetch_all_submissions
-from excel_export import generate_comprehensive_export
-from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
+from modules.auth import is_admin
+from modules.data_services import fetch_all_submissions
+from modules.excel_export import generate_comprehensive_export
+from modules.onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "logo.png"

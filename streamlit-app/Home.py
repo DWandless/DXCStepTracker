@@ -8,14 +8,14 @@ import plotly.express as px
 from PIL import Image, UnidentifiedImageError
 import io
 from pathlib import Path
-from db import supabase
-from components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
+from modules.db import supabase
+from modules.components import (apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome,
                         hide_streamlit_branding, secure_filename, get_user_id, fetch_user_forms, handle_logout, 
                         log_audit_event, get_met_values, setup_logging)
-from auth import init_session_state, handle_oauth_redirect, process_token
-from data_services import fetch_all_forms
-from challenges import get_all_challenges
-from onedrive_storage import upload_to_onedrive, get_access_token
+from modules.auth import init_session_state, handle_oauth_redirect, process_token
+from modules.data_services import fetch_all_forms
+from modules.challenges import get_all_challenges
+from modules.onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "logo.png"
@@ -45,7 +45,7 @@ if not st.session_state.logged_in:
     st.subheader("Sign In")
     st.caption("Log in with your Microsoft account to track your steps and participate in challenges.")
     
-    from auth import oauth, AUTHORIZE_URL
+    from modules.auth import oauth, AUTHORIZE_URL
     auth_url, _ = oauth.authorization_url(AUTHORIZE_URL, prompt="select_account")
     st.link_button("Sign in with Microsoft", auth_url, type="primary", use_container_width=True)
     
