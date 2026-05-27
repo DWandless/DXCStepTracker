@@ -9,16 +9,12 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from db import supabase
 
 # Import from new modular structure
-from theme import apply_dxc_theme, hide_streamlit_branding
-from ui_components import setup_logo, render_header, render_footer, render_sidebar_welcome, handle_logout, check_login_required
-from components import secure_filename, log_audit_event
-from auth import require_admin
-from data_services import fetch_unverified_high_step_submissions, delete_form, update_form
-from excel_export import generate_comprehensive_export
-from onedrive_storage import get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
+from core import supabase, require_admin
+from ui import apply_dxc_theme, hide_streamlit_branding, setup_logo, render_header, render_footer, render_sidebar_welcome, handle_logout, check_login_required, generate_comprehensive_export
+from utils import secure_filename, log_audit_event, get_file_download_url, delete_from_onedrive, get_access_token, get_file_id_from_sharing_url
+from services import fetch_unverified_high_step_submissions, delete_form, update_form
 
 # ------------------ PAGE CONFIG ------------------
 logo_path = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "logo.png"

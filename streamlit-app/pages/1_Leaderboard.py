@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
-from db import supabase
 from pathlib import Path
-from components import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, check_login_required, handle_logout
+
+# Import from new modular structure
+from core import supabase
+from ui import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, check_login_required, handle_logout
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "logo.png"

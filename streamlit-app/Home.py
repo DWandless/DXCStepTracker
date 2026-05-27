@@ -10,15 +10,16 @@ import hashlib
 from pathlib import Path
 
 # Import from new modular structure
-from theme import apply_dxc_theme, hide_streamlit_branding
-from ui_components import setup_logo, render_header, render_footer, render_sidebar_welcome, handle_logout
-from components import secure_filename, get_user_id, fetch_user_forms, log_audit_event, get_met_values, setup_logging
-from auth import initialize_session_state, handle_oauth_redirect, process_login, get_login_url
-from step_submission import validate_step_submission, check_submission_cooldown, check_daily_submission_limit, process_screenshot_upload, submit_step_form, get_last_submission_time
-from team_management import get_user_team_id, get_team_info, get_team_members, get_team_leader_name, get_member_performance, get_available_teams, join_team, leave_team, create_team, is_user_team_leader
-from challenges import get_all_challenges, validate_claim_code
-from db import supabase
-from onedrive_storage import upload_to_onedrive, get_access_token
+from core import initialize_session_state, handle_oauth_redirect, process_login, get_login_url, supabase
+from ui import apply_dxc_theme, hide_streamlit_branding, setup_logo, render_header, render_footer, render_sidebar_welcome, handle_logout, check_login_required
+from utils import secure_filename, get_user_id, fetch_user_forms, log_audit_event, get_met_values, setup_logging, upload_to_onedrive, get_access_token
+from services import (
+    validate_step_submission, check_submission_cooldown, check_daily_submission_limit,
+    process_screenshot_upload, submit_step_form, get_last_submission_time,
+    get_user_team_id, get_team_info, get_team_members, get_team_leader_name,
+    get_member_performance, get_available_teams, join_team, leave_team, create_team, is_user_team_leader,
+    get_all_challenges, validate_claim_code
+)
 
 # ------------------ PAGE CONFIG ------------------
 logo_path2 = Path(__file__).resolve().parent / ".streamlit" / "static" / "assets" / "logo.png"
