@@ -219,7 +219,7 @@ st.subheader(
     "Generate Claim Codes",
     help="Create unique claim codes for verified step submissions."
 )
-from components import get_all_challenges, generate_claim_code, hash_claim_code
+from modules.challenges import get_all_challenges, generate_claim_code, hash_claim_code
 
 # Initialize session state for generated codes
 if "generated_codes" not in st.session_state:

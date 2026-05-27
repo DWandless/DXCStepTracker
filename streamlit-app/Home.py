@@ -318,7 +318,6 @@ with tab2:
                     )
 
                     submitted = st.form_submit_button("Submit Code", type="primary")
-                    from components import validate_claim_code
                     if submitted:
                         if not validate_claim_code(Challenges, claim_code, challenge_id):
                             st.error("Please enter a valid claim code.")
