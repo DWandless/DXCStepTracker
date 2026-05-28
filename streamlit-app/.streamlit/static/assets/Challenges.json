@@ -29,6 +29,14 @@
             "description": "Music can lift our mood, reduce stress, and help us reset throughout the day. As part of our wellbeing challenge, we’re creating a shared DXC playlist filled with songs that make us feel happy, calm, energised, or simply good. To take part, comment 1–3 songs on the Viva Engage post that improve your mood or support your wellbeing. If you’d like, you can also share why the songs make you feel good, whether it’s a memory, an energy boost, or a calming effect. Feel free to explore and react to other people’s choices, and add more songs anytime throughout the challenge as we build a playlist everyone can turn to whenever they need a lift.",
             "Reward": 15000,
             "Codes": []
+        },
+
+        "Challenge5": {
+            "id": "5",
+            "title": "AI Challenge 3: Build your own AI agent ",
+            "description": "You can now build your own personal AI agents in Amazon Quick to help improve productivity and give you more time to focus on the work that matters most. No coding, data science, or advanced prompt engineering skills are required — if you can describe how you work, you can build an agent. This task involves opening Amazon Quick at https://us-east-1.quicksight.aws.amazon.com/, navigating to Chat agents → (+) Create chat agent, then adding instructions, connecting context, and experimenting with your new agent. If you’re unsure where to start, the DXC Knowledge Navigator agent can guide you through the process. To complete the challenge, comment on the Viva Engage post with a screenshot of your agent and a short description of what it helps you achieve. Please ensure no sensitive information is visible in your screenshot. Once submitted, the admin team will reply with a code to redeem.",
+            "Reward": 15000,
+            "Codes": []
         }
 
 }
