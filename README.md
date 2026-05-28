@@ -25,8 +25,8 @@ MovemberStepTracker/
 ├── streamlit-app/
 │   ├── Home.py                  # Main application entry point
 │   ├── pages/                   # Streamlit multipage application
-│   │   ├── Admin.py             # Admin dashboard
-│   │   └── 1_Leaderboard.py     # Leaderboard page
+│   │   ├── 1_Leaderboard.py     # Leaderboard page
+│   │   └── 2_Admin.py           # Admin dashboard
 │   ├── modules/                 # Shared business logic and utilities
 │   │   ├── __init__.py          # Package initialization
 │   │   ├── auth.py              # OAuth2 authentication and session management
