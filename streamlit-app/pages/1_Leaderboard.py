@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import time
 from modules.db import supabase
 from pathlib import Path
 from modules.components import apply_dxc_theme, setup_logo, render_header, render_footer, render_sidebar_welcome, hide_streamlit_branding, check_login_required, handle_logout
@@ -46,19 +47,30 @@ with tab1:
 
     # ------------------ FETCH DATA FROM SUPABASE ------------------
     try:
+        start_time = time.time()
+        
         # Try to use database-level aggregation for performance
         try:
+            st.caption("Attempting RPC call to database function...")
+            rpc_start = time.time()
+            
             if selected_date:
                 response = supabase.rpc('get_user_step_totals', {'p_date': str(selected_date)}).execute()
             else:
                 response = supabase.rpc('get_user_step_totals', {'p_date': None}).execute()
             
+            rpc_time = time.time() - rpc_start
+            
             if response.data:
                 step_summary = pd.DataFrame(response.data)
+                total_time = time.time() - start_time
+                st.success(f"✓ RPC SUCCESS: Database function used ({rpc_time:.2f}s, total: {total_time:.2f}s)")
             else:
                 raise Exception("RPC returned no data")
-        except Exception:
+        except Exception as e:
             # Fallback to per-user aggregation if RPC not available
+            fallback_start = time.time()
+            st.warning(f"✗ RPC FAILED ({str(e)[:50]}...), using fallback aggregation")
             st.caption("Using fallback aggregation (create database function for better performance)")
             
             # Get unique user_ids first
@@ -68,6 +80,8 @@ with tab1:
             else:
                 response = supabase.table("forms").select("user_id").execute()
                 user_ids = list(set(r["user_id"] for r in response.data))
+            
+            st.caption(f"Processing {len(user_ids)} users with fallback method...")
             
             step_summary_data = []
             for uid in user_ids:
@@ -93,6 +107,9 @@ with tab1:
                 step_summary_data.append({"user_id": uid, "total_steps": total})
             
             step_summary = pd.DataFrame(step_summary_data)
+            fallback_time = time.time() - fallback_start
+            total_time = time.time() - start_time
+            st.warning(f"✗ FALLBACK USED: {fallback_time:.2f}s (total: {total_time:.2f}s)")
     except Exception as e:
         st.error(f"Database error while fetching forms: {e}")
         st.stop()
@@ -103,9 +120,6 @@ with tab1:
 
     # Debug: log total records fetched
     st.caption(f"Debug: Total users processed: {len(step_summary)}")
-
-    # Debug: show step summary before merge
-    st.caption(f"Debug: Step summary before merge:\n{step_summary.to_string()}")
 
     # ------------------ GET USERNAMES ------------------
     try:
@@ -188,20 +202,28 @@ with tab2:
         
         # Try to use database-level aggregation for performance
         try:
+            st.caption("Attempting RPC call to team database function...")
+            rpc_start = time.time()
+            
             if team_selected_date:
                 response = supabase.rpc('get_team_step_totals', {'p_date': str(team_selected_date)}).execute()
             else:
                 response = supabase.rpc('get_team_step_totals', {'p_date': None}).execute()
             
+            rpc_time = time.time() - rpc_start
+            
             if response.data:
                 team_steps = pd.DataFrame(response.data)
                 # Merge with team names
                 team_leaderboard = pd.merge(team_steps, teams_df, on="team_id", how="inner")
+                st.success(f"✓ TEAM RPC SUCCESS: Database function used ({rpc_time:.2f}s)")
                 rpc_success = True
             else:
                 raise Exception("RPC returned no data")
-        except Exception:
+        except Exception as e:
             # Fallback to per-user aggregation if RPC not available
+            fallback_start = time.time()
+            st.warning(f"✗ TEAM RPC FAILED ({str(e)[:50]}...), using fallback aggregation")
             st.caption("Using fallback aggregation for teams (create database function for better performance)")
             rpc_success = False
             
@@ -233,6 +255,8 @@ with tab2:
                     offset += batch_size
             
             forms_data = all_forms
+            fallback_time = time.time() - fallback_start
+            st.warning(f"✗ TEAM FALLBACK USED: {fallback_time:.2f}s")
             
             if not forms_data:
                 st.info("No step data available for the selected date." if team_selected_date else "No step data available.")
