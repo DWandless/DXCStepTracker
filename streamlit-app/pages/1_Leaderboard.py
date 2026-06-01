@@ -60,10 +60,16 @@ with tab1:
 
     df = pd.DataFrame(forms)
 
+    # Debug: log total records fetched
+    st.caption(f"Debug: Total forms fetched: {len(df)}")
+
     # ------------------ AGGREGATE STEPS SECURELY ------------------
     try:
         step_summary = df.groupby("user_id")["form_stepcount"].sum().reset_index()
         step_summary.rename(columns={"form_stepcount": "total_steps"}, inplace=True)
+        
+        # Debug: show step summary before merge
+        st.caption(f"Debug: Step summary before merge:\n{step_summary.to_string()}")
     except Exception as e:
         st.error(f"Error processing step data: {e}")
         st.stop()
