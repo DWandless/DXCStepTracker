@@ -49,7 +49,7 @@ with tab1:
         forms_query = supabase.table("forms").select("user_id, form_stepcount, form_date")
         if selected_date:
             forms_query = forms_query.eq("form_date", str(selected_date))
-        forms = forms_query.execute().data
+        forms = forms_query.limit(10000).execute().data
     except Exception as e:
         st.error(f"Database error while fetching forms: {e}")
         st.stop()
@@ -147,7 +147,7 @@ with tab2:
         forms_query = supabase.table("forms").select("user_id, form_stepcount, form_date")
         if team_selected_date:
             forms_query = forms_query.eq("form_date", str(team_selected_date))
-        forms_data = forms_query.execute().data
+        forms_data = forms_query.limit(10000).execute().data
         
         if not forms_data:
             st.info("No step data available for the selected date." if team_selected_date else "No step data available.")

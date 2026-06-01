@@ -37,7 +37,7 @@ def fetch_user_forms(user_id: int):
         DataFrame of user forms, or empty DataFrame if none found
     """
     try:
-        res = supabase.table("forms").select("*").eq("user_id", user_id).execute()
+        res = supabase.table("forms").select("*").eq("user_id", user_id).limit(10000).execute()
         return pd.DataFrame(res.data) if res.data else pd.DataFrame()
     except Exception:
         return pd.DataFrame()
@@ -65,7 +65,7 @@ def fetch_all_forms():
         DataFrame of all forms, or empty DataFrame if none found
     """
     try:
-        res = supabase.table("forms").select("*").execute()
+        res = supabase.table("forms").select("*").limit(10000).execute()
         return pd.DataFrame(res.data) if res.data else pd.DataFrame()
     except Exception:
         return pd.DataFrame()
