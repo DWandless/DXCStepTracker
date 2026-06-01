@@ -49,7 +49,22 @@ with tab1:
         forms_query = supabase.table("forms").select("user_id, form_stepcount, form_date")
         if selected_date:
             forms_query = forms_query.eq("form_date", str(selected_date))
-        forms = forms_query.limit(10000).execute().data
+        
+        # Fetch all records using pagination
+        all_forms = []
+        current_batch = forms_query.limit(1000).execute()
+        all_forms.extend(current_batch.data)
+        
+        # Continue fetching if there are more records
+        while len(current_batch.data) == 1000:
+            # Get the last record's ID to use as offset
+            last_id = current_batch.data[-1].get('form_id') if current_batch.data else None
+            if not last_id:
+                break
+            current_batch = forms_query.gt('form_id', last_id).limit(1000).execute()
+            all_forms.extend(current_batch.data)
+        
+        forms = all_forms
     except Exception as e:
         st.error(f"Database error while fetching forms: {e}")
         st.stop()
@@ -153,7 +168,22 @@ with tab2:
         forms_query = supabase.table("forms").select("user_id, form_stepcount, form_date")
         if team_selected_date:
             forms_query = forms_query.eq("form_date", str(team_selected_date))
-        forms_data = forms_query.limit(10000).execute().data
+        
+        # Fetch all records using pagination
+        all_forms = []
+        current_batch = forms_query.limit(1000).execute()
+        all_forms.extend(current_batch.data)
+        
+        # Continue fetching if there are more records
+        while len(current_batch.data) == 1000:
+            # Get the last record's ID to use as offset
+            last_id = current_batch.data[-1].get('form_id') if current_batch.data else None
+            if not last_id:
+                break
+            current_batch = forms_query.gt('form_id', last_id).limit(1000).execute()
+            all_forms.extend(current_batch.data)
+        
+        forms_data = all_forms
         
         if not forms_data:
             st.info("No step data available for the selected date." if team_selected_date else "No step data available.")
