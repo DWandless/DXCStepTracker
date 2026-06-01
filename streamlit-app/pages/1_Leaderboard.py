@@ -46,39 +46,53 @@ with tab1:
 
     # ------------------ FETCH DATA FROM SUPABASE ------------------
     try:
-        # Per-user aggregation with pagination for each user's records
-        # Get unique user_ids first (this should be < 1000)
-        if selected_date:
-            response = supabase.table("forms").select("user_id").eq("form_date", str(selected_date)).execute()
-            user_ids = list(set(r["user_id"] for r in response.data))
-        else:
-            response = supabase.table("forms").select("user_id").execute()
-            user_ids = list(set(r["user_id"] for r in response.data))
-        
-        step_summary_data = []
-        for uid in user_ids:
-            # Fetch all records for this user with pagination
-            total = 0
-            offset = 0
-            batch_size = 1000
+        # Try to use database-level aggregation for performance
+        try:
+            if selected_date:
+                response = supabase.rpc('get_user_step_totals', {'p_date': str(selected_date)}).execute()
+            else:
+                response = supabase.rpc('get_user_step_totals', {'p_date': None}).execute()
             
-            while True:
-                if selected_date:
-                    user_batch = supabase.table("forms").select("form_stepcount").eq("user_id", uid).eq("form_date", str(selected_date)).range(offset, offset + batch_size - 1).execute()
-                else:
-                    user_batch = supabase.table("forms").select("form_stepcount").eq("user_id", uid).range(offset, offset + batch_size - 1).execute()
-                
-                batch_total = sum(r["form_stepcount"] for r in user_batch.data)
-                total += batch_total
-                
-                if len(user_batch.data) < batch_size:
-                    break
-                
-                offset += batch_size
+            if response.data:
+                step_summary = pd.DataFrame(response.data)
+            else:
+                raise Exception("RPC returned no data")
+        except Exception:
+            # Fallback to per-user aggregation if RPC not available
+            st.caption("Using fallback aggregation (create database function for better performance)")
             
-            step_summary_data.append({"user_id": uid, "total_steps": total})
-        
-        step_summary = pd.DataFrame(step_summary_data)
+            # Get unique user_ids first
+            if selected_date:
+                response = supabase.table("forms").select("user_id").eq("form_date", str(selected_date)).execute()
+                user_ids = list(set(r["user_id"] for r in response.data))
+            else:
+                response = supabase.table("forms").select("user_id").execute()
+                user_ids = list(set(r["user_id"] for r in response.data))
+            
+            step_summary_data = []
+            for uid in user_ids:
+                # Fetch all records for this user with pagination
+                total = 0
+                offset = 0
+                batch_size = 1000
+                
+                while True:
+                    if selected_date:
+                        user_batch = supabase.table("forms").select("form_stepcount").eq("user_id", uid).eq("form_date", str(selected_date)).range(offset, offset + batch_size - 1).execute()
+                    else:
+                        user_batch = supabase.table("forms").select("form_stepcount").eq("user_id", uid).range(offset, offset + batch_size - 1).execute()
+                    
+                    batch_total = sum(r["form_stepcount"] for r in user_batch.data)
+                    total += batch_total
+                    
+                    if len(user_batch.data) < batch_size:
+                        break
+                    
+                    offset += batch_size
+                
+                step_summary_data.append({"user_id": uid, "total_steps": total})
+            
+            step_summary = pd.DataFrame(step_summary_data)
     except Exception as e:
         st.error(f"Database error while fetching forms: {e}")
         st.stop()
@@ -168,61 +182,80 @@ with tab2:
         # Get all users with team assignments
         users_with_teams = supabase.table("users").select("user_id, team_id").execute().data
         
-        # Get forms data using per-user aggregation (same approach as individual leaderboard)
-        # Get unique user_ids first
-        if team_selected_date:
-            response = supabase.table("forms").select("user_id").eq("form_date", str(team_selected_date)).execute()
-            user_ids = list(set(r["user_id"] for r in response.data))
-        else:
-            response = supabase.table("forms").select("user_id").execute()
-            user_ids = list(set(r["user_id"] for r in response.data))
-        
-        # Fetch all forms with pagination for each user
-        all_forms = []
-        for uid in user_ids:
-            offset = 0
-            batch_size = 1000
-            
-            while True:
-                if team_selected_date:
-                    user_batch = supabase.table("forms").select("user_id, form_stepcount, form_date").eq("user_id", uid).eq("form_date", str(team_selected_date)).range(offset, offset + batch_size - 1).execute()
-                else:
-                    user_batch = supabase.table("forms").select("user_id, form_stepcount, form_date").eq("user_id", uid).range(offset, offset + batch_size - 1).execute()
-                
-                all_forms.extend(user_batch.data)
-                
-                if len(user_batch.data) < batch_size:
-                    break
-                
-                offset += batch_size
-        
-        forms_data = all_forms
-        
-        if not forms_data:
-            st.info("No step data available for the selected date." if team_selected_date else "No step data available.")
-            st.stop()
-        
         # Create dataframes
         teams_df = pd.DataFrame(teams)
         users_teams_df = pd.DataFrame(users_with_teams)
-        forms_df = pd.DataFrame(forms_data)
         
-        # Merge forms with user team assignments
-        merged = pd.merge(forms_df, users_teams_df, on="user_id", how="inner")
-        
-        # Filter out users without teams
-        merged = merged[merged["team_id"].notna()]
-        
-        if merged.empty:
-            st.info("No team members have submitted steps yet.")
-            st.stop()
-        
-        # Aggregate steps by team
-        team_steps = merged.groupby("team_id")["form_stepcount"].sum().reset_index()
-        team_steps.rename(columns={"form_stepcount": "total_steps"}, inplace=True)
-        
-        # Merge with team names
-        team_leaderboard = pd.merge(team_steps, teams_df, on="team_id", how="inner")
+        # Try to use database-level aggregation for performance
+        try:
+            if team_selected_date:
+                response = supabase.rpc('get_team_step_totals', {'p_date': str(team_selected_date)}).execute()
+            else:
+                response = supabase.rpc('get_team_step_totals', {'p_date': None}).execute()
+            
+            if response.data:
+                team_steps = pd.DataFrame(response.data)
+                # Merge with team names
+                team_leaderboard = pd.merge(team_steps, teams_df, on="team_id", how="inner")
+                rpc_success = True
+            else:
+                raise Exception("RPC returned no data")
+        except Exception:
+            # Fallback to per-user aggregation if RPC not available
+            st.caption("Using fallback aggregation for teams (create database function for better performance)")
+            rpc_success = False
+            
+            # Get unique user_ids first
+            if team_selected_date:
+                response = supabase.table("forms").select("user_id").eq("form_date", str(team_selected_date)).execute()
+                user_ids = list(set(r["user_id"] for r in response.data))
+            else:
+                response = supabase.table("forms").select("user_id").execute()
+                user_ids = list(set(r["user_id"] for r in response.data))
+            
+            # Fetch all forms with pagination for each user
+            all_forms = []
+            for uid in user_ids:
+                offset = 0
+                batch_size = 1000
+                
+                while True:
+                    if team_selected_date:
+                        user_batch = supabase.table("forms").select("user_id, form_stepcount, form_date").eq("user_id", uid).eq("form_date", str(team_selected_date)).range(offset, offset + batch_size - 1).execute()
+                    else:
+                        user_batch = supabase.table("forms").select("user_id, form_stepcount, form_date").eq("user_id", uid).range(offset, offset + batch_size - 1).execute()
+                    
+                    all_forms.extend(user_batch.data)
+                    
+                    if len(user_batch.data) < batch_size:
+                        break
+                    
+                    offset += batch_size
+            
+            forms_data = all_forms
+            
+            if not forms_data:
+                st.info("No step data available for the selected date." if team_selected_date else "No step data available.")
+                st.stop()
+            
+            forms_df = pd.DataFrame(forms_data)
+            
+            # Merge forms with user team assignments
+            merged = pd.merge(forms_df, users_teams_df, on="user_id", how="inner")
+            
+            # Filter out users without teams
+            merged = merged[merged["team_id"].notna()]
+            
+            if merged.empty:
+                st.info("No team members have submitted steps yet.")
+                st.stop()
+            
+            # Aggregate steps by team
+            team_steps = merged.groupby("team_id")["form_stepcount"].sum().reset_index()
+            team_steps.rename(columns={"form_stepcount": "total_steps"}, inplace=True)
+            
+            # Merge with team names
+            team_leaderboard = pd.merge(team_steps, teams_df, on="team_id", how="inner")
         
         # Get member names for each team
         users_with_names = supabase.table("users").select("user_id, user_name, team_id").execute().data
