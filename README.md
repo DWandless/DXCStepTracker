@@ -240,6 +240,76 @@ The application uses Supabase with the following main tables:
   - `challenge_code` (text, nullable - hashed claim code)
   - `form_created_at` (timestamp)
 
+## Leaderboard Performance Optimization
+
+The leaderboard page uses custom Supabase SQL functions for optimal performance. Without these functions, the leaderboard would use client-side pagination which is slow (15+ seconds) and subject to Supabase's 1000-record limit.
+
+### Required SQL Functions
+
+Run the following SQL in your Supabase SQL Editor to create the required functions:
+
+```sql
+-- Function: Get user step totals with optional date filter
+CREATE OR REPLACE FUNCTION get_user_step_totals(p_date DATE DEFAULT NULL)
+RETURNS TABLE(user_id BIGINT, total_steps BIGINT) AS $$
+BEGIN
+    IF p_date IS NULL THEN
+        -- All-time aggregation
+        RETURN QUERY
+        SELECT f.user_id::BIGINT, SUM(f.form_stepcount)::BIGINT as total_steps
+        FROM forms f
+        GROUP BY f.user_id;
+    ELSE
+        -- Date-specific aggregation
+        RETURN QUERY
+        SELECT f.user_id::BIGINT, SUM(f.form_stepcount)::BIGINT as total_steps
+        FROM forms f
+        WHERE f.form_date = p_date
+        GROUP BY f.user_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function: Get team step totals with optional date filter
+CREATE OR REPLACE FUNCTION get_team_step_totals(p_date DATE DEFAULT NULL)
+RETURNS TABLE(team_id BIGINT, total_steps BIGINT) AS $$
+BEGIN
+    IF p_date IS NULL THEN
+        -- All-time aggregation
+        RETURN QUERY
+        SELECT u.team_id::BIGINT, SUM(f.form_stepcount)::BIGINT as total_steps
+        FROM forms f
+        JOIN users u ON f.user_id = u.user_id
+        WHERE u.team_id IS NOT NULL
+        GROUP BY u.team_id;
+    ELSE
+        -- Date-specific aggregation
+        RETURN QUERY
+        SELECT u.team_id::BIGINT, SUM(f.form_stepcount)::BIGINT as total_steps
+        FROM forms f
+        JOIN users u ON f.user_id = u.user_id
+        WHERE f.form_date = p_date AND u.team_id IS NOT NULL
+        GROUP BY u.team_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+After creating the functions, verify they work by running these test queries in Supabase SQL Editor:
+
+```sql
+-- Test user function (all-time)
+SELECT * FROM get_user_step_totals(NULL);
+
+-- Test user function (specific date)
+SELECT * FROM get_user_step_totals('2026-05-20'::DATE);
+
+-- Test team function (all-time)
+SELECT * FROM get_team_step_totals(NULL);
+```
+
+The leaderboard will automatically use these functions via RPC calls. If the functions don't exist, it will fall back to the slower client-side pagination method.
+
 ## Troubleshooting
 
 ### Authentication Issues
