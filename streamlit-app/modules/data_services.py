@@ -37,21 +37,8 @@ def fetch_user_forms(user_id: int):
         DataFrame of user forms, or empty DataFrame if none found
     """
     try:
-        # Fetch all records using pagination
-        all_forms = []
-        query = supabase.table("forms").select("*").eq("user_id", user_id)
-        current_batch = query.limit(1000).execute()
-        all_forms.extend(current_batch.data)
-        
-        # Continue fetching if there are more records
-        while len(current_batch.data) == 1000:
-            last_id = current_batch.data[-1].get('form_id') if current_batch.data else None
-            if not last_id:
-                break
-            current_batch = query.gt('form_id', last_id).limit(1000).execute()
-            all_forms.extend(current_batch.data)
-        
-        return pd.DataFrame(all_forms) if all_forms else pd.DataFrame()
+        res = supabase.table("forms").select("*").eq("user_id", user_id).execute()
+        return pd.DataFrame(res.data) if res.data else pd.DataFrame()
     except Exception:
         return pd.DataFrame()
 
@@ -78,21 +65,8 @@ def fetch_all_forms():
         DataFrame of all forms, or empty DataFrame if none found
     """
     try:
-        # Fetch all records using pagination
-        all_forms = []
-        query = supabase.table("forms").select("*")
-        current_batch = query.limit(1000).execute()
-        all_forms.extend(current_batch.data)
-        
-        # Continue fetching if there are more records
-        while len(current_batch.data) == 1000:
-            last_id = current_batch.data[-1].get('form_id') if current_batch.data else None
-            if not last_id:
-                break
-            current_batch = query.gt('form_id', last_id).limit(1000).execute()
-            all_forms.extend(current_batch.data)
-        
-        return pd.DataFrame(all_forms) if all_forms else pd.DataFrame()
+        res = supabase.table("forms").select("*").execute()
+        return pd.DataFrame(res.data) if res.data else pd.DataFrame()
     except Exception:
         return pd.DataFrame()
 

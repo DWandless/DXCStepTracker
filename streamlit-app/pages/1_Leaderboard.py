@@ -46,48 +46,52 @@ with tab1:
 
     # ------------------ FETCH DATA FROM SUPABASE ------------------
     try:
-        forms_query = supabase.table("forms").select("user_id, form_stepcount, form_date")
+        # Per-user aggregation with pagination for each user's records
+        # Get unique user_ids first (this should be < 1000)
         if selected_date:
-            forms_query = forms_query.eq("form_date", str(selected_date))
+            response = supabase.table("forms").select("user_id").eq("form_date", str(selected_date)).execute()
+            user_ids = list(set(r["user_id"] for r in response.data))
+        else:
+            response = supabase.table("forms").select("user_id").execute()
+            user_ids = list(set(r["user_id"] for r in response.data))
         
-        # Fetch all records using pagination
-        all_forms = []
-        current_batch = forms_query.limit(1000).execute()
-        all_forms.extend(current_batch.data)
+        step_summary_data = []
+        for uid in user_ids:
+            # Fetch all records for this user with pagination
+            total = 0
+            offset = 0
+            batch_size = 1000
+            
+            while True:
+                if selected_date:
+                    user_batch = supabase.table("forms").select("form_stepcount").eq("user_id", uid).eq("form_date", str(selected_date)).range(offset, offset + batch_size - 1).execute()
+                else:
+                    user_batch = supabase.table("forms").select("form_stepcount").eq("user_id", uid).range(offset, offset + batch_size - 1).execute()
+                
+                batch_total = sum(r["form_stepcount"] for r in user_batch.data)
+                total += batch_total
+                
+                if len(user_batch.data) < batch_size:
+                    break
+                
+                offset += batch_size
+            
+            step_summary_data.append({"user_id": uid, "total_steps": total})
         
-        # Continue fetching if there are more records
-        while len(current_batch.data) == 1000:
-            # Get the last record's ID to use as offset
-            last_id = current_batch.data[-1].get('form_id') if current_batch.data else None
-            if not last_id:
-                break
-            current_batch = forms_query.gt('form_id', last_id).limit(1000).execute()
-            all_forms.extend(current_batch.data)
-        
-        forms = all_forms
+        step_summary = pd.DataFrame(step_summary_data)
     except Exception as e:
         st.error(f"Database error while fetching forms: {e}")
         st.stop()
 
-    if not forms:
+    if step_summary.empty:
         st.info("No step data available for the selected date." if selected_date else "No step data available.")
         st.stop()
 
-    df = pd.DataFrame(forms)
-
     # Debug: log total records fetched
-    st.caption(f"Debug: Total forms fetched: {len(df)}")
+    st.caption(f"Debug: Total users processed: {len(step_summary)}")
 
-    # ------------------ AGGREGATE STEPS SECURELY ------------------
-    try:
-        step_summary = df.groupby("user_id")["form_stepcount"].sum().reset_index()
-        step_summary.rename(columns={"form_stepcount": "total_steps"}, inplace=True)
-        
-        # Debug: show step summary before merge
-        st.caption(f"Debug: Step summary before merge:\n{step_summary.to_string()}")
-    except Exception as e:
-        st.error(f"Error processing step data: {e}")
-        st.stop()
+    # Debug: show step summary before merge
+    st.caption(f"Debug: Step summary before merge:\n{step_summary.to_string()}")
 
     # ------------------ GET USERNAMES ------------------
     try:
@@ -164,24 +168,33 @@ with tab2:
         # Get all users with team assignments
         users_with_teams = supabase.table("users").select("user_id, team_id").execute().data
         
-        # Get forms data
-        forms_query = supabase.table("forms").select("user_id, form_stepcount, form_date")
+        # Get forms data using per-user aggregation (same approach as individual leaderboard)
+        # Get unique user_ids first
         if team_selected_date:
-            forms_query = forms_query.eq("form_date", str(team_selected_date))
+            response = supabase.table("forms").select("user_id").eq("form_date", str(team_selected_date)).execute()
+            user_ids = list(set(r["user_id"] for r in response.data))
+        else:
+            response = supabase.table("forms").select("user_id").execute()
+            user_ids = list(set(r["user_id"] for r in response.data))
         
-        # Fetch all records using pagination
+        # Fetch all forms with pagination for each user
         all_forms = []
-        current_batch = forms_query.limit(1000).execute()
-        all_forms.extend(current_batch.data)
-        
-        # Continue fetching if there are more records
-        while len(current_batch.data) == 1000:
-            # Get the last record's ID to use as offset
-            last_id = current_batch.data[-1].get('form_id') if current_batch.data else None
-            if not last_id:
-                break
-            current_batch = forms_query.gt('form_id', last_id).limit(1000).execute()
-            all_forms.extend(current_batch.data)
+        for uid in user_ids:
+            offset = 0
+            batch_size = 1000
+            
+            while True:
+                if team_selected_date:
+                    user_batch = supabase.table("forms").select("user_id, form_stepcount, form_date").eq("user_id", uid).eq("form_date", str(team_selected_date)).range(offset, offset + batch_size - 1).execute()
+                else:
+                    user_batch = supabase.table("forms").select("user_id, form_stepcount, form_date").eq("user_id", uid).range(offset, offset + batch_size - 1).execute()
+                
+                all_forms.extend(user_batch.data)
+                
+                if len(user_batch.data) < batch_size:
+                    break
+                
+                offset += batch_size
         
         forms_data = all_forms
         
