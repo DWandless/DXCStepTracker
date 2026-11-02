@@ -3,7 +3,6 @@ import os
 import logging
 import pandas as pd
 import time
-import hashlib
 from datetime import datetime, timedelta, date
 import plotly.express as px
 from PIL import Image, UnidentifiedImageError
@@ -15,7 +14,6 @@ from modules.components import (apply_dxc_theme, setup_logo, render_header, rend
                         log_audit_event, get_met_values, setup_logging)
 from modules.auth import init_session_state, handle_oauth_redirect, process_token
 from modules.data_services import fetch_all_forms
-from modules.challenges import get_all_challenges, validate_claim_code
 from modules.onedrive_storage import upload_to_onedrive, get_access_token
 
 # ------------------ PAGE CONFIG ------------------
@@ -92,7 +90,7 @@ if render_sidebar_welcome():
     handle_logout()
 
 # ------------------ TABS ------------------
-tab1, tab2, tab3, tab4 = st.tabs(["✚ Submit Steps", "✦ AI & Wellbeing Challenges",  "➜ Daily Progress", "⚑ Teams"])
+tab1, tab2, tab3 = st.tabs(["✚ Submit Steps", "➜ Daily Progress", "⚑ Teams"])
 
 # ------------------ TAB 1: SUBMIT STEPS ------------------
 with tab1:
@@ -268,101 +266,101 @@ with tab1:
                     st.error("Error processing upload.")
                     st.exception(e)
 
-# ------------------ TAB 2: AI Challenges ------------------
-with tab2:
-    st.header("✦ AI & Wellbeing Challenges")
-    st.caption("Complete challenges and redeem your unique claim codes.")
-
-    # ------------------ Mock Challenge Data (UI only) ------------------
-
-    # ------------------ Challenges List ------------------
-    Challenges = get_all_challenges()  # Load challenges to ensure file is read before code generation
-    for ch in Challenges:
-        with st.container(border=True):
-            left, right = st.columns([8, 2])
-
-            with left:
-                st.subheader(Challenges[ch]["title"])
-                st.write(Challenges[ch]["description"])
-                # Display reward - show "Variable" for variable reward challenges
-                if Challenges[ch].get("variable_reward", False):
-                    st.caption("Reward: Variable (based on code)")
-                else:
-                    st.caption(f"Reward: {Challenges[ch]['Reward']:,} steps")
-
-            with right:
-                # Check if user has already completed this challenge
-                challenge_id = Challenges[ch]['id']
-                expected_filepath = f"challenge_{challenge_id}_complete"
-                toggle_key = f"show_redeem_{Challenges[ch]['id']}"
-                challenge_completed = False
-                
-                try:
-                    existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
-                    
-                    if existing_completion.data:
-                        st.success("Challenge Complete ✔")
-                        challenge_completed = True
-                    else:
-                        if toggle_key not in st.session_state:
-                            st.session_state[toggle_key] = False
-
-                        if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
-                            st.session_state[toggle_key] = not st.session_state[toggle_key]
-                except Exception:
-                    if toggle_key not in st.session_state:
-                        st.session_state[toggle_key] = False
-
-                    if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
-                        st.session_state[toggle_key] = not st.session_state[toggle_key]
-
-            # ------------------ Redeem UI ------------------
-            if st.session_state.get(toggle_key, False) and not challenge_completed:
-                st.markdown("**Redeem your challenge**")
-
-                with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
-                    claim_code = st.text_input(
-                        "Enter unique claim code",
-                        placeholder="e.g. DXC-STEP-ABC123"
-                    )
-
-                    submitted = st.form_submit_button("Submit Code", type="primary")
-                    if submitted:
-                        is_valid, challenge_reward = validate_claim_code(Challenges, claim_code, challenge_id)
-                        if not is_valid:
-                            st.error("Please enter a valid claim code.")
-                        else:
-                            try:
-                                # Check if code has already been used by any user
-                                code_hash = hashlib.sha256(claim_code.encode()).hexdigest()
-                                existing_code_check = supabase.table("forms").select("*").eq("challenge_code", code_hash).execute()
-                                
-                                if existing_code_check.data:
-                                    st.error("This code has already been used.")
-                                else:
-                                    # Insert challenge completion into forms table
-                                    form_filepath = expected_filepath
-                                    current_date = datetime.now().date()
-                                    current_timestamp = datetime.now().isoformat()
-                                    
-                                    supabase.table("forms").insert({
-                                        "form_filepath": form_filepath,
-                                        "form_stepcount": challenge_reward,
-                                        "form_date": str(current_date),
-                                        "user_id": user_id,
-                                        "form_created_at": current_timestamp,
-                                        "form_verified": True,
-                                        "challenge_code": code_hash
-                                    }).execute()
-                                    
-                                    log_audit_event("CHALLENGE_REDEMPTION", user_email, f"Challenge ID: {challenge_id}, Reward: {challenge_reward}, Code used")
-                                    st.session_state[toggle_key] = False
-                                    st.rerun()
-                            except Exception as e:
-                                st.error(f"Error processing challenge completion: {str(e)}")
-                                logging.error(f"Challenge completion error: {e}")
+# ------------------ TAB 2: AI & WELLBEING CHALLENGES (TEMPORARILY DISABLED) ------------------
+# with tab2:
+#     st.header("✦ AI & Wellbeing Challenges")
+#     st.caption("Complete challenges and redeem your unique claim codes.")
+#
+#     # ------------------ Mock Challenge Data (UI only) ------------------
+#
+#     # ------------------ Challenges List ------------------
+#     Challenges = get_all_challenges()  # Load challenges to ensure file is read before code generation
+#     for ch in Challenges:
+#         with st.container(border=True):
+#             left, right = st.columns([8, 2])
+#
+#             with left:
+#                 st.subheader(Challenges[ch]["title"])
+#                 st.write(Challenges[ch]["description"])
+#                 # Display reward - show "Variable" for variable reward challenges
+#                 if Challenges[ch].get("variable_reward", False):
+#                     st.caption("Reward: Variable (based on code)")
+#                 else:
+#                     st.caption(f"Reward: {Challenges[ch]['Reward']:,} steps")
+#
+#             with right:
+#                 # Check if user has already completed this challenge
+#                 challenge_id = Challenges[ch]['id']
+#                 expected_filepath = f"challenge_{challenge_id}_complete"
+#                 toggle_key = f"show_redeem_{Challenges[ch]['id']}"
+#                 challenge_completed = False
+#
+#                 try:
+#                     existing_completion = supabase.table("forms").select("*").eq("user_id", user_id).eq("form_filepath", expected_filepath).execute()
+#
+#                     if existing_completion.data:
+#                         st.success("Challenge Complete ✔")
+#                         challenge_completed = True
+#                     else:
+#                         if toggle_key not in st.session_state:
+#                             st.session_state[toggle_key] = False
+#
+#                         if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
+#                             st.session_state[toggle_key] = not st.session_state[toggle_key]
+#                 except Exception:
+#                     if toggle_key not in st.session_state:
+#                         st.session_state[toggle_key] = False
+#
+#                     if st.button("Redeem", key=f"redeem_btn_{Challenges[ch]['id']}", type="secondary"):
+#                         st.session_state[toggle_key] = not st.session_state[toggle_key]
+#
+#             # ------------------ Redeem UI ------------------
+#             if st.session_state.get(toggle_key, False) and not challenge_completed:
+#                 st.markdown("**Redeem your challenge**")
+#
+#                 with st.form(key=f"redeem_form_{Challenges[ch]['id']}", clear_on_submit=True):
+#                     claim_code = st.text_input(
+#                         "Enter unique claim code",
+#                         placeholder="e.g. DXC-STEP-ABC123"
+#                     )
+#
+#                     submitted = st.form_submit_button("Submit Code", type="primary")
+#                     if submitted:
+#                         is_valid, challenge_reward = validate_claim_code(Challenges, claim_code, challenge_id)
+#                         if not is_valid:
+#                             st.error("Please enter a valid claim code.")
+#                         else:
+#                             try:
+#                                 # Check if code has already been used by any user
+#                                 code_hash = hashlib.sha256(claim_code.encode()).hexdigest()
+#                                 existing_code_check = supabase.table("forms").select("*").eq("challenge_code", code_hash).execute()
+#
+#                                 if existing_code_check.data:
+#                                     st.error("This code has already been used.")
+#                                 else:
+#                                     # Insert challenge completion into forms table
+#                                     form_filepath = expected_filepath
+#                                     current_date = datetime.now().date()
+#                                     current_timestamp = datetime.now().isoformat()
+#
+#                                     supabase.table("forms").insert({
+#                                         "form_filepath": form_filepath,
+#                                         "form_stepcount": challenge_reward,
+#                                         "form_date": str(current_date),
+#                                         "user_id": user_id,
+#                                         "form_created_at": current_timestamp,
+#                                         "form_verified": True,
+#                                         "challenge_code": code_hash
+#                                     }).execute()
+#
+#                                     log_audit_event("CHALLENGE_REDEMPTION", user_email, f"Challenge ID: {challenge_id}, Reward: {challenge_reward}, Code used")
+#                                     st.session_state[toggle_key] = False
+#                                     st.rerun()
+#                             except Exception as e:
+#                                 st.error(f"Error processing challenge completion: {str(e)}")
+#                                 logging.error(f"Challenge completion error: {e}")
 # ------------------ TAB 3: DAILY PROGRESS ------------------
-with tab3:
+with tab2:
     st.header("➜ Daily Progress")
     st.caption("Track your step history, streaks, and statistics.")
     df = fetch_user_forms(user_id)
@@ -470,7 +468,7 @@ with tab3:
             st.info("No submissions found.")
 
 # ------------------ TAB 4: TEAM MANAGEMENT ------------------
-with tab4:
+with tab3:
     st.header("⚑ Team Management")
     st.caption("Join or create teams to compete together.")
     

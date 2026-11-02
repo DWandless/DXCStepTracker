@@ -215,102 +215,102 @@ else:
 
 st.divider()
 
-# ------------------ 3. GENERATE CLAIM CODES -------------------
-st.subheader(
-    "Generate Claim Codes",
-    help="Create unique claim codes for verified step submissions."
-)
-from modules.challenges import get_all_challenges, generate_claim_code, hash_claim_code
-
-# Initialize session state for generated codes
-if "generated_codes" not in st.session_state:
-    st.session_state.generated_codes = []
-
-Challenges = get_all_challenges()
-
-col_left, col_right = st.columns([1, 1])
-
-with col_left:
-    ChallengesDropdown = st.selectbox("Select Challenge", options=[Challenges[ch]["title"] for ch in Challenges])
-    num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
-    
-    # Check if selected challenge has variable reward
-    selected_challenge_key = None
-    is_variable_reward = False
-    for ch in Challenges:
-        if Challenges[ch]["title"] == ChallengesDropdown:
-            selected_challenge_key = ch
-            is_variable_reward = Challenges[ch].get("variable_reward", False)
-            break
-    
-    # Show reward input for variable reward challenges
-    if is_variable_reward:
-        reward_amount = st.number_input(
-            "Reward Amount (steps)",
-            min_value=0,
-            max_value=50000,
-            value=2000,
-            step=500,
-            help="Enter the number of steps to award for each code generated for this challenge"
-        )
-    else:
-        reward_amount = None
-    
-    if st.button("Generate Claim Codes"):
-        if not ChallengesDropdown:
-            st.error("Please select a challenge to generate claim codes for.")
-            st.stop()
-
-        # Generate codes with proper duplicate tracking
-        generated_codes = []
-        existing_codes = set()
-        for challenge in Challenges:
-            # Extract hash values from Codes (handle both dict and string formats)
-            for code_entry in Challenges[challenge]["Codes"]:
-                if isinstance(code_entry, dict):
-                    existing_codes.add(code_entry["hash"])
-                else:
-                    existing_codes.add(code_entry)
-        
-        for _ in range(num_codes):
-            code = generate_claim_code(Challenges, existing_codes)
-            generated_codes.append(code)
-            existing_codes.add(hash_claim_code(code))  # Add hash to avoid duplicates
-
-        # Hash codes for storage
-        if is_variable_reward:
-            # Store as dict with hash and reward for variable reward challenges
-            hashed_codes = [{"hash": hash_claim_code(code), "reward": reward_amount} for code in generated_codes]
-        else:
-            # Store as simple hash string for fixed reward challenges
-            hashed_codes = [hash_claim_code(code) for code in generated_codes]
-
-        # Read and update Challenges.json with proper path
-        challenges_path = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "Challenges.json"
-        try:
-            with open(challenges_path, "r") as f:
-                challenges_data = json.load(f)
-            
-            # Add hashed codes to the selected challenge
-            for challenge_key in challenges_data:
-                if challenges_data[challenge_key]["title"] == ChallengesDropdown:
-                    challenges_data[challenge_key]["Codes"].extend(hashed_codes)
-                    break
-            
-            # Write back to file
-            with open(challenges_path, "w") as f:
-                json.dump(challenges_data, f, indent=4)
-
-            st.session_state.generated_codes = generated_codes
-            log_audit_event("CODE_GENERATION", user_email, f"Challenge: {ChallengesDropdown}, Count: {num_codes}, Reward: {reward_amount if is_variable_reward else 'Fixed'}")
-        except Exception as e:
-            st.error(f"Error generating codes: {str(e)}")
-            logging.error(f"Code generation error: {e}")
-
-with col_right:
-    if st.session_state.generated_codes:
-        codes_text = "\n".join(st.session_state.generated_codes)
-        st.text_area("Codes", codes_text, height=200)
+# ------------------ 3. GENERATE CLAIM CODES (TEMPORARILY DISABLED) -------------------
+# st.subheader(
+#     "Generate Claim Codes",
+#     help="Create unique claim codes for verified step submissions."
+# )
+# from modules.challenges import get_all_challenges, generate_claim_code, hash_claim_code
+#
+# # Initialize session state for generated codes
+# if "generated_codes" not in st.session_state:
+#     st.session_state.generated_codes = []
+#
+# Challenges = get_all_challenges()
+#
+# col_left, col_right = st.columns([1, 1])
+#
+# with col_left:
+#     ChallengesDropdown = st.selectbox("Select Challenge", options=[Challenges[ch]["title"] for ch in Challenges])
+#     num_codes = st.number_input("Number of Claim Codes to Generate", min_value=1, max_value=100, value=5)
+#
+#     # Check if selected challenge has variable reward
+#     selected_challenge_key = None
+#     is_variable_reward = False
+#     for ch in Challenges:
+#         if Challenges[ch]["title"] == ChallengesDropdown:
+#             selected_challenge_key = ch
+#             is_variable_reward = Challenges[ch].get("variable_reward", False)
+#             break
+#
+#     # Show reward input for variable reward challenges
+#     if is_variable_reward:
+#         reward_amount = st.number_input(
+#             "Reward Amount (steps)",
+#             min_value=0,
+#             max_value=50000,
+#             value=2000,
+#             step=500,
+#             help="Enter the number of steps to award for each code generated for this challenge"
+#         )
+#     else:
+#         reward_amount = None
+#
+#     if st.button("Generate Claim Codes"):
+#         if not ChallengesDropdown:
+#             st.error("Please select a challenge to generate claim codes for.")
+#             st.stop()
+#
+#         # Generate codes with proper duplicate tracking
+#         generated_codes = []
+#         existing_codes = set()
+#         for challenge in Challenges:
+#             # Extract hash values from Codes (handle both dict and string formats)
+#             for code_entry in Challenges[challenge]["Codes"]:
+#                 if isinstance(code_entry, dict):
+#                     existing_codes.add(code_entry["hash"])
+#                 else:
+#                     existing_codes.add(code_entry)
+#
+#         for _ in range(num_codes):
+#             code = generate_claim_code(Challenges, existing_codes)
+#             generated_codes.append(code)
+#             existing_codes.add(hash_claim_code(code))  # Add hash to avoid duplicates
+#
+#         # Hash codes for storage
+#         if is_variable_reward:
+#             # Store as dict with hash and reward for variable reward challenges
+#             hashed_codes = [{"hash": hash_claim_code(code), "reward": reward_amount} for code in generated_codes]
+#         else:
+#             # Store as simple hash string for fixed reward challenges
+#             hashed_codes = [hash_claim_code(code) for code in generated_codes]
+#
+#         # Read and update Challenges.json with proper path
+#         challenges_path = Path(__file__).resolve().parents[1] / ".streamlit" / "static" / "assets" / "Challenges.json"
+#         try:
+#             with open(challenges_path, "r") as f:
+#                 challenges_data = json.load(f)
+#
+#             # Add hashed codes to the selected challenge
+#             for challenge_key in challenges_data:
+#                 if challenges_data[challenge_key]["title"] == ChallengesDropdown:
+#                     challenges_data[challenge_key]["Codes"].extend(hashed_codes)
+#                     break
+#
+#             # Write back to file
+#             with open(challenges_path, "w") as f:
+#                 json.dump(challenges_data, f, indent=4)
+#
+#             st.session_state.generated_codes = generated_codes
+#             log_audit_event("CODE_GENERATION", user_email, f"Challenge: {ChallengesDropdown}, Count: {num_codes}, Reward: {reward_amount if is_variable_reward else 'Fixed'}")
+#         except Exception as e:
+#             st.error(f"Error generating codes: {str(e)}")
+#             logging.error(f"Code generation error: {e}")
+#
+# with col_right:
+#     if st.session_state.generated_codes:
+#         codes_text = "\n".join(st.session_state.generated_codes)
+#         st.text_area("Codes", codes_text, height=200)
 
 # ------------------ FOOTER (ALWAYS RENDER) ------------------
 render_footer()
